@@ -598,11 +598,21 @@ namespace RE
 						conditionReduction *= 2.0f;
 					}
 
-					// Reduces damage to weapon depending on players 'Guns' level.
+					// Reduces damage to weapon depending on players relevant weapon skill level.
 					// Linear reduction from 0 - 100, 100 resulting in 20% less damage to weapon.
-					float gunsSkillValue = playerCharacter->GetActorValue(*Skills::CascadiaActorValues.Guns);
-					float reductionPercentFromSkill = (gunsSkillValue / 100.0f) * 0.2;
+					float gunsSkillValue = 0.0f;
+					ActorValueInfo* gunSkill = data->skill;
 
+					if (gunSkill)
+					{
+						REX::DEBUG("Weapon '{}' set to skill: {}.", a_weapon->object->GetFormEditorID(), gunSkill->GetFormEditorID());
+						gunsSkillValue = playerCharacter->GetActorValue(*gunSkill);
+					}
+					else {
+						REX::DEBUG("Weapon '{}' is missing skill value - please correct this in the weapon record in XEdit.", a_weapon->object->GetFormEditorID());
+					}
+					
+					float reductionPercentFromSkill = (gunsSkillValue / 100.0f) * 0.2;
 					conditionReduction *= (1.0f - reductionPercentFromSkill);
 
 					ExtraDataList* extraDataList = inventoryItem->stackData->extra.get();
