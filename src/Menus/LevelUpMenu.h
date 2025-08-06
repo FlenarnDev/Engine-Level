@@ -457,7 +457,10 @@ namespace RE
 					return false;
 				}
 
-				// TODO - Is player in scene
+				if (IsPlayerInDialogue())
+				{
+					return false;
+				}
 
 				if (IsXPMetervisible())
 				{
