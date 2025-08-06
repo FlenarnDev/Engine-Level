@@ -251,6 +251,58 @@ namespace RE
 
 			}
 
+			void PopulateSpecialEntry(Scaleform::GFx::Value* a_destination, Scaleform::Ptr<Scaleform::GFx::ASMovieRootBase> a_movieRoot, ActorValueInfo* a_skill)
+			{
+				PlayerCharacter* playerCharacter = PlayerCharacter::GetSingleton();
+
+				Scaleform::GFx::Value skillEntry;
+				a_movieRoot->CreateObject(&skillEntry);
+
+				BSStringT<char> description;
+				a_skill->GetDescription(description);
+
+				skillEntry.SetMember("text", a_skill->fullName.c_str());
+				skillEntry.SetMember("editorID", a_skill->GetFormEditorID());
+				skillEntry.SetMember("description", description.c_str());
+				skillEntry.SetMember("formid", a_skill->formID);
+
+				float baseAVValue = playerCharacter->GetBaseActorValue(*a_skill);
+				float avValue = playerCharacter->GetActorValue(*a_skill);
+
+				skillEntry.SetMember("value", (std::uint32_t)baseAVValue);
+				skillEntry.SetMember("baseValue", (std::uint32_t)baseAVValue);
+				skillEntry.SetMember("buffedValue", (std::uint32_t)avValue);
+
+				a_destination->PushBack(skillEntry);
+			}
+
+			bool ProcessSpecialList(Scaleform::Ptr<Scaleform::GFx::ASMovieRootBase> a_movieRoot)
+			{
+				Scaleform::GFx::Value argumentsArray[1];
+				a_movieRoot->CreateArray(&argumentsArray[0]);
+
+				PopulateSpecialEntry(&argumentsArray[0], a_movieRoot, Skills::VanillaActorValues.Strength);
+				PopulateSpecialEntry(&argumentsArray[0], a_movieRoot, Skills::VanillaActorValues.Perception);
+				PopulateSpecialEntry(&argumentsArray[0], a_movieRoot, Skills::VanillaActorValues.Endurance);
+				PopulateSpecialEntry(&argumentsArray[0], a_movieRoot, Skills::VanillaActorValues.Charisma);
+				PopulateSpecialEntry(&argumentsArray[0], a_movieRoot, Skills::VanillaActorValues.Intelligence);
+				PopulateSpecialEntry(&argumentsArray[0], a_movieRoot, Skills::VanillaActorValues.Agility);
+				PopulateSpecialEntry(&argumentsArray[0], a_movieRoot, Skills::VanillaActorValues.Luck);
+
+				switch (menuModeType) {
+				case kSpecialRespec:
+					a_movieRoot->Invoke("root.Menu_mc.onSpecialRespecStart", nullptr, argumentsArray, 1);
+					break;
+				case kIntenseTraining:
+					a_movieRoot->Invoke("root.Menu_mc.onIntenseTrainingStart", nullptr, argumentsArray, 1);
+					break;
+				default:
+					break;
+				}
+
+				return true;
+			}
+
 			void PopulatePerkEntry(Scaleform::GFx::Value* a_destination, Scaleform::Ptr<Scaleform::GFx::ASMovieRootBase> a_movieRoot, BGSPerk* a_perk, bool a_eligibleOnly)
 			{
 				PerkHelpers::AvailablePerk currentPerk = PerkHelpers::GetAvailablePerk(a_perk);
@@ -586,6 +638,18 @@ namespace RE
 				ProcessTagSkillsList(a_movieRoot, tagPointsValue, allowRetag);
 			}
 
+			// Send initial data to AS3 for S.P.E.C.I.A.L respec - might be cut.
+			void OnSpecialRespecStart(Scaleform::Ptr<Scaleform::GFx::ASMovieRootBase> a_movieRoot)
+			{
+				ProcessSpecialList(a_movieRoot);
+			}
+
+			// Send initial data to AS3 for  Intense Training.
+			void OnIntenseTrainingStart(Scaleform::Ptr<Scaleform::GFx::ASMovieRootBase> a_movieRoot)
+			{
+				ProcessSpecialList(a_movieRoot);
+			}
+
 			void HandleLevelUpMenuOpen(Scaleform::Ptr<Scaleform::GFx::ASMovieRootBase> a_movieRoot)
 			{
 				switch (menuModeType)
@@ -599,9 +663,11 @@ namespace RE
 					break;
 
 				case kSpecialRespec:
+					OnSpecialRespecStart(a_movieRoot);
 					break;
 
 				case kIntenseTraining:
+					OnIntenseTrainingStart(a_movieRoot);
 					break;
 
 				default:
