@@ -223,6 +223,34 @@ namespace RE
 				return true;
 			}
 
+			bool ProcessTagSkillsList(Scaleform::Ptr<Scaleform::GFx::ASMovieRootBase> a_movieRoot, std::uint32_t a_tagSkills, bool a_retag)
+			{
+				Scaleform::GFx::Value argumentsArray[3];
+				a_movieRoot->CreateArray(&argumentsArray[0]);
+
+				PopulateSkillEntry(&argumentsArray[0], a_movieRoot, Skills::CascadiaActorValues.Barter);
+				PopulateSkillEntry(&argumentsArray[0], a_movieRoot, Skills::CascadiaActorValues.EnergyWeapons);
+				PopulateSkillEntry(&argumentsArray[0], a_movieRoot, Skills::CascadiaActorValues.Explosives);
+				PopulateSkillEntry(&argumentsArray[0], a_movieRoot, Skills::CascadiaActorValues.Guns);
+				PopulateSkillEntry(&argumentsArray[0], a_movieRoot, Skills::CascadiaActorValues.Lockpick);
+				PopulateSkillEntry(&argumentsArray[0], a_movieRoot, Skills::CascadiaActorValues.Medicine);
+				PopulateSkillEntry(&argumentsArray[0], a_movieRoot, Skills::CascadiaActorValues.MeleeWeapons);
+				PopulateSkillEntry(&argumentsArray[0], a_movieRoot, Skills::CascadiaActorValues.Repair);
+				PopulateSkillEntry(&argumentsArray[0], a_movieRoot, Skills::CascadiaActorValues.Science);
+				PopulateSkillEntry(&argumentsArray[0], a_movieRoot, Skills::CascadiaActorValues.Sneak);
+				PopulateSkillEntry(&argumentsArray[0], a_movieRoot, Skills::CascadiaActorValues.Speech);
+				PopulateSkillEntry(&argumentsArray[0], a_movieRoot, Skills::CascadiaActorValues.Survival);
+				PopulateSkillEntry(&argumentsArray[0], a_movieRoot, Skills::CascadiaActorValues.Unarmed);
+
+				argumentsArray[1] = a_tagSkills;
+				argumentsArray[2] = a_retag;
+
+				a_movieRoot->Invoke("root.Menu_mc.onTagSkillsStart", nullptr, argumentsArray, 3);
+
+				return true;
+
+			}
+
 			void PopulatePerkEntry(Scaleform::GFx::Value* a_destination, Scaleform::Ptr<Scaleform::GFx::ASMovieRootBase> a_movieRoot, BGSPerk* a_perk, bool a_eligibleOnly)
 			{
 				PerkHelpers::AvailablePerk currentPerk = PerkHelpers::GetAvailablePerk(a_perk);
@@ -552,6 +580,12 @@ namespace RE
 				ProcessSkillsList(a_movieRoot);
 			}
 
+			// Send initial data to AS3 for 'Tag Skills'.
+			void OnTagSkillsStart(Scaleform::Ptr<Scaleform::GFx::ASMovieRootBase> a_movieRoot)
+			{
+				ProcessTagSkillsList(a_movieRoot, tagPointsValue, allowRetag);
+			}
+
 			void HandleLevelUpMenuOpen(Scaleform::Ptr<Scaleform::GFx::ASMovieRootBase> a_movieRoot)
 			{
 				switch (menuModeType)
@@ -561,6 +595,7 @@ namespace RE
 					break;
 
 				case kTagSkills:
+					OnTagSkillsStart(a_movieRoot);
 					break;
 
 				case kSpecialRespec:
@@ -695,6 +730,7 @@ namespace RE
 				virtual void Call(const Params& a_params)
 				{
 					REX::DEBUG("'ResetTagSkills' called from AS3.");
+					OnTagSkillsStart(a_params.movie->asMovieRoot);
 				}
 			};
 
