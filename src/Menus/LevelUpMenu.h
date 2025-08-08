@@ -689,7 +689,7 @@ namespace RE
 					break;
 
 				case kTagSkills:
-					// TODO - tagPointsValue = 0;
+					tagPointsValue = 0;
 					allowRetag = false;
 					REX::DEBUG("'CompleteLevelUp' - 'kTagSkills'");
 					break;
