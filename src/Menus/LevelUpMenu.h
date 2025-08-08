@@ -18,6 +18,8 @@ namespace RE
 			
 			bool allowRetag = false;
 
+			BSTArray<ActorValueInfo*> scaleformSkills;
+
 			namespace InitialValues
 			{
 				std::uint32_t barter;
@@ -109,6 +111,8 @@ namespace RE
 				kIntenseTrainingPerk = 8,
 				kCancel = 9
 			};
+
+
 
 			float GetInitialActorValue(ActorValueInfo* a_skill)
 			{
@@ -544,7 +548,8 @@ namespace RE
 
 				Serialization::ModSkillPoints(pointsToAdd);
 
-				// TODO - UpdateLevelUpFormsFromGame
+				Skills::CascadiaPerksLevelUp.clear();
+				Skills::GetLevelUpFormsFromGame();
 
 				Serialization::SetReadyToLevelUp(true);
 
@@ -558,7 +563,7 @@ namespace RE
 				skillNameString.erase(std::remove_if(skillNameString.begin(), skillNameString.end(), isspace), skillNameString.end());
 
 				ActorValueInfo* skill = Skills::GetSkillByName(skillNameString);
-				std::string skillEditorID = skill->GetFormEditorID();
+				const char* skillEditorID = skill->GetFormEditorID();
 
 				std::uint32_t modValue = (a_value - a_baseValue);
 
@@ -615,6 +620,82 @@ namespace RE
 					TempModValues::unarmed = modValue;
 				}
 				
+				PlayerCharacter* playerCharacter = PlayerCharacter::GetSingleton();
+				playerCharacter->ModActorValue(ACTOR_VALUE_MODIFIER::kPermanent, *skill, modValue);
+			}
+
+			void RevertSkill(ActorValueInfo* skill)
+			{
+				const char* editorID = skill->GetFormEditorID();
+
+				std::uint32_t modValue;
+
+				if (editorID == "CAS_Barter")
+				{
+					modValue = TempModValues::barter;
+					TempModValues::barter = 0;
+				}
+				else if (editorID == "CAS_EnergyWeapons")
+				{
+					modValue = TempModValues::energyWeapons;
+					TempModValues::energyWeapons = 0;
+				}
+				else if (editorID == "CAS_Explosives")
+				{
+					modValue = TempModValues::explosives;
+					TempModValues::explosives = 0;
+				}
+				else if (editorID == "CAS_Guns")
+				{
+					modValue = TempModValues::guns;
+					TempModValues::guns = 0;
+				}
+				else if (editorID == "CAS_Lockpick")
+				{
+					modValue = TempModValues::lockpick;
+					TempModValues::lockpick = 0;
+				}
+				else if (editorID == "CAS_Medicine")
+				{
+					modValue = TempModValues::medicine;
+					TempModValues::medicine = 0;
+				}
+				else if (editorID == "CAS_MeleeWeapons")
+				{
+					modValue = TempModValues::meleeWeapons;
+					TempModValues::meleeWeapons = 0;
+				}
+				else if (editorID == "CAS_Repair")
+				{
+					modValue = TempModValues::repair;
+					TempModValues::repair = 0;
+				}
+				else if (editorID == "CAS_Science")
+				{
+					modValue = TempModValues::science;
+					TempModValues::science = 0;
+				}
+				else if (editorID == "CAS_Sneak")
+				{
+					modValue = TempModValues::sneak;
+					TempModValues::sneak = 0;
+				}
+				else if (editorID == "CAS_Speech")
+				{
+					modValue = TempModValues::speech;
+					TempModValues::speech = 0;
+				}
+				else if (editorID == "CAS_Survival")
+				{
+					modValue = TempModValues::survival;
+					TempModValues::survival = 0;
+				}
+				else if (editorID == "CAS_Unarmed")
+				{
+					modValue = TempModValues::unarmed;
+					TempModValues::unarmed = 0;
+				}
+
 				PlayerCharacter* playerCharacter = PlayerCharacter::GetSingleton();
 				playerCharacter->ModActorValue(ACTOR_VALUE_MODIFIER::kPermanent, *skill, modValue);
 			}
@@ -809,6 +890,14 @@ namespace RE
 				virtual void Call(const Params& a_params)
 				{
 					REX::DEBUG("'BackToSkills' called from AS3.");
+
+					for (std::uint32_t skillEntry = 0; skillEntry < Skills::CascadiaSkillsLevelUp.size(); skillEntry++)
+					{
+						ActorValueInfo* skillAV = Skills::CascadiaSkillsLevelUp.at(skillEntry);
+						RevertSkill(skillAV);
+					}
+
+					a_params.movie->asMovieRoot->Invoke("root.Menu_mc.onSwitchBackToSkills", nullptr, nullptr, 0);
 				}
 			};
 

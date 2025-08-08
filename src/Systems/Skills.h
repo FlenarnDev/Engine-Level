@@ -8,6 +8,7 @@ namespace RE
 		{
 			typedef std::vector<ActorValueInfo*> AVVector;
 			extern BSTArray<BGSPerk*> CascadiaPerksLevelUp;
+			extern BSTArray<ActorValueInfo*> CascadiaSkillsLevelUp;
 
 			enum SPECIALFormIDs
 			{

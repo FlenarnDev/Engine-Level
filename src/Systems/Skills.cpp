@@ -8,6 +8,7 @@ namespace RE
 		namespace Skills
 		{
 			BSTArray<BGSPerk*> CascadiaPerksLevelUp;
+			BSTArray<ActorValueInfo*> CascadiaSkillsLevelUp;
 
 			VanillaAV_Struct VanillaActorValues;
 
@@ -286,13 +287,13 @@ namespace RE
 				TESDataHandler* tesDataHandler = TESDataHandler::GetSingleton();
 
 				BGSListForm* perkList = tesDataHandler->LookupForm<BGSListForm>(0x1F9DFA, "FalloutCascadia.esm");
-
 				for (std::uint32_t perkEntry = 0; perkEntry < perkList->arrayOfForms.size(); perkEntry++)
 				{
 					BGSPerk* perk = static_cast<BGSPerk*>(perkList->arrayOfForms[perkEntry]);
 					if (perk == nullptr)
 					{
 						// Entry in list is not a perk.
+						REX::DEBUG("Skills::GetLevelUpFormsFromGame, form: {} in Perk formlist is not a perk.", perkList->arrayOfForms[perkEntry]->GetFormEditorID());
 						continue;
 					}
 
@@ -302,7 +303,22 @@ namespace RE
 					}
 				}
 
-				REX::DEBUG("Perk count found: {}", CascadiaPerksLevelUp.size());
+				REX::DEBUG("Perk count: {}", CascadiaPerksLevelUp.size());
+
+				BGSListForm* skillList = tesDataHandler->LookupForm<BGSListForm>(0x1F9DF1, "FalloutCascadia.esm");
+				for (std::uint32_t skillEntry = 0; skillEntry < skillList->arrayOfForms.size(); skillEntry++)
+				{
+					ActorValueInfo* skill = static_cast<ActorValueInfo*>(skillList->arrayOfForms[skillEntry]);
+					if (skill == nullptr)
+					{
+						// Entry in list is not a skill.
+						REX::DEBUG("Skills::GetLevelUpFormsFromGame, form: {} in Skill formlist is not a skill.", perkList->arrayOfForms[skillEntry]->GetFormEditorID());
+						continue;
+					}
+					CascadiaSkillsLevelUp.push_back(skill);
+				}
+
+				REX::DEBUG("Skill count: {}", CascadiaSkillsLevelUp.size());
 			}
 
 			bool DefineSkillsFormsFromGame()
