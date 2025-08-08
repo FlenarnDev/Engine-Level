@@ -4,6 +4,8 @@ namespace RE
 {
 	namespace Cascadia
 	{
+		bool IsPlayerInDialogue();
+
 		std::string FloatToPreciseString(float value, std::uint32_t precision);
 
 		bool HasVMScript(TESForm* form, const char* scriptName);
