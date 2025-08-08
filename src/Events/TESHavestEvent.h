@@ -35,7 +35,7 @@ namespace RE
 				{
 					if (strcmp(itemHarvestedEDID, "CAS_LL_WoodPile_Random") == 0)
 					{
-						// TODO - figure out a way to aquire FullName of the result from the LVLI roll and replace this mess with keyword.
+						// TODO - figure out a way to aquire form of the result from the LVLI roll and replace this mess with keyword. (Is this even possible? How do we know what LVLI roll to look for?)
 						std::string message = "Firewood";
 						message += " ";
 						message += addedMessage;
