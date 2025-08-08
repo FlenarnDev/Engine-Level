@@ -660,8 +660,30 @@ namespace RE
 				}
 				else
 				{
-					REX::DEBUG("RETAIL DAMAGE: {}", retailDamageResistance);
-					REX::DEBUG("AP INFO: {}", a_info->GetFormEditorID());
+					BGSInventoryList* inventoryList = a_actor->inventoryList;
+					inventoryList->rwLock.lock_read();
+					std::uint32_t inventoryListSize = inventoryList->data.size();
+
+					for (BGSInventoryItem& item : inventoryList->data)
+					{
+						if (item.IsEquipped(0))
+						{
+							TESObjectARMO* armor = static_cast<TESObjectARMO*>(item.object);
+							if (item.object && armor->formType == ENUM_FORM_ID::kARMO && armor->Protects(a_info, false))
+							{
+								ExtraDataList* extraDataList = item.stackData->extra.get();
+								REX::DEBUG("Hit item: {}", item.object->GetFormEditorID());
+								REX::DEBUG("Item condition: {}", extraDataList->GetHealthPerc());
+								REX::DEBUG("Damage resistance prior to condition modifier: {}", retailDamageResistance);
+								float conditionModifier = 0.66f + std::min((0.34f * extraDataList->GetHealthPerc()) / 0.5f, 0.34f);
+								retailDamageResistance *= conditionModifier;
+								REX::DEBUG("Damage resistance after condition modifier: {}", retailDamageResistance);
+								break;
+							}
+						}
+					}
+
+					inventoryList->rwLock.unlock_read();
 					return retailDamageResistance;
 				}
 			}
