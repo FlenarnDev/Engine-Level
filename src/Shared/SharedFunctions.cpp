@@ -6,12 +6,6 @@ namespace RE
 {
 	namespace Cascadia
 	{
-		bool IsPlayerInDialogue() {
-			using func_t = decltype(&IsPlayerInDialogue);
-			static REL::Relocation<func_t> func{ ID::IsPlayerInDialogue };
-			return func();
-		}
-
 		// Takes a Float and converts it to a Precise String.
 		// eg. FloatToPreciseString(3.141592, 2) would return "3.14"
 		std::string FloatToPreciseString(float a_value, std::uint32_t a_precision)
