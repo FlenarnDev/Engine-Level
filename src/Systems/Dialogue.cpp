@@ -793,11 +793,11 @@ namespace RE
 		{
 			// Restore player dialogue starting.
 			// StartPlayerDialogue - 2196817 + 652 offset.
-			REL::Relocation<std::uintptr_t> startPlayerDialogue{ REL::ID(2196817) };
+			REL::Relocation<std::uintptr_t> startPlayerDialogue{ ID::BGSSceneActionNPCResponseDialogue::UpdateAction };
 			startPlayerDialogue.write<0x652>({ 0x48, 0x8B, 0xC8 });
 
 			// SwitchToPlayerCC - 2214898 ID + ADC offset.
-			REL::Relocation<std::uintptr_t> switchToPlayerCC{ REL::ID(2214898) };
+			REL::Relocation<std::uintptr_t> switchToPlayerCC{ ID::DialogueCameraState::UpdateActorsAndAction };
 			switchToPlayerCC.write<0xADC>({ 0x01 });
 		}
 		else
@@ -805,12 +805,12 @@ namespace RE
 			// Disable player dialogue starting.
 			uint8_t bytes[] = { 0xEB, 0x1E, 0x90 };
 			// StartPlayerDialogue - 2196817 + 652 offset.
-			REL::Relocation<std::uintptr_t> startPlayerDialogue{ REL::ID(2196817) };
+			REL::Relocation<std::uintptr_t> startPlayerDialogue{ ID::BGSSceneActionNPCResponseDialogue::UpdateAction };
 			startPlayerDialogue.write<0x652>({ 0xEB, 0x1E, 0x90 });
 
 			// Disable dialogue camera switching to player.
 			// SwitchToPlayerCC - 2214898 ID + ADC offset.
-			REL::Relocation<std::uintptr_t> switchToPlayerCC{ REL::ID(2214898) };
+			REL::Relocation<std::uintptr_t> switchToPlayerCC{ ID::DialogueCameraState::UpdateActorsAndAction };
 			switchToPlayerCC.write<0xADC>({ 0x02 });
 		}
 	}

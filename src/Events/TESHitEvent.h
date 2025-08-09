@@ -114,12 +114,15 @@ namespace RE
 				// If sourceREFR is 'nullptr', most likely a melee attack.
 				if (sourceREFR)
 				{
+					
 					if (sourceREFR->IsExplosion())
 					{
+						REX::DEBUG("Player hit, explosion?");
 						// TODO
 					}
 					else
 					{
+						REX::DEBUG("Player hit, not explosion, melee?");
 						std::uint32_t damageLimb = a_event.hitData.damageLimb.underlying();
 						if (damageLimb != std::uint32_t(BGSBodyPartDefs::LIMB_ENUM::kWeapon) && damageLimb != std::uint32_t(BGSBodyPartDefs::LIMB_ENUM::kNone))
 						{
@@ -129,6 +132,7 @@ namespace RE
 				}
 				else
 				{
+					REX::DEBUG("Player hit, melee?");
 					std::uint32_t damageLimb = a_event.hitData.damageLimb.underlying();
 					if (damageLimb != std::uint32_t(BGSBodyPartDefs::LIMB_ENUM::kWeapon) && damageLimb != std::uint32_t(BGSBodyPartDefs::LIMB_ENUM::kNone))
 					{

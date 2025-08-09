@@ -102,22 +102,22 @@ namespace RE
 
 				// GetInfoForPlayerDialogueOptionHook - { ID 2196817 + 0x40A }
 				typedef TESTopicInfo(GetCurrentTopicInfo_Player_Sig)(BGSSceneActionPlayerDialogue* apPlayerDialogue, BGSScene* apParentScene, TESObjectREFR* apTarget, std::uint32_t aeType);
-				REL::Relocation<GetCurrentTopicInfo_Player_Sig> GetCurrentTopicInfo_Player_Location{ REL::ID(2196817), 0x40A };
+				REL::Relocation<GetCurrentTopicInfo_Player_Sig> GetCurrentTopicInfo_Player_Location{ ID::BGSSceneActionNPCResponseDialogue::UpdateAction1, 0x40A };
 				trampoline.write_call<5>(GetCurrentTopicInfo_Player_Location.address(), &RE::GetCurrentTopicInfo_Player_Hook);
 
 				// GetInfoForNPCResponseDialogOptionHook - { ID 2196817 + 0x7A1 }
 				typedef TESTopicInfo(GetCurrentTopicInfo_NPC_Sig)(BGSSceneActionPlayerDialogue* apPlayerDialogue, BGSScene* apParentScene, TESObjectREFR* apTarget, std::uint32_t aeType);
-				REL::Relocation<GetCurrentTopicInfo_NPC_Sig> GetCurrentTopicInfo_NPC_Location{ REL::ID(2196817), 0x7A1 };
+				REL::Relocation<GetCurrentTopicInfo_NPC_Sig> GetCurrentTopicInfo_NPC_Location{ ID::BGSSceneActionNPCResponseDialogue::UpdateAction1, 0x7A1 };
 				trampoline.write_call<5>(GetCurrentTopicInfo_NPC_Location.address(), &RE::GetCurrentTopicInfo_NPC_Hook);
 
 				// GetNPCResponseInfoForOptionHook - { ID 2196800 + 0x388 }
 				typedef TESTopicInfo(GetCurrentTopicInfo_NPCAction_Sig)(BGSSceneActionNPCResponseDialogue* apNPCDialogue, BGSScene* apParentScene);
-				REL::Relocation<GetCurrentTopicInfo_NPCAction_Sig> GetCurrentTopicInfo_NPCAction_Location{ REL::ID(2196800), 0x388 };
+				REL::Relocation<GetCurrentTopicInfo_NPCAction_Sig> GetCurrentTopicInfo_NPCAction_Location{ ID::BGSSceneActionNPCResponseDialogue::UpdateAction2, 0x388 };
 				trampoline.write_call<5>(GetCurrentTopicInfo_NPCAction_Location.address(), &RE::GetCurrentTopicInfo_NPCAction_Hook);
 
 				// PopulateItemCardInfo - { ID 2225264 + 0x651 }
 				typedef void(PopulateItemCardInfo1_Sig)(PipboyInventoryData* a_pipboyInventoryData, const BGSInventoryItem* a_inventoryItem, const BGSInventoryItem::Stack* a_stack, PipboyObject* a_data);
-				REL::Relocation<PopulateItemCardInfo1_Sig> PopulateItemCardInfo1_Location{ REL::ID(2225264), 0x651 };
+				REL::Relocation<PopulateItemCardInfo1_Sig> PopulateItemCardInfo1_Location{ ID::PipboyInventoryData::InitializeItem, 0x651 };
 				trampoline.write_jmp<5>(PopulateItemCardInfo1_Location.address(), &HookPipboyDataPopulateItemCardInfo);
 
 				// PopulateItemCardInfo - { ID 2225279 + 0x40F }
@@ -126,7 +126,7 @@ namespace RE
 				trampoline.write_call<5>(PopulateItemCardInfo2_Location.address(), &HookPipboyDataPopulateItemCardInfo);
 
 				// InventoryUserUIUtils::PopulateItemCardInfo_Helper - { ID 2222625 + 0x1226 }
-				REL::Relocation<std::uintptr_t> InventoryUserUIUtilsPopulateItemCardInfo_Helper_NOP{ REL::ID(2222625), 0x1226 };
+				REL::Relocation<std::uintptr_t> InventoryUserUIUtilsPopulateItemCardInfo_Helper_NOP{ ID::InventoryUserUIUtils::PopulateItemCardInfo_Helper, 0x1226 };
 				InventoryUserUIUtilsPopulateItemCardInfo_Helper_NOP.write_fill(REL::NOP, 5);
 
 				// PipboyInventoryData::PopulateItemCardInfo - { 2225266 + 0x8CD }
@@ -134,23 +134,23 @@ namespace RE
 				PipboyInventoryDataPopulateItemCardInfo_NOP.write_fill(REL::NOP, 5);
 
 				// HUDExperienceMeter::UpdateDisplayObject - { 2220382 + 0x221 }
-				REL::Relocation<std::uintptr_t> HUDExperienceMeterUpdateDisplayObject_NOP_1{ REL::ID(2220382), 0x221 };
+				REL::Relocation<std::uintptr_t> HUDExperienceMeterUpdateDisplayObject_NOP_1{ ID::HUDExperienceMeter::UpdateDisplayObject, 0x221 };
 				HUDExperienceMeterUpdateDisplayObject_NOP_1.write_fill(REL::NOP, 5);
 
 				// HUDExperienceMeter::UpdateDisplayObject - { 2220382 + 0x26B }
-				REL::Relocation<std::uintptr_t> HUDExperienceMeterUpdateDisplayObject_NOP_2{ REL::ID(2220382), 0x26B };
+				REL::Relocation<std::uintptr_t> HUDExperienceMeterUpdateDisplayObject_NOP_2{ ID::HUDExperienceMeter::UpdateDisplayObject, 0x26B };
 				HUDExperienceMeterUpdateDisplayObject_NOP_2.write_fill(REL::NOP, 5);
 
 				// Actor::GetDesirability - { 2229946 + 0x56 } - .984
-				REL::Relocation<std::uintptr_t> ActorUtilsArmorRatingVisitorBaseoperator_1{ REL::ID(2229946), 0x56 };
+				REL::Relocation<std::uintptr_t> ActorUtilsArmorRatingVisitorBaseoperator_1{ ID::Actor::GetDesirability, 0x56 };
 				trampoline.write_call<5>(ActorUtilsArmorRatingVisitorBaseoperator_1.address(), &HookActorUtilsArmorRatingVisitorBaseOperator);
 
 				// Actor::CalcArmorRating - { 2230008 + 0xFC } - .984
-				REL::Relocation<std::uintptr_t> ActorUtilsArmorRatingVisitorBaseoperator_2{ REL::ID(2230008), 0xFC };
+				REL::Relocation<std::uintptr_t> ActorUtilsArmorRatingVisitorBaseoperator_2{ ID::Actor::CalcArmorRating1, 0xFC };
 				trampoline.write_call<5>(ActorUtilsArmorRatingVisitorBaseoperator_2.address(), &HookActorUtilsArmorRatingVisitorBaseOperator);
 
 				// Actor::CalcArmorRating - { 2230009 + 0x2B } - .984
-				REL::Relocation<std::uintptr_t> ActorUtilsArmorRatingVisitorBaseoperator_3{ REL::ID(2230009), 0x2B };
+				REL::Relocation<std::uintptr_t> ActorUtilsArmorRatingVisitorBaseoperator_3{ ID::Actor::CalcArmorRating2, 0x2B };
 				trampoline.write_call<5>(ActorUtilsArmorRatingVisitorBaseoperator_3.address(), &HookActorUtilsArmorRatingVisitorBaseOperator);
 
 				// sub_140BFBE70 - { 2230010 + 0x13C } - .984 - TODO: Further RE func needed, inlined in .980? 
@@ -158,23 +158,23 @@ namespace RE
 				trampoline.write_call<5>(ActorUtilsArmorRatingVisitorBaseoperator_4.address(), &HookActorUtilsArmorRatingVisitorBaseOperator);
 
 				// CombatBehaviourFindObject::EvaluateArmor { 2241004 + 0x4ED } - .984
-				REL::Relocation<std::uintptr_t> ActorUtilsArmorRatingVisitorBaseoperator_5{ REL::ID(2241004), 0x4ED };
+				REL::Relocation<std::uintptr_t> ActorUtilsArmorRatingVisitorBaseoperator_5{ ID::CombatBehaviorFindObject::EvaluateArmor, 0x4ED };
 				trampoline.write_call<5>(ActorUtilsArmorRatingVisitorBaseoperator_5.address(), &HookActorUtilsArmorRatingVisitorBaseOperator);
 
 				// CombatBehaviourFindObject::EvaluateArmor { 2241004 + 0x579 }
-				REL::Relocation<std::uintptr_t> ActorUtilsArmorRatingVisitorBaseoperator_6{ REL::ID(2241004), 0x579 };
+				REL::Relocation<std::uintptr_t> ActorUtilsArmorRatingVisitorBaseoperator_6{ ID::CombatBehaviorFindObject::EvaluateArmor, 0x579 };
 				trampoline.write_call<5>(ActorUtilsArmorRatingVisitorBaseoperator_6.address(), &HookActorUtilsArmorRatingVisitorBaseOperator);
 
 				// FavoritesManager::UseQuickkeyItem - { ID 2248740 + 0x5B }
-				REL::Relocation<std::uintptr_t> FavoritesManagerUseQuickkeyItem_1{ REL::ID(2248740), 0x5B };
+				REL::Relocation<std::uintptr_t> FavoritesManagerUseQuickkeyItem_1{ ID::FavoritesManager::HandleEvent, 0x5B };
 				trampoline.write_call<5>(FavoritesManagerUseQuickkeyItem_1.address(), &HookFavoritesManagerUseQuickkeyItem);
 
 				// FavoritesManager::UseQuickkeyItem - { ID 2248766 + 0x68 }
-				REL::Relocation<std::uintptr_t> FavoritesManagerUseQuickkeyItem_2{ REL::ID(2248766), 0x68 };
+				REL::Relocation<std::uintptr_t> FavoritesManagerUseQuickkeyItem_2{ ID::FavoritesManager::Call, 0x68 };
 				trampoline.write_call<5>(FavoritesManagerUseQuickkeyItem_2.address(), &HookFavoritesManagerUseQuickkeyItem);
 
 				// WorkbenchMenuBase::ShowBuildFailureMessage { ID 2224322 + 0x2C5 } - .980
-				REL::Relocation<std::uintptr_t> WorkbenchMenuBaseShowBuildFailureMessage_PowerArmorModMenu{ REL::ID(2224322), 0x2C5 };
+				REL::Relocation<std::uintptr_t> WorkbenchMenuBaseShowBuildFailureMessage_PowerArmorModMenu{ ID::PowerArmorModMenu::ShowBuildFailureMessage, 0x2C5 };
 				trampoline.write_jmp<5>(WorkbenchMenuBaseShowBuildFailureMessage_PowerArmorModMenu.address(), &HookWorkbenchMenuBaseShowBuildFailureMessage_PowerArmorModMenu);
 			}
 
@@ -784,10 +784,33 @@ namespace RE
 				}
 			}
 
+			DetourXS hook_CombatFormulasCalcTargetedLimbDamage;
+			typedef void(CombatFormulasCalcTargetedLimbDamageSig)(Actor*, const BGSBodyPart*, float, BSTArray<BSTTuple<TESForm*, BGSTypedFormValuePair::SharedVal>, BSTArrayHeapAllocator>*);
+			REL::Relocation<CombatFormulasCalcTargetedLimbDamageSig> CombatFormulasCalcTargetedLimbDamage_Original;
+
+			void HookCombatFormulasCalcTargetedLimbDamage(Actor* a_target, const BGSBodyPart* a_bodyPart, float a_physicalDamage, BSTArray<BSTTuple<TESForm*, BGSTypedFormValuePair::SharedVal>, BSTArrayHeapAllocator>* a_damageTypes)
+			{
+				return CombatFormulasCalcTargetedLimbDamage_Original(a_target, a_bodyPart, a_physicalDamage, a_damageTypes);
+			}
+
 			// ========== REGISTERS ==========
+			void RegisterCalcTargeteLimbDamage()
+			{
+				REL::Relocation<CombatFormulasCalcTargetedLimbDamageSig> functionLocation{ ID::CombatFormulas::CalcTargetedLimbDamage };
+				if (hook_CombatFormulasCalcTargetedLimbDamage.Create(reinterpret_cast<void*>(functionLocation.address()), &HookCombatFormulasCalcTargetedLimbDamage))
+				{
+					REX::DEBUG("Installed 'CombatFormulas::CalcTargetedLimbDamage' hook.");
+					CombatFormulasCalcTargetedLimbDamage_Original = reinterpret_cast<uintptr_t>(hook_CombatFormulasCalcTargetedLimbDamage.GetTrampoline());
+				}
+				else
+				{
+					REX::CRITICAL("Failed to hook 'CombatFormulas::CalcTargetedLimbDamage', exiting.");
+				}
+			}
+
 			void RegisterGetBuildConfirmQuestion()
 			{
-				REL::Relocation<GetBuildConfirmQuestionSig> functionLocation{ REL::ID(2223057) };
+				REL::Relocation<GetBuildConfirmQuestionSig> functionLocation{ ID::ExamineMenu::GetBuildConfirmQuestion };
 				if (hook_GetBuildConfirmQuestion.Create(reinterpret_cast<void*>(functionLocation.address()), &HookExamineMenuGetBuildConfirmQuestion))
 				{
 					REX::DEBUG("Installed 'ExamineMenu::GetBuildConfirmQuestion' hook.");
@@ -800,7 +823,7 @@ namespace RE
 
 			void RegisterShowBuildFailureMessage()
 			{
-				REL::Relocation<ShowBuildFailureMessageSig> functionLocation{ REL::ID(2224959) };
+				REL::Relocation<ShowBuildFailureMessageSig> functionLocation{ ID::WorkbenchMenuBase::ShowBuildFailureMessage };
 				if (hook_ShowBuildFailureMessage.Create(reinterpret_cast<void*>(functionLocation.address()), &HookWorkbenchMenuBaseShowBuildFailureMessage))
 				{
 					REX::DEBUG("Installed 'WorkbenchMenuBase::ShowBuildFailureMessage' hook.");
@@ -827,7 +850,7 @@ namespace RE
 
 			void RegisterAddItemHook()
 			{
-				REL::Relocation<AddItemSig> functionLocation{ REL::ID(2194159) };
+				REL::Relocation<AddItemSig> functionLocation{ ID::BGSInventoryList::AddItem };
 				if (hook_AddItem.Create(reinterpret_cast<void*>(functionLocation.address()), &HookBGSInventoryListAddItem))
 				{
 					REX::DEBUG("Installed 'BGSInventoryList::AddItem' hook.");
@@ -841,7 +864,7 @@ namespace RE
 
 			void RegisterGetInventoryValueHook()
 			{
-				REL::Relocation<GetInventoryValueSig> functionLocation{ REL::ID(2194127) };
+				REL::Relocation<GetInventoryValueSig> functionLocation{ ID::BGSInventoryItemUtils::GetInventoryValue };
 				if (hook_GetInventoryValue.Create(reinterpret_cast<void*>(functionLocation.address()), &HookBGSInventoryItemUtilsGetInventoryValue))
 				{
 					REX::DEBUG("Installed 'BGSInventoryItemUtils::GetInventoryValue' hook.");
@@ -882,7 +905,7 @@ namespace RE
 
 			void RegisterTESObjectWEAPFire()
 			{
-				REL::Relocation<TESObjectWEAPFireSig> functionLocation{ REL::ID(2198960) };
+				REL::Relocation<TESObjectWEAPFireSig> functionLocation{ ID::TESObjectWEAP::Fire };
 				if (hook_TESObjectWEAPFire.Create(reinterpret_cast<void*>(functionLocation.address()), &HookTESObjectWEAPFire))
 				{
 					REX::DEBUG("Installed 'TESObjectWEAP::Fire' hook.");
@@ -896,7 +919,7 @@ namespace RE
 
 			void RegisterCombatFormulasCalcWeaponDamage()
 			{
-				REL::Relocation<CombatFormulasCalcWeaponDamageSig> functionLocation{ REL::ID(2209001) };
+				REL::Relocation<CombatFormulasCalcWeaponDamageSig> functionLocation{ ID::CombatFormulas::CalcWeaponDamage };
 				if (hook_CombatFormulasCalcWeaponDamage.Create(reinterpret_cast<void*>(functionLocation.address()), &HookCombatFormulasCalcWeaponDamage))
 				{
 					REX::DEBUG("Installed 'CombatFormulas::CalcWeaponDamage' hook.");
@@ -952,7 +975,7 @@ namespace RE
 
 			void RegisterIUUIIUtilsPopulateItemCardInfo_Helper()
 			{
-				REL::Relocation<IUUIIUtilsPopulateItemCardInfo_HelperSig> functionLocation{ REL::ID(2222625) };
+				REL::Relocation<IUUIIUtilsPopulateItemCardInfo_HelperSig> functionLocation{ ID::InventoryUserUIUtils::PopulateItemCardInfo_Helper };
 				if (hook_IUUIIUtilsPopulateItemCardInfo_Helper.Create(reinterpret_cast<void*>(functionLocation.address()), &HookIUUIIUtilsPopulateItemCardInfo_Helper))
 				{
 					REX::DEBUG("Installed 'IUUIIUtils::PopulateItemCardInfo_Helper' hook.");
@@ -966,7 +989,7 @@ namespace RE
 
 			void RegisterPipboyInventoryUtilsFillResistTypeInfo()
 			{
-				REL::Relocation<PipboyInventoryUtilsFillResistTypeInfoSig> functionLocation{ REL::ID(2225235) };
+				REL::Relocation<PipboyInventoryUtilsFillResistTypeInfoSig> functionLocation{ ID::PipboyInventoryUtils::FillResistTypeInfo };
 				if (hook_PipboyInventoryUtilsFillResistTypeInfo.Create(reinterpret_cast<void*>(functionLocation.address()), &HookPipboyInventoryUtilsFillResistTypeInfo))
 				{
 					REX::DEBUG("Installed 'PipboyInventoryUtils::FillResistTypeInfo' hook.");

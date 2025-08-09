@@ -13,6 +13,7 @@ namespace RE
 		namespace Hooks
 		{
 			void Install();
+			void RegisterCalcTargetedLimbDamage();
 			void RegisterAddItemHook();
 			void RegisterSetHealthPercHook();
 			void RegisterGetInventoryValueHook();
@@ -30,6 +31,7 @@ namespace RE
 
 			void RegisterHooks()
 			{
+				RegisterCalcTargetedLimbDamage();
 				RegisterAddItemHook();
 				RegisterSetHealthPercHook();
 				RegisterGetInventoryValueHook();
