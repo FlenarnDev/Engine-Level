@@ -671,13 +671,23 @@ namespace RE
 							TESObjectARMO* armor = static_cast<TESObjectARMO*>(item.object);
 							if (item.object && armor->formType == ENUM_FORM_ID::kARMO && armor->Protects(a_info, false))
 							{
+								// TODO - add in check to handle items with no condition, they should not have a impact at all.
 								ExtraDataList* extraDataList = item.stackData->extra.get();
-								REX::DEBUG("Hit item: {}", item.object->GetFormEditorID());
-								REX::DEBUG("Item condition: {}", extraDataList->GetHealthPerc());
-								REX::DEBUG("Damage resistance prior to condition modifier: {}", retailDamageResistance);
-								float conditionModifier = 0.66f + std::min((0.34f * extraDataList->GetHealthPerc()) / 0.5f, 0.34f);
-								retailDamageResistance *= conditionModifier;
-								REX::DEBUG("Damage resistance after condition modifier: {}", retailDamageResistance);
+								if (extraDataList->HasType(EXTRA_DATA_TYPE::kHealth))
+								{
+									float currentHealth = extraDataList->GetHealthPerc();
+
+									if (currentHealth == 0.0f) // Armor is fully broken, return no value.
+									{
+										inventoryList->rwLock.unlock_read();
+										return 0.0f;
+									}
+
+									REX::DEBUG("Damage resistance prior to condition modifier: {}", retailDamageResistance);
+									float conditionModifier = 0.66f + std::min((0.34f * extraDataList->GetHealthPerc()) / 0.5f, 0.34f);
+									retailDamageResistance *= conditionModifier;
+									REX::DEBUG("Damage resistance after condition modifier: {}", retailDamageResistance);
+								}
 								break;
 							}
 						}
@@ -785,16 +795,93 @@ namespace RE
 			}
 
 			DetourXS hook_CombatFormulasCalcTargetedLimbDamage;
-			typedef void(CombatFormulasCalcTargetedLimbDamageSig)(Actor*, const BGSBodyPart*, float, BSTArray<BSTTuple<TESForm*, BGSTypedFormValuePair::SharedVal>, BSTArrayHeapAllocator>*);
+			typedef float(CombatFormulasCalcTargetedLimbDamageSig)(Actor*, const BGSBodyPart*, float, BSTArray<BSTTuple<TESForm*, BGSTypedFormValuePair::SharedVal>, BSTArrayHeapAllocator>*);
 			REL::Relocation<CombatFormulasCalcTargetedLimbDamageSig> CombatFormulasCalcTargetedLimbDamage_Original;
 
-			void HookCombatFormulasCalcTargetedLimbDamage(Actor* a_target, const BGSBodyPart* a_bodyPart, float a_physicalDamage, BSTArray<BSTTuple<TESForm*, BGSTypedFormValuePair::SharedVal>, BSTArrayHeapAllocator>* a_damageTypes)
+			float HookCombatFormulasCalcTargetedLimbDamage(Actor* a_target, const BGSBodyPart* a_bodyPart, float a_physicalDamage, BSTArray<BSTTuple<TESForm*, BGSTypedFormValuePair::SharedVal>, BSTArrayHeapAllocator>* a_damageTypes)
 			{
-				return CombatFormulasCalcTargetedLimbDamage_Original(a_target, a_bodyPart, a_physicalDamage, a_damageTypes);
+				float retailValue = CombatFormulasCalcTargetedLimbDamage_Original(a_target, a_bodyPart, a_physicalDamage, a_damageTypes);
+				
+				PlayerCharacter* playerCharacter = PlayerCharacter::GetSingleton();
+				if (a_target == playerCharacter) // TODO: Might rework this so enemy armor takes damage as well.
+				{
+					ActorValueInfo* conditionAV = a_bodyPart->data.actorValue;
+					float damageResistanceForHitLimb = ActorUtils::GetEquippedArmorDamageResistance(a_target, conditionAV);
+
+					if (a_physicalDamage > damageResistanceForHitLimb && !playerCharacter->IsGodMode())
+					{
+						BGSInventoryList* inventoryList = a_target->inventoryList;
+						inventoryList->rwLock.lock_read();
+						std::uint32_t inventoryListSize = inventoryList->data.size();
+
+						for (BGSInventoryItem& item : inventoryList->data)
+						{
+							if (item.IsEquipped(0))
+							{
+								TESObjectARMO* armor = static_cast<TESObjectARMO*>(item.object);
+								if (item.object && armor->formType == ENUM_FORM_ID::kARMO && armor->Protects(conditionAV, false))
+								{
+									ExtraDataList* extraDataList = item.stackData->extra.get();
+									if (extraDataList->HasType(EXTRA_DATA_TYPE::kHealth))
+									{
+										float currentHealth = extraDataList->GetHealthPerc();
+
+										if (currentHealth > 0.0f)
+										{
+											REX::DEBUG("Hit item: {}, condition prior to degradation: {}", item.object->GetFormEditorID(), currentHealth);
+
+											float conditionReduction = (a_physicalDamage - damageResistanceForHitLimb) / damageResistanceForHitLimb * 0.0025f; // 0.0025% per percent.
+											float newHealth = std::max(currentHealth - conditionReduction, 0.0f);
+
+											if (newHealth == 0.0f)
+											{
+												//auto test = armor.
+
+												//auto test = playerCharacter->currentProcess->middleHigh->equippedItems.size();
+												//REX::DEBUG("EquippedItem count: {}", test);
+												//TESFormID inventoryItemFormID = item.object->GetFormID();
+
+												ObjectEquipParams objectEquipParams = ObjectEquipParams();
+												objectEquipParams.stackID = 0;
+												objectEquipParams.applyNow = true;
+
+												inventoryList->rwLock.unlock_read();
+												playerCharacter->UnequipItem(item.object, objectEquipParams);
+												inventoryList->rwLock.lock_read();
+
+												/*for (EquippedItem eqItem : playerCharacter->currentProcess->middleHigh->equippedItems)
+												{
+													if (inventoryItemFormID == eqItem.item.object->GetFormID())
+													{
+														
+														ActorEquipManager::GetSingleton()->UnequipItem(playerCharacter, &eqItem, false);
+														
+														break;
+													}
+												}*/
+											
+												SendHUDMessage::ShowHUDMessage("$CAS_ArmorBroken", "UIWorkshopModeItemScrapGeneric", true, true);
+											}
+
+											REX::DEBUG("Hit item: {}, condition after degradation: {} with a reduction of: {}%", item.object->GetFormEditorID(), newHealth, conditionReduction * 100);
+
+											extraDataList->SetHealthPerc(newHealth);
+											PipboyDataManager::GetSingleton()->inventoryData.RepopulateItemCardsOnSection(ENUM_FORM_ID::kARMO);
+										}
+									}
+									break;
+								}
+							}
+						}
+
+						inventoryList->rwLock.unlock_read();
+					}
+				}
+				return retailValue;
 			}
 
 			// ========== REGISTERS ==========
-			void RegisterCalcTargeteLimbDamage()
+			void RegisterCalcTargetedLimbDamage()
 			{
 				REL::Relocation<CombatFormulasCalcTargetedLimbDamageSig> functionLocation{ ID::CombatFormulas::CalcTargetedLimbDamage };
 				if (hook_CombatFormulasCalcTargetedLimbDamage.Create(reinterpret_cast<void*>(functionLocation.address()), &HookCombatFormulasCalcTargetedLimbDamage))
