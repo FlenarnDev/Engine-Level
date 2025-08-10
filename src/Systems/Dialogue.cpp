@@ -793,7 +793,7 @@ namespace RE
 		{
 			// Restore player dialogue starting.
 			// StartPlayerDialogue - 2196817 + 652 offset.
-			REL::Relocation<std::uintptr_t> startPlayerDialogue{ ID::BGSSceneActionNPCResponseDialogue::UpdateAction };
+			REL::Relocation<std::uintptr_t> startPlayerDialogue{ ID::BGSSceneActionNPCResponseDialogue::UpdateAction1 };
 			startPlayerDialogue.write<0x652>({ 0x48, 0x8B, 0xC8 });
 
 			// SwitchToPlayerCC - 2214898 ID + ADC offset.
@@ -805,7 +805,7 @@ namespace RE
 			// Disable player dialogue starting.
 			uint8_t bytes[] = { 0xEB, 0x1E, 0x90 };
 			// StartPlayerDialogue - 2196817 + 652 offset.
-			REL::Relocation<std::uintptr_t> startPlayerDialogue{ ID::BGSSceneActionNPCResponseDialogue::UpdateAction };
+			REL::Relocation<std::uintptr_t> startPlayerDialogue{ ID::BGSSceneActionNPCResponseDialogue::UpdateAction1 };
 			startPlayerDialogue.write<0x652>({ 0xEB, 0x1E, 0x90 });
 
 			// Disable dialogue camera switching to player.
