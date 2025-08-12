@@ -15,7 +15,7 @@ namespace ObScript
 		ObScript::BetaComment::Install();
 		ObScript::GetBaseObject::Install();
 		ObScript::GetDefaultObject::Install();
-		ObScript::Help::Install();
+		//ObScript::Help::Install();
 		ObScript::SavePlayerFace::Install();
 		ObScript::TestLoadingMenu::Install();
 		ObScript::ToggleMarkers::Install();
