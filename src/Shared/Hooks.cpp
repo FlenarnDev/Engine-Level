@@ -821,6 +821,8 @@ namespace RE
 								TESObjectARMO* armor = static_cast<TESObjectARMO*>(item.object);
 								if (item.object && armor->formType == ENUM_FORM_ID::kARMO && armor->Protects(conditionAV, false))
 								{
+
+									
 									ExtraDataList* extraDataList = item.stackData->extra.get();
 									if (extraDataList->HasType(EXTRA_DATA_TYPE::kHealth))
 									{
@@ -835,30 +837,12 @@ namespace RE
 
 											if (newHealth == 0.0f)
 											{
-												//auto test = armor.
-
-												//auto test = playerCharacter->currentProcess->middleHigh->equippedItems.size();
-												//REX::DEBUG("EquippedItem count: {}", test);
-												//TESFormID inventoryItemFormID = item.object->GetFormID();
-
-												ObjectEquipParams objectEquipParams = ObjectEquipParams();
-												objectEquipParams.stackID = 0;
-												objectEquipParams.applyNow = true;
+												TBO_InstanceData instanceData = armor->armorData;
+												BGSObjectInstance* armorInstance = new BGSObjectInstance(armor, &instanceData);
 
 												inventoryList->rwLock.unlock_read();
-												playerCharacter->UnequipItem(item.object, objectEquipParams);
+												ActorEquipManager::GetSingleton()->UnequipObject(playerCharacter, armorInstance, 1, armor->equipSlot, 0, false, true, true, true, nullptr);
 												inventoryList->rwLock.lock_read();
-
-												/*for (EquippedItem eqItem : playerCharacter->currentProcess->middleHigh->equippedItems)
-												{
-													if (inventoryItemFormID == eqItem.item.object->GetFormID())
-													{
-														
-														ActorEquipManager::GetSingleton()->UnequipItem(playerCharacter, &eqItem, false);
-														
-														break;
-													}
-												}*/
 											
 												SendHUDMessage::ShowHUDMessage("$CAS_ArmorBroken", "UIWorkshopModeItemScrapGeneric", true, true);
 											}
