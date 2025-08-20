@@ -10,7 +10,8 @@ This project is a re-creation of remagination of the Fallout series based in the
 ### Prerequisites
 
 - Fallout 4 Script Extender (F4SE)
-- A compatible version of Fallout 4
+- A compatible version of Fallout 4 (Latest version, .984)
+- Address Library for release .984
 
 ### Installation
 
