@@ -794,6 +794,26 @@ namespace RE
 				}
 			}
 
+			DetourXS hook_ActorUnequipObject;
+			typedef void(ActorUnequipObjectSig)(Actor*, TESBoundObject*, ObjectEquipParams*);
+			REL::Relocation<ActorUnequipObjectSig> ActorUnequipObject_Original;
+
+			void HookActorUnequipObject(Actor* a_this, TESBoundObject* a_object, ObjectEquipParams* a_params)
+			{
+				ActorUnequipObject_Original(a_this, a_object, a_params);
+
+				TESDataHandler* tesDataHandler = TESDataHandler::GetSingleton();
+				ActorValueInfo* armorPenetrationAV = tesDataHandler->LookupForm<ActorValueInfo>(0x097341, "Fallout4.esm");
+
+				if (a_object->formType == ENUM_FORM_ID::kWEAP)
+				{
+					if (a_this->GetActorValue(*armorPenetrationAV) > 0.0)
+					{
+						a_this->SetActorValue(*armorPenetrationAV, 0.0);
+					}
+				}
+			}
+
 			DetourXS hook_CombatFormulasCalcTargetedLimbDamage;
 			typedef float(CombatFormulasCalcTargetedLimbDamageSig)(Actor*, const BGSBodyPart*, float, BSTArray<BSTTuple<TESForm*, BGSTypedFormValuePair::SharedVal>, BSTArrayHeapAllocator>*);
 			REL::Relocation<CombatFormulasCalcTargetedLimbDamageSig> CombatFormulasCalcTargetedLimbDamage_Original;
@@ -865,6 +885,20 @@ namespace RE
 			}
 
 			// ========== REGISTERS ==========
+			void RegisterActorUnequipObject()
+			{
+				REL::Relocation<ActorUnequipObjectSig> functionLocation{ ID::Actor::UnequipObject };
+				if (hook_ActorUnequipObject.Create(reinterpret_cast<void*>(functionLocation.address()), &HookActorUnequipObject))
+				{
+					REX::DEBUG("Installed 'Actor::UnequipObject' hook.");
+					ActorUnequipObject_Original = reinterpret_cast<uintptr_t>(hook_ActorUnequipObject.GetTrampoline());
+				}
+				else
+				{
+					REX::CRITICAL("Failed to hook 'Actor::UnequipObject', exiting.");
+				}
+			}
+
 			void RegisterCalcTargetedLimbDamage()
 			{
 				REL::Relocation<CombatFormulasCalcTargetedLimbDamageSig> functionLocation{ ID::CombatFormulas::CalcTargetedLimbDamage };

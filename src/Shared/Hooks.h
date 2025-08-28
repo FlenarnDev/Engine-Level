@@ -28,9 +28,11 @@ namespace RE
 			void RegisterPipboyInventoryDataBaseAddItemsCardInfoEntry();
 			void RegisterIUUIIUtilsPopulateItemCardInfo_Helper();
 			void RegisterPipboyInventoryUtilsFillResistTypeInfo();
+			void RegisterActorUnequipObject();
 
 			void RegisterHooks()
 			{
+				RegisterActorUnequipObject();
 				RegisterCalcTargetedLimbDamage();
 				RegisterAddItemHook();
 				RegisterSetHealthPercHook();
