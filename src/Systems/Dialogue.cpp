@@ -338,7 +338,7 @@ namespace RE
 				{
 					// Check that the action is a NPC response action and that the alias is filled for this action.
 					// If the alias is not filled, any conditions that check the subject will cause a CTD.
-					if (action->GetActionType() == BGSSceneAction::kNPCResponse && GetActionREFR(scene, action))
+					if (action->GetActionType() == SCENE_ACTION_TYPE::kNPCResponse && GetActionREFR(scene, action))
 					{
 						return reinterpret_cast<BGSSceneActionNPCResponseDialogue*>(action);
 					}
@@ -358,7 +358,7 @@ namespace RE
 			for (std::uint32_t i = 0; i < scene->actions.size(); i++)
 			{
 				BGSSceneAction* action = scene->actions[i];
-				if (action->GetActionType() == BGSSceneAction::SCENE_ACTION_TYPE::kPlayerDialogue)
+				if (action->GetActionType() == SCENE_ACTION_TYPE::kPlayerDialogue)
 				{
 					if (action->status & BGSSceneAction::Status::kRunning || IsSceneActionWithinPhase(action, scene->currentActivePhase))
 					{
@@ -781,7 +781,7 @@ namespace RE
 		{
 			currentScene->niFlags.flags |= static_cast<std::uint32_t>(BGSScene::BOOL_BITS::kQueueActive);
 			apScene->ResetAllSceneActions();
-			apScene->niFlags.flags &= static_cast<std::uint32_t>(BGSScene::BOOL_BITS::KPauseScene);
+			apScene->niFlags.flags &= static_cast<std::uint32_t>(BGSScene::BOOL_BITS::kPauseScene);
 			apScene->SetSceneActive(true);
 			apScene->startPhase = apPhase;
 		}
