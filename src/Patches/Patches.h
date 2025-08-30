@@ -3,6 +3,7 @@
 #include "Patches/LoadEditorIDs.h"
 #include "Patches/Sprint.h"
 #include "Patches/TESObjectREFR.h"
+#include "Patches/MoonRotation.h"
 
 namespace RE
 {
@@ -15,6 +16,7 @@ namespace RE
 				LoadEditorIDs::Install();
 				TESObjectREFR_ConsoleName::Install();
 				SprintPatch::Install();
+				MoonRotation::Install();
 			}
 		}
 	}
