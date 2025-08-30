@@ -503,12 +503,12 @@ namespace RE
 
 			BGSScene* currentScene = PlayerCharacter::GetSingleton()->GetCurrentScene();
 
-			std::uint32_t lastResponseIndex = -1;
+			std::int32_t lastResponseIndex = -1;
 			bool initialized = false;
 			std::uint32_t currentInfoIndex = 0;
 			for (TESTopicInfo* info : infos)
 			{
-				std::uint_fast32_t currentResponseIndex;
+				std::int_fast32_t currentResponseIndex;
 
 				for (std::uint32_t c = 0; c < 4; c++)
 				{
