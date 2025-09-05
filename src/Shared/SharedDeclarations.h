@@ -7,6 +7,7 @@ namespace RE
 		namespace Shared
 		{
 			extern BGSKeyword* noDegradation;
+			extern TESLoadScreen* forcedLoadScreen;
 			void InitializeSharedVariables();
 			void InitializeSharedGameVariables();
 			extern bool noArmorDegradation;

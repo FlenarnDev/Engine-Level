@@ -7,6 +7,7 @@ namespace RE
 		namespace Shared
 		{
 			BGSKeyword* noDegradation;
+			TESLoadScreen* forcedLoadScreen;
 			bool noArmorDegradation;
 			bool noWeaponDegradation;
 

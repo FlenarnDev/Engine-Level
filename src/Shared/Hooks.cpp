@@ -882,6 +882,21 @@ namespace RE
 				return retailValue;
 			}
 
+			DetourXS hook_LoadingMenuPopulateLoadScreens;
+			typedef void(LoadingMenuPopulateLoadScreensSig)(LoadingMenu*);
+			REL::Relocation<LoadingMenuPopulateLoadScreensSig> LoadingMenuPopulateLoadScreens_Original;
+
+			void HookLoadingMenuPopulateLoadScreens(LoadingMenu* a_this)
+			{
+				LoadingMenuPopulateLoadScreens_Original(a_this);
+				
+				if (Shared::forcedLoadScreen)
+				{
+					a_this->artScreen = Shared::forcedLoadScreen;
+					Shared::forcedLoadScreen = nullptr;
+				}
+			}
+
 			// ========== REGISTERS ==========
 			void RegisterActorUnequipObject()
 			{
@@ -1101,6 +1116,20 @@ namespace RE
 				else
 				{
 					REX::CRITICAL("Failed to hook 'PipboyInventoryUtils::FillResistTypeInfo', exiting.");
+				}
+			}
+
+			void RegisterLoadingMenuPopulateLoadScreens()
+			{
+				REL::Relocation<LoadingMenuPopulateLoadScreensSig> functionLocation{ ID::LoadingMenu::PopulateLoadScreens };
+				if (hook_LoadingMenuPopulateLoadScreens.Create(reinterpret_cast<void*>(functionLocation.address()), &HookLoadingMenuPopulateLoadScreens))
+				{
+					REX::DEBUG("Installed 'LoadingMenu::PopulateLoadScreens' hook.");
+					LoadingMenuPopulateLoadScreens_Original = reinterpret_cast<uintptr_t>(hook_LoadingMenuPopulateLoadScreens.GetTrampoline());
+				}
+				else
+				{
+					REX::CRITICAL("Failed to hook 'LoadingMenu::PopulateLoadScreens', exiting.");
 				}
 			}
 

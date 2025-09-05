@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Menus/LevelUpMenu.h"
+#include "Shared/SharedDeclarations.h"
 
 namespace ObScript
 {
@@ -19,9 +19,15 @@ namespace ObScript
 				});
 			if (it != functions.end())
 			{
-				*it = RE::SCRIPT_FUNCTION{ LONG_NAME.data(), SHORT_NAME.data(), it->output };
+				static std::array params{
+					RE::SCRIPT_PARAMETER{"String", RE::SCRIPT_PARAM_TYPE::kChar, false},
+				};
+
+				*it = RE::SCRIPT_FUNCTION{ LONG_NAME.data(), "", it->output };
 				it->helpString = HelpString().data();
 				it->referenceFunction = false;
+				it->paramCount = static_cast<std::uint16_t>(params.size());
+				it->parameters = params.data();
 				it->executeFunction = Execute;
 				REX::DEBUG("Registered 'TestLoadingMenu' command.");
 			}
@@ -41,8 +47,33 @@ namespace ObScript
 			float&,
 			std::uint32_t& a_offset)
 		{
-			RE::LoadingMenu::StartTestingLoadMenu();
+			char loadScreenName[512]{ '\0' };
+			RE::Script::ParseParameters(
+				a_parameters,
+				a_compiledParams,
+				a_offset,
+				a_refObject,
+				a_container,
+				a_script,
+				a_scriptLocals,
+				loadScreenName);
 
+			if (loadScreenName[0] == '\0')
+			{
+				return true;
+			}
+
+			if (auto form = RE::TESForm::GetFormByEditorID(loadScreenName))
+			{
+				if (auto loadscreen = form->As<RE::TESLoadScreen>(); loadscreen)
+				{
+					RE::Cascadia::Shared::forcedLoadScreen = loadscreen;
+					RE::LoadingMenu::StartTestingLoadMenu();
+					return true;
+				}
+			}
+			auto result = std::format("TestLoadingMenu ({:s}) >> Does not exist."sv, loadScreenName);
+			RE::ConsoleLog::GetSingleton()->PrintLine(result.data());
 			return true;
 		}
 
@@ -57,6 +88,5 @@ namespace ObScript
 				return help;
 		}
 		static constexpr auto LONG_NAME = "TestLoadingMenu"sv;
-		static constexpr auto SHORT_NAME = "TLM"sv;
 	};
 }
