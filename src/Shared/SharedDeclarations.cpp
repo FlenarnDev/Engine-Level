@@ -7,13 +7,19 @@ namespace RE
 		namespace Shared
 		{
 			BGSKeyword* noDegradation;
-			bool bPrimitivesOn;
+			bool noArmorDegradation;
+			bool noWeaponDegradation;
 
-			void InitializeSharedVariables()
+			void InitializeSharedGameVariables()
 			{
 				TESDataHandler* dataHandler = TESDataHandler::GetSingleton();
 				noDegradation = dataHandler->LookupForm<BGSKeyword>(0x2BD72E, "FalloutCascadia.esm");
-				bPrimitivesOn = true;
+			}
+
+			void InitializeSharedVariables()
+			{
+				noArmorDegradation = false;
+				noWeaponDegradation = false;
 			}
 		}
 	}

@@ -51,11 +51,11 @@ namespace ObScript
 			CullMarkers(RE::TES::GetSingleton(), !showMarkers);
 			if (showMarkers)
 			{
-				RE::ConsoleLog::GetSingleton()->PrintLine("Toggle markers on.");
+				RE::ConsoleLog::GetSingleton()->PrintLine("Toggled markers on.");
 			}
 			else
 			{
-				RE::ConsoleLog::GetSingleton()->PrintLine("Toggle markers off.");
+				RE::ConsoleLog::GetSingleton()->PrintLine("Toggled markers off.");
 			}
 			return true;
 		}

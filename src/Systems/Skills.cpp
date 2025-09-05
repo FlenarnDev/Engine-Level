@@ -303,8 +303,6 @@ namespace RE
 					}
 				}
 
-				REX::DEBUG("Perk count: {}", CascadiaPerksLevelUp.size());
-
 				BGSListForm* skillList = tesDataHandler->LookupForm<BGSListForm>(0x1F9DF1, "FalloutCascadia.esm");
 				for (std::uint32_t skillEntry = 0; skillEntry < skillList->arrayOfForms.size(); skillEntry++)
 				{
@@ -317,8 +315,6 @@ namespace RE
 					}
 					CascadiaSkillsLevelUp.push_back(skill);
 				}
-
-				REX::DEBUG("Skill count: {}", CascadiaSkillsLevelUp.size());
 			}
 
 			bool DefineSkillsFormsFromGame()

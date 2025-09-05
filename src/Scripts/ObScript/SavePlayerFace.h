@@ -78,15 +78,10 @@ namespace ObScript
 			RE::Cascadia::NPCFile npcFile{};
 
 			npcFile.bodyMorphRegionsA = RE::Cascadia::GetBodyMorphRegionsFromNPC(npc);  // Body Morph Regions
-			REX::DEBUG("Body Morph Regions");
 			npcFile.facialBoneMorphIntensity = npc->GetFacialBoneMorphIntensity();  // Facial Bone Morph Intensity
-			REX::DEBUG("Facial Bone Morph Intensity");
 			npcFile.facialBoneRegionsA = RE::Cascadia::GetFacialBoneRegionsFromNPC(npc);  // Facial Bone Regions
-			REX::DEBUG("Facial Bone Regions");
 			npcFile.morphSlidersA = RE::Cascadia::GetMorphSliderValuesFromNPC(npc);  //Morph Sliders
-			REX::DEBUG("Morph Sliders");
 			npcFile.tintEntriesA = RE::Cascadia::GetTintEntriesFromNPC(npc, std::to_underlying(npc->GetSex()));  // Tint Entries
-			REX::DEBUG("Tint Entries");
 
 			RE::Cascadia::NPCFileExport::ExportNPCFile(npcFile, rawComment.data());
 
@@ -100,7 +95,7 @@ namespace ObScript
 				std::string buf;
 				buf += "Exports the Player's face as "sv;
 				buf += "a .npc file for use in importing"sv;
-				buf += "into the Creation Kit."sv;
+				buf += " into the Creation Kit."sv;
 				return buf;
 			}();
 			return help;

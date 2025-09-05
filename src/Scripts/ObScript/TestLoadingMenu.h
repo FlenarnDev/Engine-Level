@@ -41,11 +41,7 @@ namespace ObScript
 			float&,
 			std::uint32_t& a_offset)
 		{
-
-			F4SE::GetTaskInterface()->AddTask([]() {
-				RE::UIMessageQueue::GetSingleton()->AddMessage("CASLevelUpMenu", RE::UI_MESSAGE_TYPE::kShow);
-			});
-			//RE::LoadingMenu::StartTestingLoadMenu();
+			RE::LoadingMenu::StartTestingLoadMenu();
 
 			return true;
 		}

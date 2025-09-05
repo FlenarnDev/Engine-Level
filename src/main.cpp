@@ -41,7 +41,7 @@ namespace
 		{
 		case F4SE::MessagingInterface::kGameDataReady:
 			RE::Cascadia::AmmoSwitch::DefineAmmoLists();
-			RE::Cascadia::Shared::InitializeSharedVariables();
+			RE::Cascadia::Shared::InitializeSharedGameVariables();
 			if (RE::Cascadia::Skills::DefineSkillsFormsFromGame())
 			{
 				RE::Cascadia::Skills::RegisterForSkillLink();
@@ -115,6 +115,8 @@ F4SE_PLUGIN_LOAD(const F4SE::LoadInterface* a_f4se)
 {
 	F4SE::Init(a_f4se, { .trampoline = true, .trampolineSize = 0x8000 });
 
+
+	RE::Cascadia::Shared::InitializeSharedVariables();
 	RE::Cascadia::Hooks::Install();
 
 	const F4SE::SerializationInterface* serialization = F4SE::GetSerializationInterface();

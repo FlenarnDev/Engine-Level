@@ -6,7 +6,15 @@
 #include "ObScript/Help.h"
 #include "ObScript/SavePlayerFace.h"
 #include "ObScript/TestLoadingMenu.h"
+#include "ObScript/ToggleArmorDegradation.h"
 #include "ObScript/ToggleMarkers.h"
+#include "ObScript/ToggleWeaponDegradation.h"
+
+// Repurposed retail commands:
+// "IgnoreRenderPass" = "GetBaseObject"
+// "DumpSoundMap" = "GetDefaultObject"
+// "CaptureMessage" = "ToggleArmorDegradation"
+// "CaptureMessages" = "ToggleWeaponDegradation"
 
 namespace ObScript
 {
@@ -18,6 +26,8 @@ namespace ObScript
 		//ObScript::Help::Install();
 		ObScript::SavePlayerFace::Install();
 		ObScript::TestLoadingMenu::Install();
+		ObScript::ToggleArmorDegradation::Install();
 		ObScript::ToggleMarkers::Install();
+		ObScript::ToggleWeaponDegradation::Install();
 	}
 }

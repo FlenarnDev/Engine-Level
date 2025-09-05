@@ -223,8 +223,6 @@ namespace RE
 										if (inventoryList)
 										{
 											TESBoundObject* object = reinterpret_cast<TESBoundObject*>(form);
-
-											//REX::DEBUG("'sharedContainerREF' has inventory list.");
 											std::uint32_t availableCount = GetAvailableComponentCount(inventoryList, form);
 											insertObject = { object, availableCount };
 										}
@@ -534,7 +532,7 @@ namespace RE
 				}
 
 				// God Mod - no degradation.
-				if (playerCharacter->IsGodMode())
+				if (playerCharacter->IsGodMode() || Shared::noWeaponDegradation)
 				{
 					return TESObjectWEAPFireOriginal(a_weapon, a_source, a_equipIndex, a_ammo, a_poison);
 				}
@@ -828,7 +826,7 @@ namespace RE
 					ActorValueInfo* conditionAV = a_bodyPart->data.actorValue;
 					float damageResistanceForHitLimb = ActorUtils::GetEquippedArmorDamageResistance(a_target, conditionAV);
 
-					if (a_physicalDamage > damageResistanceForHitLimb && !playerCharacter->IsGodMode())
+					if (a_physicalDamage > damageResistanceForHitLimb && (!playerCharacter->IsGodMode() || !Shared::noArmorDegradation))
 					{
 						BGSInventoryList* inventoryList = a_target->inventoryList;
 						inventoryList->rwLock.lock_read();

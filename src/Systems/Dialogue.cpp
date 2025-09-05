@@ -367,7 +367,6 @@ namespace RE
 				}
 			}
 		}
-		REX::DEBUG("GetCurrentPlayerDialogueAction - return `nullptr`.");
 		return nullptr;
 	}
 
@@ -712,8 +711,6 @@ namespace RE
 						endsScene = true;
 					}
 				}
-
-				//REX::DEBUG("Response text: {:s}", responseText);
 
 				DialogueOption option = {};
 				option.optionID = infoEntry.optionID;
