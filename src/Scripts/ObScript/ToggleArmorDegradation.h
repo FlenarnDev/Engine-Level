@@ -22,13 +22,14 @@ namespace ObScript
 			{
 				*it = RE::SCRIPT_FUNCTION{ LONG_NAME.data(), SHORT_NAME.data(), it->output };
 				it->helpString = HelpString().data();
+				it->referenceFunction = false;
 				it->executeFunction = Execute;
 				
 				REX::DEBUG("Registered 'ToggleArmorDegradation' command.");
 			}
 			else
 			{
-				REX::DEBUG("WARNING: Failed to register 'ToggleArmorDegradation' command.");
+				REX::WARN("WARNING: Failed to register 'ToggleArmorDegradation' command.");
 			}
 		}
 
