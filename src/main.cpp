@@ -7,7 +7,7 @@
 #include "Events/TESInitScriptEvent.h"
 #include "Events/TESLoadGameEvent.h"
 #include "Menus/ExamineConfirmMenu.h"
-#include "Menus/PipboyMenu.h"
+#include "Menus/PipboyTabs.h"
 #include "Patches/Patches.h"
 #include "Scripts/ObScript.h"
 #include "Serialization/Serialization.h"
@@ -160,15 +160,15 @@ F4SE_PLUGIN_LOAD(const F4SE::LoadInterface* a_f4se)
 			return false;
 		}
 
-		/*if (!scaleform->Register("Cascadia-PipboyMenu", RE::Cascadia::PipboyMenu::RegisterScaleform))
-		{
-			REX::CRITICAL("Failed to register 'PipboyMenu', marking as incompatible.");
-			return false;
-		}*/
-
 		if (!scaleform->Register("Cascadia-ExamineConfirmMenu", RE::Cascadia::ExamineConfirmMenu::RegisterScaleform))
 		{
 			REX::CRITICAL("Failed to register 'ExamineConfirmMenu', marking as incompatible."sv);
+			return false;
+		}
+
+		if (!scaleform->Register("Cascadia-PipboyTabs", RE::Cascadia::PipboyTabs::RegisterScaleform))
+		{
+			REX::CRITICAL("Failed to register 'PipboyTabs', marking as incompatible."sv);
 			return false;
 		}
 
