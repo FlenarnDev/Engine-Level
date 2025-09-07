@@ -71,42 +71,6 @@ namespace RE
 
 			AVVector CascadiaSkillsList;
 
-			/*void PopulateSkillEntries(Scaleform::Ptr<Scaleform::GFx::ASMovieRootBase> a_movieRoot)
-			{
-				Scaleform::GFx::Value arraySkills[7];
-				a_movieRoot->CreateString(&arraySkills[0], "skills");
-				a_movieRoot->CreateString(&arraySkills[1], "$F4CW_SKILLS");
-
-				arraySkills[2] = 0;
-				arraySkills[3] = 0; // Pipboy Page - Skills
-
-				a_movieRoot->CreateObject(&arraySkills[4]);
-				Scaleform::GFx::Value skillsArray;
-				a_movieRoot->CreateArray(&skillsArray);
-				std::vector<std::string> stringArray;
-
-				// All skills injected here.
-				PopulateSkillEntry(&skillsArray, a_movieRoot, Skills::CascadiaActorValues.Barter, 1, stringArray);
-				PopulateSkillEntry(&skillsArray, a_movieRoot, Skills::CascadiaActorValues.EnergyWeapons, 1, stringArray);
-				PopulateSkillEntry(&skillsArray, a_movieRoot, Skills::CascadiaActorValues.Explosives, 1, stringArray);
-				PopulateSkillEntry(&skillsArray, a_movieRoot, Skills::CascadiaActorValues.Guns, 1, stringArray);
-				PopulateSkillEntry(&skillsArray, a_movieRoot, Skills::CascadiaActorValues.Lockpick, 1, stringArray);
-				PopulateSkillEntry(&skillsArray, a_movieRoot, Skills::CascadiaActorValues.Medicine, 1, stringArray);
-				PopulateSkillEntry(&skillsArray, a_movieRoot, Skills::CascadiaActorValues.MeleeWeapons, 1, stringArray);
-				PopulateSkillEntry(&skillsArray, a_movieRoot, Skills::CascadiaActorValues.Repair, 1, stringArray);
-				PopulateSkillEntry(&skillsArray, a_movieRoot, Skills::CascadiaActorValues.Science, 1, stringArray);
-				PopulateSkillEntry(&skillsArray, a_movieRoot, Skills::CascadiaActorValues.Sneak, 1, stringArray);
-				PopulateSkillEntry(&skillsArray, a_movieRoot, Skills::CascadiaActorValues.Speech, 1, stringArray);
-				PopulateSkillEntry(&skillsArray, a_movieRoot, Skills::CascadiaActorValues.Survival, 1, stringArray);
-				PopulateSkillEntry(&skillsArray, a_movieRoot, Skills::CascadiaActorValues.Unarmed, 1, stringArray);
-
-				arraySkills[4].SetMember("arrayList", &skillsArray);
-				arraySkills[5] = 0;
-				arraySkills[6] = 0;
-
-				a_movieRoot->Invoke("root.casPipboy_loader.content.registerTab", nullptr, arraySkills, 7);
-			}*/
-
 			// Returns ActorValueInfo based on Skill Name.
 			ActorValueInfo* GetSkillByName(std::string mySkill)
 			{

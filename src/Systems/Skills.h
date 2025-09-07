@@ -54,11 +54,7 @@ namespace RE
 			};
 			extern CascadiaAV_Struct CascadiaActorValues;
 
-			void PopulateSkillEntry(Scaleform::GFx::Value* destination, Scaleform::Ptr<Scaleform::GFx::ASMovieRootBase> a_movieRoot, ActorValueInfo* skill, std::uint32_t filter, std::vector<std::string> stringValue);
-			void PopulateSkillEntries(Scaleform::Ptr<Scaleform::GFx::ASMovieRootBase> a_movieRoot);
-
 			ActorValueInfo* GetSkillByName(std::string mySkill);
-			float GetSkillByValueName(Actor* myActor, std::string mySkill);
 			float GetBaseSkillValueByName(Actor* myActor, std::string mySkill);
 
 			ActorValueInfo* GetDependantAV(ActorValueInfo* myAV);
