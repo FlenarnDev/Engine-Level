@@ -8,7 +8,7 @@ namespace RE
 		{
 			void Install()
 			{
-				REX::DEBUG("Installed 'SprintLimit' patch.");
+				REX::DEBUG("Installed Patch: 'SprintLimit'.");
 
 				float limit = 1100.0f;
 
