@@ -709,8 +709,8 @@ namespace RE
 					bool showAsPercent = true;
 					std::uint32_t precision = 1;
 
-					SetMemberAS3(a_newEntry, "showAsPercent", showAsPercent);
-					SetMemberAS3(a_newEntry, "precision", precision);
+					a_newEntry.SetMember("showAsPercent", showAsPercent);
+					a_newEntry.SetMember("precision", precision);
 				}
 			}
 
@@ -722,13 +722,13 @@ namespace RE
 			{
 				PipboyObject* result = PipboyInventoryDataBaseAddItemCardInfoEntryOriginal(a_inventory, a_textID, a_array);
 
-				if (std::string(a_textID->c_str()) == "CND")
+				if (a_textID->c_str() == "CND")
 				{
 					PipboyPrimitiveValue<bool>* showAsPercent = new PipboyPrimitiveValue<bool>(true, result);
 					PipboyPrimitiveValue<std::uint32_t>* precision = new PipboyPrimitiveValue<std::uint32_t>(1, result);
 
-					const BSFixedString showAsPercentString = BSFixedString("showAsPercent");
-					const BSFixedString precisionString = BSFixedString("precision");
+					const BSFixedString showAsPercentString = "showAsPercent";
+					const BSFixedString precisionString = "precision";
 
 					result->AddMember(&showAsPercentString, showAsPercent);
 					result->AddMember(&precisionString, precision);
@@ -747,8 +747,17 @@ namespace RE
 
 				if (!UI::GetSingleton()->GetMenuOpen("CookingMenu") && a_item->stackData->extra->HasType(EXTRA_DATA_TYPE::kHealth))
 				{
-					Scaleform::GFx::Value defaultArray = a_menuObj->HasMember("ItemCardInfoList") ? GetMemberAS3(*a_menuObj, "ItemCardInfoList") : *a_menuObj;
-
+					Scaleform::GFx::Value defaultArray;
+					
+					if (a_menuObj->HasMember("ItemCardInfoList"))
+					{
+						a_menuObj->GetMember("ItemCardInfoList", &defaultArray);
+					}
+					else
+					{
+						defaultArray = *a_menuObj;
+					}
+					
 					float condition = a_item->stackData->extra->GetHealthPerc();
 					InventoryUserUIUtils::AddItemCardInfoEntry(defaultArray, "CND", condition * 100.0f);
 
