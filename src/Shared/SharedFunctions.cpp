@@ -6,15 +6,6 @@ namespace RE
 {
 	namespace Cascadia
 	{
-		// Takes a Float and converts it to a Precise String.
-		// eg. FloatToPreciseString(3.141592, 2) would return "3.14"
-		std::string FloatToPreciseString(float a_value, std::uint32_t a_precision)
-		{
-			std::stringstream stream;
-			stream << std::fixed << std::setprecision(a_precision) << a_value;
-			return stream.str();
-		}
-
 		//	Converts a UInt8 percentage to float (eg. 38% becomes 0.38)
 		float ConvertPercentageToFloat(std::uint8_t percentage)
 		{
