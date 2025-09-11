@@ -30,6 +30,8 @@ namespace RE
 			void RegisterPipboyInventoryUtilsFillResistTypeInfo();
 			void RegisterActorUnequipObject();
 			void RegisterLoadingMenuPopulateLoadScreens();
+			void RegisterGamePlayFormulasCanPickLockGateCheck();
+			void RegisterGamePlayFormulasCanHackGateCheck();
 
 			void RegisterHooks()
 			{
@@ -50,6 +52,8 @@ namespace RE
 				RegisterIUUIIUtilsPopulateItemCardInfo_Helper();
 				RegisterPipboyInventoryUtilsFillResistTypeInfo();
 				RegisterLoadingMenuPopulateLoadScreens();
+				RegisterGamePlayFormulasCanPickLockGateCheck();
+				RegisterGamePlayFormulasCanHackGateCheck();
 			}
 		}
 	}

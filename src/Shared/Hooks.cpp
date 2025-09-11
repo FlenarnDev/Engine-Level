@@ -96,6 +96,15 @@ namespace RE
 				return;
 			}
 
+			void HookBGSTerminalActivate_ShowHUDMessage(const char* a_message, const char* a_sound, bool a_throttle, bool a_warning)
+			{
+				// TODO: A bit hacky? Alternative is match for full strings.
+				if (std::strchr(a_message, '{') == nullptr)
+				{
+					SendHUDMessage::ShowHUDMessage(a_message, a_sound, a_throttle, a_warning);
+				}
+			}
+
 			void Install()
 			{
 				auto& trampoline = REL::GetTrampoline();
@@ -176,6 +185,14 @@ namespace RE
 				// WorkbenchMenuBase::ShowBuildFailureMessage { ID 2224322 + 0x2C5 } - .980
 				REL::Relocation<std::uintptr_t> WorkbenchMenuBaseShowBuildFailureMessage_PowerArmorModMenu{ ID::PowerArmorModMenu::ShowBuildFailureMessage, 0x2C5 };
 				trampoline.write_jmp<5>(WorkbenchMenuBaseShowBuildFailureMessage_PowerArmorModMenu.address(), &HookWorkbenchMenuBaseShowBuildFailureMessage_PowerArmorModMenu);
+
+				// PlayerCharacter::TryUnlockObject { 2233040 + 0x186 } - .984
+				REL::Relocation<std::uintptr_t> PlayerCharacterTryUnlockObject{ ID::PlayerCharacter::TryUnlockObject, 0x186 };
+				PlayerCharacterTryUnlockObject.write_fill(REL::NOP, 5);
+
+				// BGSTerminal::Activate { 2197778 + 0x423 } - .984
+				REL::Relocation<std::uintptr_t> BGSTerminalActivate{ ID::BGSTerminal::Activate, 0x423 };
+				trampoline.write_call<5>(BGSTerminalActivate.address(), &HookBGSTerminalActivate_ShowHUDMessage);
 			}
 
 			DetourXS hook_ShowBuildFailureMessage;
@@ -906,6 +923,80 @@ namespace RE
 				}
 			}
 
+			DetourXS hook_GamePlayFormulasCanPickLockGateCheck;
+			typedef bool(GamePlayFormulasCanPickLockGateCheckSig)(LOCK_LEVEL);
+			bool HookGamePlayFormulasCanPickLockGateCheck(LOCK_LEVEL a_lockLevel)
+			{
+				PlayerCharacter* playerCharacter = PlayerCharacter::GetSingleton();
+				float skillLevelRequired = 0.0f;
+
+				switch (a_lockLevel)
+				{
+				case LOCK_LEVEL::kEasy:
+					skillLevelRequired = 25.0f;
+					break;
+
+				case LOCK_LEVEL::kAverage:
+					skillLevelRequired = 50.0f;
+					
+
+				case LOCK_LEVEL::kHard:
+					skillLevelRequired = 75.0f;
+
+				case LOCK_LEVEL::kVeryHard:
+					skillLevelRequired = 100.0f;
+				}
+
+				bool returnValue = playerCharacter->GetActorValue(*Skills::CascadiaActorValues.Lockpick) >= skillLevelRequired;
+
+				if (!returnValue)
+				{
+					GameSettingCollection* gameSettingCollection = GameSettingCollection::GetSingleton();
+					auto formatStr = gameSettingCollection->GetSetting("sAutoLockPickGateFail")->GetString();
+					auto returnMessage = std::vformat(formatStr, std::make_format_args(skillLevelRequired));
+
+					SendHUDMessage::ShowHUDMessage(returnMessage.c_str(), nullptr, true, true);
+				}
+				return returnValue;
+			}
+
+			DetourXS hook_GamePlayFormulasCanHackGateCheck;
+			typedef bool(GamePlayFormulasCanHackGateCheckSig)(LOCK_LEVEL);
+			bool HookGamePlayFormulasCanHackGateCheck(LOCK_LEVEL a_lockLevel)
+			{
+				PlayerCharacter* playerCharacter = PlayerCharacter::GetSingleton();
+				float skillLevelRequired = 0.0f;
+
+				switch (a_lockLevel)
+				{
+				case LOCK_LEVEL::kEasy:
+					skillLevelRequired = 25.0f;
+					break;
+
+				case LOCK_LEVEL::kAverage:
+					skillLevelRequired = 50.0f;
+
+
+				case LOCK_LEVEL::kHard:
+					skillLevelRequired = 75.0f;
+
+				case LOCK_LEVEL::kVeryHard:
+					skillLevelRequired = 100.0f;
+				}
+
+				bool returnValue = playerCharacter->GetActorValue(*Skills::CascadiaActorValues.Science) >= skillLevelRequired;
+
+				if (!returnValue)
+				{
+					GameSettingCollection* gameSettingCollection = GameSettingCollection::GetSingleton();
+					auto formatStr = gameSettingCollection->GetSetting("sHackingGateFail")->GetString();
+					auto returnMessage = std::vformat(formatStr, std::make_format_args(skillLevelRequired));
+
+					SendHUDMessage::ShowHUDMessage(returnMessage.c_str(), nullptr, true, true);
+				}
+				return returnValue;
+			}
+
 			// ========== REGISTERS ==========
 			void RegisterActorUnequipObject()
 			{
@@ -1142,19 +1233,31 @@ namespace RE
 				}
 			}
 
-			/**void RegisterActorUtilsArmorRatingVisitorBaseOperator()
+			void RegisterGamePlayFormulasCanPickLockGateCheck()
 			{
-				REL::Relocation<ActorUtilsArmorRatingVisitorBaseOperatorSig> functionLocation{ ActorUtils::ArmorRatingVisitorBase::_operator };
-				if (hook_ActorUtilsArmorRatingVisitorBaseOperator.Create(reinterpret_cast<void*>(functionLocation.address()), &HookActorUtilsArmorRatingVisitorBaseOperator))
+				REL::Relocation<GamePlayFormulasCanPickLockGateCheckSig> functionLocation{ ID::GamePlayFormulas::CanPickLockGateCheck };
+				if (hook_GamePlayFormulasCanPickLockGateCheck.Create(reinterpret_cast<void*>(functionLocation.address()), &HookGamePlayFormulasCanPickLockGateCheck))
 				{
-					REX::DEBUG("Installed 'ActorUtils::ArmorRatingVisitorBaseOperator' hook.");
-					ActorUtilsArmorRatingVisitorBaseOperator_Original = reinterpret_cast<uintptr_t>(hook_ActorUtilsArmorRatingVisitorBaseOperator.GetTrampoline());
+					REX::DEBUG("Installed 'GamePlayFormulas::CanPickLockGate' hook.");
 				}
 				else
 				{
-					REX::CRITICAL("Failed to hook: 'ActorUtils::ArmorRatingVisitorBaseOperator', exiting.");
+					REX::CRITICAL("Failed to hook 'GamePlayFormulas::CanPickLockGate', exiting.");
 				}
-			}*/
+			}
+
+			void RegisterGamePlayFormulasCanHackGateCheck()
+			{
+				REL::Relocation<GamePlayFormulasCanHackGateCheckSig> functionLocation{ ID::GamePlayFormulas::CanHackGateCheck };
+				if (hook_GamePlayFormulasCanHackGateCheck.Create(reinterpret_cast<void*>(functionLocation.address()), &HookGamePlayFormulasCanHackGateCheck))
+				{
+					REX::DEBUG("Installed 'GamePlayFormulas::CanHackGateCheck' hook.");
+				}
+				else
+				{
+					REX::CRITICAL("Failed to hook 'GamePlayFormulas::CanHackGateCheck', exiting.");
+				}
+			}
 		}
 	}
 }
