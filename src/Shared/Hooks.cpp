@@ -105,6 +105,44 @@ namespace RE
 				}
 			}
 
+			char HookAIFormulasGetBarterValue_HandleEntryPoint(std::int32_t a_EntryPoint, Actor* a_perkOwner, ...)
+			{
+				bool selling = (a_EntryPoint == 60);
+
+				va_list args;
+				va_start(args, a_perkOwner);
+
+				BGSObjectInstance* objectInstance = va_arg(args, BGSObjectInstance*);
+				float* newPrice = va_arg(args, float*);
+
+				PlayerCharacter* playerCharacter = PlayerCharacter::GetSingleton();
+				float barterMultiplier;
+
+
+				if (selling)
+				{
+					barterMultiplier = 0.45f * playerCharacter->GetActorValue(*Skills::CascadiaActorValues.Barter) + 45.0f;
+				}
+				else
+				{
+					barterMultiplier = -0.45f * playerCharacter->GetActorValue(*Skills::CascadiaActorValues.Barter) + 155.0f;
+					
+				}
+
+				REX::DEBUG("Selling: {}, barter modifier: {}", selling, barterMultiplier);
+
+				*newPrice *= (barterMultiplier / 100.0f);
+
+				va_end(args);
+				return 1;
+			}
+
+			// We don't want the players 'Charisma' stat to influence prices, new calculation is based purely on 'Barter' level.
+			float HookGamePlayFormulasCalculateItemValue_GetBarterValue(float a_baseValue, float a_charisma, bool a_selling, TESObjectREFR* a_refTarget)
+			{
+				return AIFormulas::GetBarterValue(a_baseValue, 0.0f, a_selling, a_refTarget);
+			}
+
 			void Install()
 			{
 				auto& trampoline = REL::GetTrampoline();
@@ -193,6 +231,14 @@ namespace RE
 				// BGSTerminal::Activate { 2197778 + 0x423 } - .984
 				REL::Relocation<std::uintptr_t> BGSTerminalActivate{ ID::BGSTerminal::Activate, 0x423 };
 				trampoline.write_call<5>(BGSTerminalActivate.address(), &HookBGSTerminalActivate_ShowHUDMessage);
+
+				// AiFormulas::GetBarterValue { 2208969 + 0xC8 } - .984
+				REL::Relocation<std::uintptr_t> AiFormulasGetBarterValue_HandleEntryPoint{ ID::AIFormulas::GetBarterValue, 0xC8 };
+				trampoline.write_call<5>(AiFormulasGetBarterValue_HandleEntryPoint.address(), &HookAIFormulasGetBarterValue_HandleEntryPoint);
+
+				// GamePlayFormulas::CalculateItemValue { 2209074 + 0xF4 } - .984
+				REL::Relocation<std::uintptr_t> GamePlayFormulasCalculateItemValue_GetBarterValue{ ID::GamePlayFormulas::CalculateItemValue, 0xF4 };
+				trampoline.write_call<5>(GamePlayFormulasCalculateItemValue_GetBarterValue.address(), &HookGamePlayFormulasCalculateItemValue_GetBarterValue);
 			}
 
 			DetourXS hook_ShowBuildFailureMessage;
