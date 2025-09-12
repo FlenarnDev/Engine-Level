@@ -107,7 +107,7 @@ namespace RE
 
 			char HookAIFormulasGetBarterValue_HandleEntryPoint(std::int32_t a_EntryPoint, Actor* a_perkOwner, ...)
 			{
-				bool selling = (a_EntryPoint == 60);
+				bool selling = (static_cast<BGSEntryPoint::ENTRY_POINT>(a_EntryPoint) == BGSEntryPoint::ENTRY_POINT::kModSellPrices);
 
 				va_list args;
 				va_start(args, a_perkOwner);
@@ -143,6 +143,61 @@ namespace RE
 				return AIFormulas::GetBarterValue(a_baseValue, 0.0f, a_selling, a_refTarget);
 			}
 
+			float HookActorUpdateSprinting_CalcSprintingActionPoints(float a_equippedWeight, float a_elapsedTime, float a_endurance)
+			{
+				PlayerCharacter* playerCharacter = PlayerCharacter::GetSingleton();
+				return playerCharacter->IsJumping() ? 0 : GamePlayFormulas::CalcSprintingActionPoints(a_equippedWeight, a_elapsedTime, a_endurance);
+			}
+
+			// Util function for Actor::Jump hooks
+			float JumpCostCalculator(Actor* a_actor)
+			{
+				ActorValue* actorValue = ActorValue::GetSingleton();
+
+				float calculatedCost = 5.0;
+				float maxActionPoints = a_actor->GetActorValue(*actorValue->actionPoints);
+
+				std::uint32_t brokenLegs = 0;
+				if (a_actor->GetActorValue(*actorValue->leftMobiltyCondition) == 0.0f )
+				{
+					brokenLegs += 1;
+				}
+				
+				if (a_actor->GetActorValue(*actorValue->rightMobilityCondition) == 0.0f)
+				{
+					brokenLegs += 1;
+				}
+
+				calculatedCost += calculatedCost * (brokenLegs * 0.5f);
+
+				return calculatedCost;
+			}
+
+
+			std::uint8_t HookActorJump_GetMobilityCrippled(Actor* a_this)
+			{
+				if (a_this->GetActorValue(*ActorValue::GetSingleton()->actionPoints) < JumpCostCalculator(a_this))
+				{
+					GameSettingCollection* gameSettingCollection = GameSettingCollection::GetSingleton();
+					SendHUDMessage::ShowHUDMessage(gameSettingCollection->GetSetting("sNoJumpWarning")->GetString().data(), nullptr, true, true);
+					return 2;
+				}
+
+				return a_this->GetMobilityCrippled();
+			}
+
+			void HookActorJump_bhkCharacterControllerJump(bhkCharacterController* a_this, float a_height)
+			{
+				PlayerCharacter* playerCharacter = PlayerCharacter::GetSingleton();
+				float jumpCost = JumpCostCalculator(playerCharacter);
+
+				ActorValue* actorValue = ActorValue::GetSingleton();
+				playerCharacter->ModActorValue(ACTOR_VALUE_MODIFIER::kDamage, *actorValue->actionPoints, -1.0f * jumpCost);
+
+				// Note: If we want to globally modify the players jump height, here is a good place to do it.
+				return a_this->Jump(a_height);
+			}
+
 			void Install()
 			{
 				auto& trampoline = REL::GetTrampoline();
@@ -162,12 +217,12 @@ namespace RE
 				REL::Relocation<GetCurrentTopicInfo_NPCAction_Sig> GetCurrentTopicInfo_NPCAction_Location{ ID::BGSSceneActionNPCResponseDialogue::UpdateAction2, 0x388 };
 				trampoline.write_call<5>(GetCurrentTopicInfo_NPCAction_Location.address(), &RE::GetCurrentTopicInfo_NPCAction_Hook);
 
-				// PopulateItemCardInfo - { ID 2225264 + 0x651 }
+				// PipboyInventoryData::PopulateItemCardInfo - { ID 2225264 + 0x651 }
 				typedef void(PopulateItemCardInfo1_Sig)(PipboyInventoryData* a_pipboyInventoryData, const BGSInventoryItem* a_inventoryItem, const BGSInventoryItem::Stack* a_stack, PipboyObject* a_data);
 				REL::Relocation<PopulateItemCardInfo1_Sig> PopulateItemCardInfo1_Location{ ID::PipboyInventoryData::InitializeItem, 0x651 };
 				trampoline.write_jmp<5>(PopulateItemCardInfo1_Location.address(), &HookPipboyDataPopulateItemCardInfo);
 
-				// PopulateItemCardInfo - { ID 2225279 + 0x40F }
+				// PipboyInventoryData::PopulateItemCardInfo - { ID 2225279 + 0x40F }
 				typedef void(PopulateItemCardInfo2_Sig)(PipboyInventoryData* a_pipboyInventoryData, const BGSInventoryItem* a_inventoryItem, const BGSInventoryItem::Stack* a_stack, PipboyObject* a_data);
 				REL::Relocation<PopulateItemCardInfo2_Sig> PopulateItemCardInfo2_Location{ ID::PipboyInventoryData::RepopulateItemCardsOnSection, 0x40F };
 				trampoline.write_call<5>(PopulateItemCardInfo2_Location.address(), &HookPipboyDataPopulateItemCardInfo);
@@ -188,15 +243,15 @@ namespace RE
 				REL::Relocation<std::uintptr_t> HUDExperienceMeterUpdateDisplayObject_NOP_2{ ID::HUDExperienceMeter::UpdateDisplayObject, 0x26B };
 				HUDExperienceMeterUpdateDisplayObject_NOP_2.write_fill(REL::NOP, 5);
 
-				// Actor::GetDesirability - { 2229946 + 0x56 } - .984
+				// Actor::GetDesirability - { 2229946 + 0x56 }
 				REL::Relocation<std::uintptr_t> ActorUtilsArmorRatingVisitorBaseoperator_1{ ID::Actor::GetDesirability, 0x56 };
 				trampoline.write_call<5>(ActorUtilsArmorRatingVisitorBaseoperator_1.address(), &HookActorUtilsArmorRatingVisitorBaseOperator);
 
-				// Actor::CalcArmorRating - { 2230008 + 0xFC } - .984
+				// Actor::CalcArmorRating - { 2230008 + 0xFC }
 				REL::Relocation<std::uintptr_t> ActorUtilsArmorRatingVisitorBaseoperator_2{ ID::Actor::CalcArmorRating1, 0xFC };
 				trampoline.write_call<5>(ActorUtilsArmorRatingVisitorBaseoperator_2.address(), &HookActorUtilsArmorRatingVisitorBaseOperator);
 
-				// Actor::CalcArmorRating - { 2230009 + 0x2B } - .984
+				// Actor::CalcArmorRating - { 2230009 + 0x2B }
 				REL::Relocation<std::uintptr_t> ActorUtilsArmorRatingVisitorBaseoperator_3{ ID::Actor::CalcArmorRating2, 0x2B };
 				trampoline.write_call<5>(ActorUtilsArmorRatingVisitorBaseoperator_3.address(), &HookActorUtilsArmorRatingVisitorBaseOperator);
 
@@ -204,7 +259,7 @@ namespace RE
 				REL::Relocation<std::uintptr_t> ActorUtilsArmorRatingVisitorBaseoperator_4{ REL::ID(2230010), 0x13C };
 				trampoline.write_call<5>(ActorUtilsArmorRatingVisitorBaseoperator_4.address(), &HookActorUtilsArmorRatingVisitorBaseOperator);
 
-				// CombatBehaviourFindObject::EvaluateArmor { 2241004 + 0x4ED } - .984
+				// CombatBehaviourFindObject::EvaluateArmor { 2241004 + 0x4ED }
 				REL::Relocation<std::uintptr_t> ActorUtilsArmorRatingVisitorBaseoperator_5{ ID::CombatBehaviorFindObject::EvaluateArmor, 0x4ED };
 				trampoline.write_call<5>(ActorUtilsArmorRatingVisitorBaseoperator_5.address(), &HookActorUtilsArmorRatingVisitorBaseOperator);
 
@@ -220,25 +275,38 @@ namespace RE
 				REL::Relocation<std::uintptr_t> FavoritesManagerUseQuickkeyItem_2{ ID::FavoritesManager::Call, 0x68 };
 				trampoline.write_call<5>(FavoritesManagerUseQuickkeyItem_2.address(), &HookFavoritesManagerUseQuickkeyItem);
 
-				// WorkbenchMenuBase::ShowBuildFailureMessage { ID 2224322 + 0x2C5 } - .980
+				// WorkbenchMenuBase::ShowBuildFailureMessage { ID 2224322 + 0x2C5 }
 				REL::Relocation<std::uintptr_t> WorkbenchMenuBaseShowBuildFailureMessage_PowerArmorModMenu{ ID::PowerArmorModMenu::ShowBuildFailureMessage, 0x2C5 };
 				trampoline.write_jmp<5>(WorkbenchMenuBaseShowBuildFailureMessage_PowerArmorModMenu.address(), &HookWorkbenchMenuBaseShowBuildFailureMessage_PowerArmorModMenu);
 
-				// PlayerCharacter::TryUnlockObject { 2233040 + 0x186 } - .984
+				// PlayerCharacter::TryUnlockObject { 2233040 + 0x186 }
 				REL::Relocation<std::uintptr_t> PlayerCharacterTryUnlockObject{ ID::PlayerCharacter::TryUnlockObject, 0x186 };
 				PlayerCharacterTryUnlockObject.write_fill(REL::NOP, 5);
 
-				// BGSTerminal::Activate { 2197778 + 0x423 } - .984
+				// BGSTerminal::Activate { 2197778 + 0x423 }
 				REL::Relocation<std::uintptr_t> BGSTerminalActivate{ ID::BGSTerminal::Activate, 0x423 };
 				trampoline.write_call<5>(BGSTerminalActivate.address(), &HookBGSTerminalActivate_ShowHUDMessage);
 
-				// AiFormulas::GetBarterValue { 2208969 + 0xC8 } - .984
+				// AiFormulas::GetBarterValue { 2208969 + 0xC8 }
 				REL::Relocation<std::uintptr_t> AiFormulasGetBarterValue_HandleEntryPoint{ ID::AIFormulas::GetBarterValue, 0xC8 };
 				trampoline.write_call<5>(AiFormulasGetBarterValue_HandleEntryPoint.address(), &HookAIFormulasGetBarterValue_HandleEntryPoint);
 
-				// GamePlayFormulas::CalculateItemValue { 2209074 + 0xF4 } - .984
+				// GamePlayFormulas::CalculateItemValue { 2209074 + 0xF4 }
 				REL::Relocation<std::uintptr_t> GamePlayFormulasCalculateItemValue_GetBarterValue{ ID::GamePlayFormulas::CalculateItemValue, 0xF4 };
 				trampoline.write_call<5>(GamePlayFormulasCalculateItemValue_GetBarterValue.address(), &HookGamePlayFormulasCalculateItemValue_GetBarterValue);
+
+				// Actor::UpdateSprinting { 2230498 + 0x1C }
+				REL::Relocation<std::uintptr_t> ActorUpdateSprinting_CalcSprintingActionPoints{ ID::Actor::UpdateSprinting, 0x1C4 };
+				trampoline.write_call<5>(ActorUpdateSprinting_CalcSprintingActionPoints.address(), &HookActorUpdateSprinting_CalcSprintingActionPoints);
+
+				// Actor::Jump { 2229650 + 0x17 }
+				REL::Relocation<std::uintptr_t> ActorJump_GetMobilityCrippled{ ID::Actor::Jump, 0x17 };
+				trampoline.write_call<5>(ActorJump_GetMobilityCrippled.address(), &HookActorJump_GetMobilityCrippled);
+
+				// Actor::Jump { 2229650 + 0x1D5 }
+				REL::Relocation<std::uintptr_t> ActorJump_bhkCharacterControllerJump{ ID::Actor::Jump, 0x1D5 };
+				trampoline.write_call<5>(ActorJump_bhkCharacterControllerJump.address(), &HookActorJump_bhkCharacterControllerJump);
+
 			}
 
 			DetourXS hook_ShowBuildFailureMessage;
