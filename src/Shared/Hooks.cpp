@@ -963,10 +963,17 @@ namespace RE
 				PlayerCharacter* playerCharacter = PlayerCharacter::GetSingleton();
 				if (a_target == playerCharacter) // TODO: Might rework this so enemy armor takes damage as well.
 				{
+
+					// Early return.
+					if (playerCharacter->IsGodMode() || Shared::noArmorDegradation)
+					{
+						return retailValue;
+					}
+
 					ActorValueInfo* conditionAV = a_bodyPart->data.actorValue;
 					float damageResistanceForHitLimb = ActorUtils::GetEquippedArmorDamageResistance(a_target, conditionAV);
 
-					if (a_physicalDamage > damageResistanceForHitLimb && (!playerCharacter->IsGodMode() || !Shared::noArmorDegradation))
+					if (a_physicalDamage > damageResistanceForHitLimb)
 					{
 						BGSInventoryList* inventoryList = a_target->inventoryList;
 						inventoryList->rwLock.lock_read();
