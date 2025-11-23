@@ -719,8 +719,8 @@ namespace RE
 				option.responseText = responseText;
 				option.enabled = enabled;
 				option.said = info->data.flags.all(TOPIC_INFO_DATA::TOPIC_INFO_FLAGS::kDialogueInfoSaid);
-				option.challengeLevel = info->GetChallengeLevel();
-				option.challengeResult = info->GetSuccessLevel();
+				option.challengeLevel = static_cast<std::uint32_t>(info->GetChallengeLevel());
+				option.challengeResult = static_cast<std::int32_t>(info->GetSuccessLevel());
 				option.linkedToSelf = sceneData ? (currentScene == sceneData->scene && playerDialogue->startPhase >= sceneData->phase && playerDialogue->endPhase <= sceneData->phase) : false;
 				option.endsScene = endsScene;
 				option.isBarterOption = npcResponseInfo ? Cascadia::HasVMScript(npcResponseInfo, "VendorInfoScript") : false;
@@ -868,7 +868,7 @@ namespace RE
 				// Since player dialogue length is always zero with the framework active, the timed code will not run and an explicit call needs to be made.
 				if (TESTopicInfo* playerInfo = GetPlayerInfo(apPlayerDialogue, selectedOption))
 				{
-					if (playerInfo->GetChallengeLevel() > TESTopicInfo::CC_CHALLENGE_NONE)
+					if (playerInfo->GetChallengeLevel() > TESTopicInfo::CHARISMA_CHALLENGE_DIFFICULTY::kNone)
 					{
 						PlayerCharacter::GetSingleton()->UpdateVoiceTimer(true);
 					}

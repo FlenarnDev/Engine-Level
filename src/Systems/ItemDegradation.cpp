@@ -4,31 +4,11 @@ namespace RE
 {
 	namespace Cascadia
 	{
-		// Power Armor Keyword
-		BGSKeyword* furnitureTypePowerArmor;
-
-		// Armor Type Keywords
-		BGSKeyword* armorTypePowerArmor;
-		BGSKeyword* armorBodyPartChest;
-		BGSKeyword* armorBodyPartHead;
-		BGSKeyword* armorBodyPartLeftArm;
-		BGSKeyword* armorBodyPartRightArm;
-		BGSKeyword* armorBodyPartLeftLeg;
-		BGSKeyword* armorBodyPartRightLeg;
 
 		void DefineItemDegradationFormsFromGame()
 		{
 			REX::INFO("Item Degradation: Linking degradation forms.");
 			TESDataHandler* dataHandler = TESDataHandler::GetSingleton();
-
-			// Armor Type Keywords
-			armorTypePowerArmor = dataHandler->LookupForm<BGSKeyword>(0x04D8A1, "Fallout4.esm");
-			armorBodyPartChest = dataHandler->LookupForm<BGSKeyword>(0x06C0EC, "Fallout4.esm");
-			armorBodyPartHead = dataHandler->LookupForm<BGSKeyword>(0x10C418, "Fallout4.esm");
-			armorBodyPartLeftArm = dataHandler->LookupForm<BGSKeyword>(0x211D06, "FalloutCascadia.esm");
-			armorBodyPartRightArm = dataHandler->LookupForm<BGSKeyword>(0x211D08, "FalloutCascadia.esm");
-			armorBodyPartLeftLeg = dataHandler->LookupForm<BGSKeyword>(0x211D07, "FalloutCascadia.esm");
-			armorBodyPartRightLeg = dataHandler->LookupForm<BGSKeyword>(0x211D09, "FalloutCascadia.esm");
 
 			// Ammo types with respective degradation values
 			TESAmmo* ammo10mm = dataHandler->LookupForm<TESAmmo>(0x01F276, "Fallout4.esm");

@@ -113,8 +113,7 @@ namespace
 
 F4SE_PLUGIN_LOAD(const F4SE::LoadInterface* a_f4se)
 {
-	F4SE::Init(a_f4se, { .trampoline = true, .trampolineSize = 0x8000 });
-
+	F4SE::Init(a_f4se, { .trampoline = true, .trampolineSize = 512 });
 
 	RE::Cascadia::Shared::InitializeSharedVariables();
 	RE::Cascadia::Hooks::Install();
@@ -187,16 +186,13 @@ F4SE_PLUGIN_LOAD(const F4SE::LoadInterface* a_f4se)
 		REX::CRITICAL("Failed to register Papyrus handler, marking as incompatible."sv);
 		return false;
 	}
-	else
-	{
-
-	}
 
 	RE::Cascadia::RegisterMenuOpenCloseEventSink();
 	RE::Cascadia::ExamineMenu::hkOnButtonEvent::InstallHook();
 	RE::Cascadia::Hooks::RegisterHooks();
 	RE::Cascadia::Patches::Install();
 	ObScript::Install();
+
 
 	REX::INFO(("{:s} finished loading."), "Cascadia Gameplay Systems");
 
