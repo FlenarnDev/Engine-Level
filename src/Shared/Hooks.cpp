@@ -255,7 +255,7 @@ namespace RE
 				REL::Relocation<std::uintptr_t> ActorUtilsArmorRatingVisitorBaseoperator_3{ ID::Actor::CalcArmorRating2, 0x2B };
 				trampoline.write_call<5>(ActorUtilsArmorRatingVisitorBaseoperator_3.address(), &HookActorUtilsArmorRatingVisitorBaseOperator);
 
-				// sub_140BFBE70 - { 2230010 + 0x13C } - .984 - TODO: Further RE func needed, inlined in .980? 
+				// sub_140BFBE70 - { 2230010 + 0x13C } - inlined in .980? 
 				REL::Relocation<std::uintptr_t> ActorUtilsArmorRatingVisitorBaseoperator_4{ REL::ID(2230010), 0x13C };
 				trampoline.write_call<5>(ActorUtilsArmorRatingVisitorBaseoperator_4.address(), &HookActorUtilsArmorRatingVisitorBaseOperator);
 
@@ -294,11 +294,11 @@ namespace RE
 				// GamePlayFormulas::CalculateItemValue { 2209074 + 0xF4 }
 				REL::Relocation<std::uintptr_t> GamePlayFormulasCalculateItemValue_GetBarterValue{ ID::GamePlayFormulas::CalculateItemValue, 0xF4 };
 				trampoline.write_call<5>(GamePlayFormulasCalculateItemValue_GetBarterValue.address(), &HookGamePlayFormulasCalculateItemValue_GetBarterValue);
-
-				// Actor::UpdateSprinting { 2230498 + 0x1C }
+				
+				// Actor::UpdateSprinting { 2230498 + 0x1C4 }
 				REL::Relocation<std::uintptr_t> ActorUpdateSprinting_CalcSprintingActionPoints{ ID::Actor::UpdateSprinting, 0x1C4 };
 				trampoline.write_call<5>(ActorUpdateSprinting_CalcSprintingActionPoints.address(), &HookActorUpdateSprinting_CalcSprintingActionPoints);
-
+				
 				// Actor::Jump { 2229650 + 0x17 }
 				REL::Relocation<std::uintptr_t> ActorJump_GetMobilityCrippled{ ID::Actor::Jump, 0x17 };
 				trampoline.write_call<5>(ActorJump_GetMobilityCrippled.address(), &HookActorJump_GetMobilityCrippled);
@@ -306,7 +306,6 @@ namespace RE
 				// Actor::Jump { 2229650 + 0x1D5 }
 				REL::Relocation<std::uintptr_t> ActorJump_bhkCharacterControllerJump{ ID::Actor::Jump, 0x1D5 };
 				trampoline.write_call<5>(ActorJump_bhkCharacterControllerJump.address(), &HookActorJump_bhkCharacterControllerJump);
-
 			}
 
 			DetourXS hook_ShowBuildFailureMessage;
@@ -1059,13 +1058,15 @@ namespace RE
 
 				case LOCK_LEVEL::kAverage:
 					skillLevelRequired = 50.0f;
-					
+					break;
 
 				case LOCK_LEVEL::kHard:
 					skillLevelRequired = 75.0f;
+					break;
 
 				case LOCK_LEVEL::kVeryHard:
 					skillLevelRequired = 100.0f;
+					break;
 				}
 
 				bool returnValue = playerCharacter->GetActorValue(*Skills::CascadiaActorValues.Lockpick) >= skillLevelRequired;
@@ -1096,13 +1097,15 @@ namespace RE
 
 				case LOCK_LEVEL::kAverage:
 					skillLevelRequired = 50.0f;
-
+					break;
 
 				case LOCK_LEVEL::kHard:
 					skillLevelRequired = 75.0f;
+					break;
 
 				case LOCK_LEVEL::kVeryHard:
 					skillLevelRequired = 100.0f;
+					break;
 				}
 
 				bool returnValue = playerCharacter->GetActorValue(*Skills::CascadiaActorValues.Science) >= skillLevelRequired;

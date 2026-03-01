@@ -178,7 +178,7 @@ namespace RE
 										examineMenu->uiMovie->Invoke("RefreshList", nullptr, nullptr, 0);
 
 										PipboyDataManager* pipboyDataManager = PipboyDataManager::GetSingleton();
-										pipboyDataManager->inventoryData.RepopulateItemCardsOnSection(examineMenu->GetCurrentObj()->formType.get());
+										pipboyDataManager->inventoryData.RepopulateItemCardOnSection(examineMenu->GetCurrentObj()->formType.get());
 									}
 									break;
 								}
