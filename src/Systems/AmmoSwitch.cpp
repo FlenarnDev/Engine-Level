@@ -11,16 +11,18 @@ namespace RE
 			BGSObjectInstance* equippedInstance;
 
 			BSTArray<BGSKeyword*> keywordsAmmo;
-			std::unordered_map<BGSKeyword*, BGSListForm*> keywordFormlistMap;
+			std::unordered_map<BGSKeyword*, BGSListForm*> keywordsAmmoCaliberMap;
+			std::unordered_map<TESAmmo*, BGSKeyword*> keywordsAmmoOMODMap;
 
 			BSTArray<BGSKeyword*> keywordsOMOD;
 			
 			BGSKeyword* noFormlistWEAP;
 			BGSKeyword* uniqueFormlistWEAP;
 			BGSKeyword* materialChange;
-			BGSKeyword* omodAP;
+			BGSKeyword* omodAPKeyword;
 
-			std::vector<std::pair<BGSKeyword*, BGSMod::Attachment::Mod*>> omodFormListMap;
+			std::vector<std::pair<BGSKeyword*, BGSMod::Attachment::Mod*>> omodFormListVec;
+			std::unordered_map<BGSKeyword*, BGSMod::Attachment::Mod*> omodKeywordMap;
 
 			bool InitializeAmmoSwitch() {
 				// Return true to make sure proper menu audio is played if ammo switch is successfully initiated, otherwise false return.
@@ -95,8 +97,8 @@ namespace RE
 			}
 
 			bool FindAmmoInFormlist(BGSKeyword* keyword, TESAmmo* currentAmmo, PlayerCharacter* playerCharacter) {
-			    auto mapEntry = keywordFormlistMap.find(keyword);
-			    if (mapEntry != keywordFormlistMap.end()) {
+			    auto mapEntry = keywordsAmmoCaliberMap.find(keyword);
+			    if (mapEntry != keywordsAmmoCaliberMap.end()) {
 			        BGSListForm* formList = mapEntry->second;
 			        std::uint32_t formListSize = formList->arrayOfForms.size();
 			        if (formListSize != 0) {
@@ -201,13 +203,14 @@ namespace RE
 				BSTArray<TESForm*> omodEntries = dataHandler->formArrays[std::to_underlying(ENUM_FORM_ID::kOMOD)];
 				noFormlistWEAP = dataHandler->LookupForm<BGSKeyword>(0x2D9AB8, "FalloutCascadia.esm");
 				uniqueFormlistWEAP = dataHandler->LookupForm<BGSKeyword>(0x2D9AB9, "FalloutCascadia.esm");
-				omodAP = dataHandler->LookupForm<BGSKeyword>(0x0008CF, "CAS_AmmoSwitch_OMOD.esp");
+				omodAPKeyword = dataHandler->LookupForm<BGSKeyword>(0x2F32F2, "FalloutCascadia.esm");
 				materialChange = dataHandler->LookupForm<BGSKeyword>(0x000001, "CAS_AmmoSwitch_Extension.esp");
 				
 				const char* standardListPrefix = "CAS_AmmoSwitch_Standard_";
 				const char* uniqueListPrefix = "CAS_AmmoSwitch_Unique_";
 				const char* omodPrefix = "CAS_AmmoSwitch_OMOD_";
 
+				// Identify all keywords.
 				for (TESForm* tesForm : keywordEntries)
 				{
 					const char* formEditorID = tesForm->GetFormEditorID();
@@ -216,7 +219,7 @@ namespace RE
 					{
 						REX::DEBUG("'AmmoSwitch::DefineAmmoLists' - matching keyword: {}, added to 'keywordsAmmo'.", formEditorID);
 						keywordsAmmo.push_back((BGSKeyword*)tesForm);
-						keywordFormlistMap[(BGSKeyword*)tesForm] = new BGSListForm;
+						keywordsAmmoCaliberMap[(BGSKeyword*)tesForm] = new BGSListForm;
 					}
 
 					if (strncmp(formEditorID, omodPrefix, strlen(omodPrefix)) == 0)
@@ -226,6 +229,24 @@ namespace RE
 					}
 				}
 
+				// Prep OMOD lists.
+				for (TESForm* tesForm : omodEntries)
+				{
+					BGSMod::Attachment::Mod* omod = static_cast<BGSMod::Attachment::Mod*>(tesForm);
+					BGSKeyword* currentKeyword = BGSKeyword::GetTypedKeywordByIndex(KeywordType::kAttachPoint, omod->attachPoint.keywordIndex);
+					if (currentKeyword == omodAPKeyword)
+					{
+						// Currently we assume the 'filterKeyword' fetched here is populated with a valid OMOD keyword. 
+						BGSKeyword* filterKeyword = BGSKeyword::GetTypedKeywordByIndex(KeywordType::kInstantiationFilter, omod->filterKeywords.array->keywordIndex);
+						if (filterKeyword)
+						{
+							REX::DEBUG("Filter keyword {} on OMOD: {}", filterKeyword->GetFormEditorID(), omod->GetFormEditorID());
+							omodKeywordMap[filterKeyword] = omod;
+						}
+					}
+				}
+
+				// Ammo iteration time
 				for (TESForm* tesForm : ammoEntries)
 				{
 					TESAmmo* tesAMMO = static_cast<TESAmmo*>(tesForm);
@@ -240,11 +261,13 @@ namespace RE
 							if (bgsKeyword.has_value())
 							{
 								const char* formEditorID = bgsKeyword.value()->GetFormEditorID();
+
+								// Caliber mapping
 								if (strncmp(formEditorID, standardListPrefix, strlen(standardListPrefix)) == 0 || strncmp(formEditorID, uniqueListPrefix, strlen(uniqueListPrefix)) == 0)
 								{
-									REX::DEBUG("'AmmoSwitch::DefineAmmoLists' - found keyword: {}, on ammo: {}.", bgsKeyword.value()->GetFormEditorID(), tesForm->GetFormEditorID());
-									auto mapEntry = keywordFormlistMap.find(bgsKeyword.value());
-									if (mapEntry != keywordFormlistMap.end())
+									REX::DEBUG("'AmmoSwitch::DefineAmmoLists' - found caliber keyword: {}, on ammo: {}.", bgsKeyword.value()->GetFormEditorID(), tesForm->GetFormEditorID());
+									auto mapEntry = keywordsAmmoCaliberMap.find(bgsKeyword.value());
+									if (mapEntry != keywordsAmmoCaliberMap.end())
 									{
 										BGSListForm* formList = mapEntry->second;
 										formList->arrayOfForms.push_back(tesForm);
@@ -253,22 +276,21 @@ namespace RE
 									{
 										REX::CRITICAL("'AmmoSwitch::DefineAmmoLists' - keyword '{}' not found in 'keywordFormlistMap'.", formEditorID);
 									}	
+								} 
+
+								// OMOD mapping [ammo,keyword]
+								else if (strncmp(formEditorID, omodPrefix, strlen(omodPrefix)) == 0)
+								{
+									REX::DEBUG("'AmmoSwitch::DefineAmmoLists' - found OMOD keyword: {}, on ammo: {}.", bgsKeyword.value()->GetFormEditorID(), tesForm->GetFormEditorID());
+									keywordsAmmoOMODMap[(TESAmmo*)tesForm] = (BGSKeyword*)bgsKeyword.value();
 								}
 							}
 						}
 					}
 				}
 
-				for (TESForm* tesForm : omodEntries)
-				{
-					BGSMod::Attachment::Mod* omod = static_cast<BGSMod::Attachment::Mod*>(tesForm);
-					BGSKeyword* currentKeyword = BGSKeyword::GetTypedKeywordByIndex(KeywordType::kAttachPoint, omod->attachPoint.keywordIndex);
-					if (currentKeyword == omodAP)
-					{
-
-					}
-				}
-				REX::DEBUG("'AmmoSwitch::DefineAmmoLists' - 'keywordFormlistMap' size: {}", keywordFormlistMap.size());
+				
+				REX::DEBUG("'AmmoSwitch::DefineAmmoLists' - 'keywordFormlistMap' size: {}", keywordsAmmoCaliberMap.size());
 			}
 
 			void PostLoadGameAmmoFix()
@@ -286,7 +308,7 @@ namespace RE
 					{
 						REX::DEBUG("'AmmoSwitch::PostLoadGameAmmoFix' - adjusted weapon instance ammo from: {}, to: {}", currentAmmoInWeaponInstance->GetFormEditorID(), currentAmmoInPlayerMemory->GetFormEditorID());
 						instanceDataWEAP->ammo = currentAmmoInPlayerMemory;
-						PipboyDataManager::GetSingleton()->inventoryData.RepopulateItemCardsOnSection(ENUM_FORM_ID::kWEAP);
+						PipboyDataManager::GetSingleton()->inventoryData.RepopulateItemCardOnSection(ENUM_FORM_ID::kWEAP);
 					}
 				}
 			}

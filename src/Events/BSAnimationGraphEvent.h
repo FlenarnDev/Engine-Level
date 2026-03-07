@@ -43,29 +43,45 @@ namespace RE
 							}
 						}
 
+						// If we manage to locate currently equipped weapon instance from the stack, all  OMOD magic takes place here.
 						if (inventoryItem)
 						{
-							REX::DEBUG("Inventory item found.");
-							BGSMod::Attachment::Mod* modTest = TESDataHandler::GetSingleton()->LookupForm<BGSMod::Attachment::Mod>(0x0009C2, "CAS_Jimswapping.esp");
-							//BGSInventoryItem::Stack* stack = inventoryItem->GetStackByID(0);
+							auto getKeyword = [&](TESAmmo* ammo) -> BGSKeyword*
+								{
+									auto it = AmmoSwitch::keywordsAmmoOMODMap.find(ammo);
+									return (it != AmmoSwitch::keywordsAmmoOMODMap.end()) ? it->second : nullptr;
+								};
 
-							bool test = false;
-							BGSInventoryItem::CheckStackIDFunctor compareFunction(0);
-							BGSInventoryItem::ModifyModDataFunctor writeDataFunction(modTest, 0, true, &test);
-							REX::DEBUG("Managed to write new mod data: {}", test);
-							playerCharacter->FindAndWriteStackDataForInventoryItem(tesWEAP, compareFunction, writeDataFunction);
+							auto applyOMOD = [&](BGSKeyword* keyword, bool add)
+								{
+									if (!keyword)
+										return;
+
+									auto it = AmmoSwitch::omodKeywordMap.find(keyword);
+									if (it == AmmoSwitch::omodKeywordMap.end())
+										return;
+
+									BGSMod::Attachment::Mod* omod = it->second;
+									bool result = false;
+
+									BGSInventoryItem::CheckStackIDFunctor compare(0);
+									BGSInventoryItem::ModifyModDataFunctor writeData(omod, 0, add, &result);
+
+									playerCharacter->FindAndWriteStackDataForInventoryItem(tesWEAP, compare, writeData);
+
+									REX::DEBUG("{} OMOD: {}", add ? "Added" : "Removed", result);
+								};
+
+							applyOMOD(getKeyword(instanceDataWEAP->ammo), false);
+							applyOMOD(getKeyword(AmmoSwitch::ammoToSwitchTo), true);
+						
+							// Ammo logic itself
+							instanceDataWEAP->ammo = AmmoSwitch::ammoToSwitchTo;
 							playerCharacter->currentProcess->SetCurrentAmmo(BGSEquipIndex{ 0 }, AmmoSwitch::ammoToSwitchTo);
 							playerCharacter->SetCurrentAmmoCount(BGSEquipIndex{ 0 }, 0);
-							(Actor*)playerCharacter->ReloadWeapon(weaponInstance, BGSEquipIndex{ 0 });
+							playerCharacter->ReloadWeapon(weaponInstance, BGSEquipIndex{ 0 });
+							PipboyDataManager::GetSingleton()->inventoryData.RepopulateItemCardOnSection(ENUM_FORM_ID::kWEAP);
 						}
-						
-							
-						/**instanceDataWEAP->ammo = AmmoSwitch::ammoToSwitchTo;
-						PlayerCharacter* playerCharacter = PlayerCharacter::GetSingleton();
-						playerCharacter->currentProcess->SetCurrentAmmo(BGSEquipIndex{ 0 }, AmmoSwitch::ammoToSwitchTo);
-						playerCharacter->SetCurrentAmmoCount(BGSEquipIndex{ 0 }, 0);
-						(Actor*)playerCharacter->ReloadWeapon(weaponInstance, BGSEquipIndex{ 0 });
-						PipboyDataManager::GetSingleton()->inventoryData.RepopulateItemCardsOnSection(ENUM_FORM_ID::kWEAP);*/
 					}
 						
 					AmmoSwitch::switchingAmmo = false;
