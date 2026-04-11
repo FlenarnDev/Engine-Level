@@ -1384,7 +1384,7 @@ namespace RE
 
 			LOCK_LEVEL_EXTENDED HookREFR_LOCKNumericValueToEnum(std::uint32_t a_val)
 			{
-				if (a_val == 0) {
+				if (a_val <= 1) {
 					return LOCK_LEVEL_EXTENDED::kVeryEasy;
 				}
 
