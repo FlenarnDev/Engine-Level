@@ -32,6 +32,11 @@ namespace RE
 			void RegisterLoadingMenuPopulateLoadScreens();
 			void RegisterGamePlayFormulasCanPickLockGateCheck();
 			void RegisterGamePlayFormulasCanHackGateCheck();
+			void RegisternsHUDTypesNotificationData_ctor();
+			void RegisterActorSPECIALModifiedCallback();
+			void RegisterREFR_LOCKNumericValueToEnum();
+			void RegisterREFR_LOCKIsInaccessible();
+			void RegisterGamePlayFormulasGetLockXPReward();
 
 			void RegisterHooks()
 			{
@@ -54,6 +59,11 @@ namespace RE
 				RegisterLoadingMenuPopulateLoadScreens();
 				RegisterGamePlayFormulasCanPickLockGateCheck();
 				RegisterGamePlayFormulasCanHackGateCheck();
+				RegisternsHUDTypesNotificationData_ctor();
+				RegisterActorSPECIALModifiedCallback();
+				RegisterREFR_LOCKNumericValueToEnum();
+				RegisterREFR_LOCKIsInaccessible();
+				RegisterGamePlayFormulasGetLockXPReward();
 			}
 		}
 	}

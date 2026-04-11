@@ -54,14 +54,13 @@ namespace RE
 			};
 			extern CascadiaAV_Struct CascadiaActorValues;
 
+			extern std::unordered_map<const ActorValueInfo*, std::vector<ActorValueInfo*>> specialToSkillsMap;
+			extern std::unordered_map<const ActorValueInfo*, ActorValueInfo*> skillToSpecialMap;
+
 			ActorValueInfo* GetSkillByName(std::string mySkill);
 			float GetBaseSkillValueByName(Actor* myActor, std::string mySkill);
 
-			ActorValueInfo* GetDependantAV(ActorValueInfo* myAV);
-			void AddDependentAV(ActorValueInfo* a_newActorValue, ActorValueInfo* a_dependentAV);
-			void RegisterDerivedAV(ActorValueInfo* a_newActorValue, std::function<RE::ActorValueInfo::DerivationFunction_t> a_calcFunction);
-			void RegisterLinkedAV(ActorValueInfo* myAV, std::function<RE::ActorValueInfo::DerivationFunction_t> CalcFunction, ActorValueInfo* av1, ActorValueInfo* av2);
-			float CalculateSkillOffset(const ActorValueOwner* myAVOwner, const ActorValueInfo& myAV);
+			void RegisterLinkedAV(ActorValueInfo* skill, ActorValueInfo* special);
 			void RegisterForSkillLink();
 
 			float GetAVValue(Actor* myActor, ActorValueInfo* myAV);

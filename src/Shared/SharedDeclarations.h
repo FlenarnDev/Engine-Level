@@ -6,6 +6,8 @@ namespace RE
 	{
 		namespace Shared
 		{
+			inline Setting** g_lockLevelNamesStub = nullptr;
+
 			extern BGSKeyword* noDegradation;
 			extern TESLoadScreen* forcedLoadScreen;
 			void InitializeSharedVariables();

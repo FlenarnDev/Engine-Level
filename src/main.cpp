@@ -13,6 +13,7 @@
 #include "Serialization/Serialization.h"
 #include "Shared/SharedDeclarations.h"
 #include "Systems/Skills.h"
+#include "Systems/LockLevels.h"
 
 namespace RE
 {
@@ -40,6 +41,7 @@ namespace
 		switch (a_msg->type)
 		{
 		case F4SE::MessagingInterface::kGameDataReady:
+
 			RE::Cascadia::AmmoSwitch::DefineAmmoLists();
 			RE::Cascadia::Shared::InitializeSharedGameVariables();
 			if (RE::Cascadia::Skills::DefineSkillsFormsFromGame())
@@ -60,6 +62,7 @@ namespace
 			RE::Cascadia::RegisterLevelIncreaseEventSink();
 			RE::Cascadia::RegisterTESLoadGameEventSink();
 			RE::Cascadia::Skills::GetLevelUpFormsFromGame();
+			RE::Cascadia::InitializeLockLevelNamesArray();
 
 			REX::INFO("{:s} - kGameDataReady", "Cascadia Gameplay Systems");
 			break;
@@ -192,7 +195,6 @@ F4SE_PLUGIN_LOAD(const F4SE::LoadInterface* a_f4se)
 	RE::Cascadia::Hooks::RegisterHooks();
 	RE::Cascadia::Patches::Install();
 	ObScript::Install();
-
 
 	REX::INFO(("{:s} finished loading."), "Cascadia Gameplay Systems");
 

@@ -23,7 +23,8 @@ namespace RE
 			return vm->FindBoundObject(handle, scriptName, 1, identifier, 0);
 		}
 
-		std::string trim(const std::string& str) {
+		std::string trim(const std::string& str) 
+		{
 			size_t start = str.find_first_not_of(" \t\n\r");
 			size_t end = str.find_last_not_of(" \t\n\r");
 			return (start == std::string::npos) ? "" : str.substr(start, end - start + 1);

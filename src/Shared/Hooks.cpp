@@ -1,4 +1,5 @@
 #include "Shared/Hooks.h"
+#include "Systems/LockLevels.h"
 #include "detourXS/detourxs.h"
 #undef min
 #undef max
@@ -202,6 +203,10 @@ namespace RE
 			{
 				auto& trampoline = REL::GetTrampoline();
 
+				// Shared stub for a few patches.
+				Shared::g_lockLevelNamesStub = reinterpret_cast<Setting**>(trampoline.allocate(sizeof(Setting*) * 10));
+				std::uintptr_t stubAddr = reinterpret_cast<std::uintptr_t>(Shared::g_lockLevelNamesStub);
+
 				// GetInfoForPlayerDialogueOptionHook - { ID 2196817 + 0x40A }
 				typedef TESTopicInfo(GetCurrentTopicInfo_Player_Sig)(BGSSceneActionPlayerDialogue* apPlayerDialogue, BGSScene* apParentScene, TESObjectREFR* apTarget, std::uint32_t aeType);
 				REL::Relocation<GetCurrentTopicInfo_Player_Sig> GetCurrentTopicInfo_Player_Location{ ID::BGSSceneActionNPCResponseDialogue::UpdateAction1, 0x40A };
@@ -224,7 +229,7 @@ namespace RE
 
 				// PipboyInventoryData::PopulateItemCardInfo - { ID 2225279 + 0x40F }
 				typedef void(PopulateItemCardInfo2_Sig)(PipboyInventoryData* a_pipboyInventoryData, const BGSInventoryItem* a_inventoryItem, const BGSInventoryItem::Stack* a_stack, PipboyObject* a_data);
-				REL::Relocation<PopulateItemCardInfo2_Sig> PopulateItemCardInfo2_Location{ ID::PipboyInventoryData::RepopulateItemCardsOnSection, 0x40F };
+				REL::Relocation<PopulateItemCardInfo2_Sig> PopulateItemCardInfo2_Location{ ID::PipboyInventoryData::RepopulateItemCardOnSection, 0x40F };
 				trampoline.write_call<5>(PopulateItemCardInfo2_Location.address(), &HookPipboyDataPopulateItemCardInfo);
 
 				// InventoryUserUIUtils::PopulateItemCardInfo_Helper - { ID 2222625 + 0x1226 }
@@ -280,8 +285,12 @@ namespace RE
 				trampoline.write_jmp<5>(WorkbenchMenuBaseShowBuildFailureMessage_PowerArmorModMenu.address(), &HookWorkbenchMenuBaseShowBuildFailureMessage_PowerArmorModMenu);
 
 				// PlayerCharacter::TryUnlockObject { 2233040 + 0x186 }
-				REL::Relocation<std::uintptr_t> PlayerCharacterTryUnlockObject{ ID::PlayerCharacter::TryUnlockObject, 0x186 };
-				PlayerCharacterTryUnlockObject.write_fill(REL::NOP, 5);
+				REL::Relocation<std::uintptr_t> PlayerCharacterTryUnlockObject1{ ID::PlayerCharacter::TryUnlockObject, 0x186 };
+				PlayerCharacterTryUnlockObject1.write_fill(REL::NOP, 5);
+
+				// PlayerCharacter::TryUnlockObject { 2233040 + 0x9A }
+				REL::Relocation<std::uintptr_t> PlayerCharacterTryUnlockObject2{ ID::PlayerCharacter::TryUnlockObject, 0x9A };
+				PlayerCharacterTryUnlockObject2.write<0>(static_cast<std::uint8_t>(0x05));
 
 				// BGSTerminal::Activate { 2197778 + 0x423 }
 				REL::Relocation<std::uintptr_t> BGSTerminalActivate{ ID::BGSTerminal::Activate, 0x423 };
@@ -306,6 +315,98 @@ namespace RE
 				// Actor::Jump { 2229650 + 0x1D5 }
 				REL::Relocation<std::uintptr_t> ActorJump_bhkCharacterControllerJump{ ID::Actor::Jump, 0x1D5 };
 				trampoline.write_call<5>(ActorJump_bhkCharacterControllerJump.address(), &HookActorJump_bhkCharacterControllerJump);
+
+				// Lockpicking 
+				// Index has been shifted up 1 by default for retail entries, gotta take that into account, turns out it's a few places.
+				
+				// LockpickingMenu::OpenLockpickingMenu { 2249263 + 0x87 }
+				REL::Relocation<std::uintptr_t> LockLevelUpperBoundCheck{ ID::LockpickingMenu::OpenLockpickingMenu, 0x87 };
+				LockLevelUpperBoundCheck.write<0>(static_cast<std::uint8_t>(0x05));
+
+				// BGSTerminal::GetHackDifficultyLockLevel { 2197777 + 0x5B }
+				REL::Relocation<std::uintptr_t> HackDifficultyLockLevelUpperBoundCheck{ ID::BGSTerminal::GetHackDifficultyLockLevel, 0x5B };
+				HackDifficultyLockLevelUpperBoundCheck.write<0>(static_cast<std::uint32_t>(0x00000004));
+
+				// BGSTerminal::Activate1 { 2197778 + 0x2B0 }
+				REL::Relocation<std::uintptr_t> BGSTerminalActivate1{ ID::BGSTerminal::Activate, 0x2B0 };
+				BGSTerminalActivate1.write<0>(static_cast<std::uint32_t>(0x00000004));
+
+				// BGSTerminal::Activate2 { 2197778 + 0x2F1 }
+				REL::Relocation<std::uintptr_t> BGSTerminalActivate2{ ID::BGSTerminal::Activate, 0x2F1 };
+				BGSTerminalActivate2.write<0>(static_cast<std::uint8_t>(0xFB));
+
+				// BGSTerminal::Activate3 { 2197778 + 0x313 }
+				REL::Relocation<std::uintptr_t> BGSTerminalActivate3{ ID::BGSTerminal::Activate, 0x313 };
+				BGSTerminalActivate3.write<0>(static_cast<std::uint8_t>(0x06));
+
+				// BGSTerminal::Activate4 { 2197778 + 0x387 }
+				REL::Relocation<std::uintptr_t> BGSTerminalActivate4{ ID::BGSTerminal::Activate, 0x387 };
+				BGSTerminalActivate4.write<0>(static_cast<std::uint8_t>(0x06));
+
+				// BGSTerminal::Activate5 { 2197778 + 0x3DA }
+				REL::Relocation<std::uintptr_t> BGSTerminalActivate5{ ID::BGSTerminal::Activate, 0x3DA };
+				BGSTerminalActivate5.write<0>(static_cast<std::uint8_t>(0x05));
+
+				// sub_1404435E0 { 2197829 + 0x87 }
+				REL::Relocation<std::uintptr_t> sub_1404435E0{REL::ID(2197829), 0x87};
+				sub_1404435E0.write<0>(static_cast<std::uint8_t>(0x05));
+
+				// sub_140443960 { 2197832 + 0x155 }
+				REL::Relocation<std::uintptr_t> sub_140443960{REL::ID(2197832), 0x155};
+				sub_140443960.write<0>(static_cast<std::uint8_t>(0x05));
+
+				// TESObjectCONT::GetActivateText { 2198653 + 0x7B }
+				REL::Relocation<std::uintptr_t> TESObjectCONTGetActivateText1{ID::TESObjectCONT::GetActivateText, 0x7B};
+				TESObjectCONTGetActivateText1.write<0>(static_cast<std::uint8_t>(0x0A));
+
+				// TESObjectCONT::GetActivateText { 2198653 + 0x321 }
+				REL::Relocation<std::uintptr_t> TESObjectCONTGetActivateText2{ ID::TESObjectCONT::GetActivateText, 0x321 };
+				std::int32_t disp1 = static_cast<std::int32_t>(stubAddr - (TESObjectCONTGetActivateText2.address() + 7));
+				TESObjectCONTGetActivateText2.write<3>(disp1);
+
+				// Console::DisplayRef { 2248550 + 0x58F }
+				REL::Relocation<std::uintptr_t> ConsoleDisplayRefLEA{ ID::Console::DisplayRef, 0x58F };
+				std::int32_t disp2 = static_cast<std::int32_t>(reinterpret_cast<std::uintptr_t>(Shared::g_lockLevelNamesStub) - (ConsoleDisplayRefLEA.address() + 7));
+				ConsoleDisplayRefLEA.write<3>(disp2);
+
+				// LockpickingMenu::SendLockInfoToMenu { 2249267 + 0x1E }
+				REL::Relocation<std::uintptr_t> LockpickingMenuSendLockInfoLEA{ ID::LockpickingMenu::SendLockInfoToMenu, 0x1E };
+				std::int32_t disp3 = static_cast<std::int32_t>(reinterpret_cast<std::uintptr_t>(Shared::g_lockLevelNamesStub) - (LockpickingMenuSendLockInfoLEA.address() + 7));
+				LockpickingMenuSendLockInfoLEA.write<3>(disp3);
+
+				// sub_14044CC90 { 2198055 + 0x91 }
+				REL::Relocation<std::uintptr_t> sub_14044CC90{ REL::ID(2198055), 0x91 };
+				sub_14044CC90.write<0>(static_cast<std::uint8_t>(0x06));
+
+				// sub_14044CC90 { 2198055 + 0xE4 }
+				REL::Relocation<std::uintptr_t> sub_14044CC90_LEA{ REL::ID(2198055), 0xE4 };
+				std::int32_t disp4 = static_cast<std::int32_t>(reinterpret_cast<std::uintptr_t>(Shared::g_lockLevelNamesStub) - (sub_14044CC90_LEA.address() + 7));
+				sub_14044CC90_LEA.write<3>(disp4);
+
+				// TESObjectDOORGetActivateText1 { 2198690 + 0x101 }
+				REL::Relocation<std::uintptr_t> TESObjectDOORGetActivateText1{ID::TESObjectDOOR::GetActivateText, 0x101};
+				TESObjectDOORGetActivateText1.write<0>(static_cast<std::uint8_t>(0x0A));
+
+				// TESObjectDOOR::GetActivateText LEA patches
+				REL::Relocation<std::uintptr_t> TESObjectDOORGetActivateText_LEA1{ ID::TESObjectDOOR::GetActivateText, 0x17A };
+				std::int32_t doorDisp1 = static_cast<std::int32_t>(reinterpret_cast<std::uintptr_t>(Shared::g_lockLevelNamesStub) - (TESObjectDOORGetActivateText_LEA1.address() + 7));
+				TESObjectDOORGetActivateText_LEA1.write<3>(doorDisp1);
+
+				REL::Relocation<std::uintptr_t> TESObjectDOORGetActivateText_LEA2{ ID::TESObjectDOOR::GetActivateText, 0x1DC };
+				std::int32_t doorDisp2 = static_cast<std::int32_t>(reinterpret_cast<std::uintptr_t>(Shared::g_lockLevelNamesStub) - (TESObjectDOORGetActivateText_LEA2.address() + 7));
+				TESObjectDOORGetActivateText_LEA2.write<3>(doorDisp2);
+
+				REL::Relocation<std::uintptr_t> TESObjectDOORGetActivateText_LEA3{ ID::TESObjectDOOR::GetActivateText, 0x27B };
+				std::int32_t doorDisp3 = static_cast<std::int32_t>(reinterpret_cast<std::uintptr_t>(Shared::g_lockLevelNamesStub) - (TESObjectDOORGetActivateText_LEA3.address() + 7));
+				TESObjectDOORGetActivateText_LEA3.write<3>(doorDisp3);
+
+				REL::Relocation<std::uintptr_t> TESObjectDOORGetActivateText_LEA4{ ID::TESObjectDOOR::GetActivateText, 0x2D8 };
+				std::int32_t doorDisp4 = static_cast<std::int32_t>(reinterpret_cast<std::uintptr_t>(Shared::g_lockLevelNamesStub) - (TESObjectDOORGetActivateText_LEA4.address() + 7));
+				TESObjectDOORGetActivateText_LEA4.write<3>(doorDisp4);
+
+				// TESObjectDOOR::CalculateDoFavor { 2198692 + 0x108 }
+				REL::Relocation<std::uintptr_t> TESObjectDOORCalculateDoFavor{ ID::TESObjectDOOR::CalculateDoFavor, 0x108 };
+				TESObjectDOORCalculateDoFavor.write<0>(static_cast<std::uint8_t>(0x05));
 			}
 
 			DetourXS hook_ShowBuildFailureMessage;
@@ -755,7 +856,7 @@ namespace RE
 						SendHUDMessage::ShowHUDMessage(gameSettingCollection->GetSetting("sWeaponBreak")->GetString().data(), "UIWorkshopModeItemScrapGeneric", true, true);
 					}
 					extraDataList->SetHealthPerc(newHealth);
-					PipboyDataManager::GetSingleton()->inventoryData.RepopulateItemCardsOnSection(ENUM_FORM_ID::kWEAP);
+					PipboyDataManager::GetSingleton()->inventoryData.RepopulateItemCardOnSection(ENUM_FORM_ID::kWEAP);
 				}
 				return;
 			}
@@ -1014,7 +1115,7 @@ namespace RE
 											REX::DEBUG("Hit item: {}, condition after degradation: {} with a reduction of: {}%", item.object->GetFormEditorID(), newHealth, conditionReduction * 100);
 
 											extraDataList->SetHealthPerc(newHealth);
-											PipboyDataManager::GetSingleton()->inventoryData.RepopulateItemCardsOnSection(ENUM_FORM_ID::kARMO);
+											PipboyDataManager::GetSingleton()->inventoryData.RepopulateItemCardOnSection(ENUM_FORM_ID::kARMO);
 										}
 									}
 									break;
@@ -1044,27 +1145,31 @@ namespace RE
 			}
 
 			DetourXS hook_GamePlayFormulasCanPickLockGateCheck;
-			typedef bool(GamePlayFormulasCanPickLockGateCheckSig)(LOCK_LEVEL);
-			bool HookGamePlayFormulasCanPickLockGateCheck(LOCK_LEVEL a_lockLevel)
+			typedef bool(GamePlayFormulasCanPickLockGateCheckSig)(Cascadia::LOCK_LEVEL_EXTENDED);
+			bool HookGamePlayFormulasCanPickLockGateCheck(Cascadia::LOCK_LEVEL_EXTENDED a_lockLevel)
 			{
 				PlayerCharacter* playerCharacter = PlayerCharacter::GetSingleton();
 				float skillLevelRequired = 0.0f;
 
 				switch (a_lockLevel)
 				{
-				case LOCK_LEVEL::kEasy:
+				case Cascadia::LOCK_LEVEL_EXTENDED::kVeryEasy:
+					skillLevelRequired = 0.0f;
+					break;
+
+				case Cascadia::LOCK_LEVEL_EXTENDED::kEasy:
 					skillLevelRequired = 25.0f;
 					break;
 
-				case LOCK_LEVEL::kAverage:
+				case Cascadia::LOCK_LEVEL_EXTENDED::kAverage:
 					skillLevelRequired = 50.0f;
 					break;
 
-				case LOCK_LEVEL::kHard:
+				case Cascadia::LOCK_LEVEL_EXTENDED::kHard:
 					skillLevelRequired = 75.0f;
 					break;
 
-				case LOCK_LEVEL::kVeryHard:
+				case Cascadia::LOCK_LEVEL_EXTENDED::kVeryHard:
 					skillLevelRequired = 100.0f;
 					break;
 				}
@@ -1083,27 +1188,31 @@ namespace RE
 			}
 
 			DetourXS hook_GamePlayFormulasCanHackGateCheck;
-			typedef bool(GamePlayFormulasCanHackGateCheckSig)(LOCK_LEVEL);
-			bool HookGamePlayFormulasCanHackGateCheck(LOCK_LEVEL a_lockLevel)
+			typedef bool(GamePlayFormulasCanHackGateCheckSig)(Cascadia::LOCK_LEVEL_EXTENDED);
+			bool HookGamePlayFormulasCanHackGateCheck(Cascadia::LOCK_LEVEL_EXTENDED a_lockLevel)
 			{
 				PlayerCharacter* playerCharacter = PlayerCharacter::GetSingleton();
 				float skillLevelRequired = 0.0f;
 
 				switch (a_lockLevel)
 				{
-				case LOCK_LEVEL::kEasy:
+				case Cascadia::LOCK_LEVEL_EXTENDED::kVeryEasy:
+					skillLevelRequired = 0.0f;
+					break;
+
+				case Cascadia::LOCK_LEVEL_EXTENDED::kEasy:
 					skillLevelRequired = 25.0f;
 					break;
 
-				case LOCK_LEVEL::kAverage:
+				case Cascadia::LOCK_LEVEL_EXTENDED::kAverage:
 					skillLevelRequired = 50.0f;
 					break;
 
-				case LOCK_LEVEL::kHard:
+				case Cascadia::LOCK_LEVEL_EXTENDED::kHard:
 					skillLevelRequired = 75.0f;
 					break;
 
-				case LOCK_LEVEL::kVeryHard:
+				case Cascadia::LOCK_LEVEL_EXTENDED::kVeryHard:
 					skillLevelRequired = 100.0f;
 					break;
 				}
@@ -1121,7 +1230,259 @@ namespace RE
 				return returnValue;
 			}
 
+			DetourXS hook_ActorSPECIALModifiedCallback;
+			typedef void(ActorSPECIALModifiedCallbackSig)(Actor*, const ActorValueInfo*, float, float);
+			REL::Relocation<ActorSPECIALModifiedCallbackSig> ActorSPECIALModifiedCallback_Original;
+
+			void HookActorSPECIALModifiedCallback(Actor* a_this, const ActorValueInfo* a_info, float a_originalValue, float a_delta)
+			{
+				PlayerCharacter* playerCharacter = PlayerCharacter::GetSingleton();
+
+				ActorSPECIALModifiedCallback_Original(a_this, a_info, a_originalValue, a_delta);
+
+				REX::DEBUG("Special Modified Callback - AV: {}", a_info->GetFormEditorID());
+
+
+				if (a_this == playerCharacter)
+				{
+					bool boost = true;
+
+					if (a_delta < 0.0f)
+					{
+						boost = false;
+					}
+
+					bool temporary = true;
+
+					float baseValue = playerCharacter->GetBaseActorValue(*a_info);
+					REX::DEBUG("'{}' base value: {}", a_info->GetFormEditorID(), baseValue);
+					float modValue = playerCharacter->GetActorValue(*a_info);
+					REX::DEBUG("'{}' mod value: {}", a_info->GetFormEditorID(), modValue);
+					if (baseValue == modValue)
+					{
+						temporary = false;
+					}
+					REX::DEBUG("Temporary modification: {}", temporary);
+
+					ActorValue* actorValueSingleton = ActorValue::GetSingleton();
+					bool isLuck = a_info == actorValueSingleton->luck;
+
+					if (isLuck)
+					{
+
+					}
+					else
+					{
+						auto skillsIt = Skills::specialToSkillsMap.find(a_info);
+						if (skillsIt != Skills::specialToSkillsMap.end()) {
+							for (auto* skill : skillsIt->second) {
+								REX::DEBUG("Skill found for {}: {}", a_info->GetFormEditorID(), skill->GetFormEditorID());
+
+								// Correct
+								float originalValueFloat = 2.0f + (2.0f * a_originalValue) + (playerCharacter->GetBaseActorValue(*actorValueSingleton->luck) * 0.5f);
+								int originalValueInt = static_cast<int>(std::ceil(originalValueFloat));
+								REX::DEBUG("Skill, initial S.P.E.C.I.A.L value: {}", originalValueInt);
+
+								// Correct
+								float newValueFloat = 2.0f + (2.0f * playerCharacter->GetActorValue(*a_info)) + (playerCharacter->GetActorValue(*actorValueSingleton->luck) * 0.5f);
+								int newValueInt = static_cast<int>(std::ceil(newValueFloat));
+								REX::DEBUG("Skill, new S.P.E.C.I.A.L value: {}", newValueInt);
+
+								const int delta = newValueInt - originalValueInt;
+								REX::DEBUG("Delta of skill values (initial/new): {}", delta);
+
+								// Correct
+								float currentSkillLevelWithoutInitialValue = (playerCharacter->GetBaseActorValue(*skill) - originalValueFloat) - 0.5f; // Needs 0.5f reduction for math reasons.
+								REX::DEBUG("Current skill level without S.P.E.C.I.A.L modification: {}", currentSkillLevelWithoutInitialValue);							
+
+
+								float currentBaseSkillValue = playerCharacter->GetBaseActorValue(*skill);
+								REX::DEBUG("Current base skill value: {}", currentBaseSkillValue);
+								float currentModSkillValue = playerCharacter->GetActorValue(*skill);
+								REX::DEBUG("Current mod skill value: {}", currentModSkillValue);
+								
+								
+								bool skillModifiedByReduction = false;
+								if (currentBaseSkillValue > currentModSkillValue)
+								{
+									skillModifiedByReduction = true;
+								}
+								if (skillModifiedByReduction)
+								{
+									REX::DEBUG("Skill is reduced by mod by: {} points.", (currentBaseSkillValue - currentModSkillValue));
+
+									// We make the assumption that a S.P.E.C.I.A.L can only ever be reduced temporarily, 
+									// this is the only limiting factor we have at play here.
+									if ((currentBaseSkillValue - currentModSkillValue) >= delta && !temporary)
+									{
+										REX::DEBUG("Current reduction is bigger than, or equals to the newly calculated delta of: {} points.", delta);
+										playerCharacter->ModActorValue(ACTOR_VALUE_MODIFIER::kTemporary, *skill, delta);
+									}
+									return;
+
+								}
+
+								if (temporary)
+								{
+									playerCharacter->SetActorValue(*skill, originalValueInt + currentSkillLevelWithoutInitialValue);
+									playerCharacter->ModActorValue(ACTOR_VALUE_MODIFIER::kTemporary, *skill, delta);
+								}
+								else
+								{
+									playerCharacter->SetActorValue(*skill, newValueInt + currentSkillLevelWithoutInitialValue);
+								}
+							}
+						}
+					}
+				}
+			}
+
+			DetourXS hook_nsHUDTypesNotificationData_ctor;
+			typedef void(nsHUDTypesNotificationData_ctorSig)(nsHUDTypes::NotificationInfo*, const HUDNotificationEvent*);
+			REL::Relocation<nsHUDTypesNotificationData_ctorSig> nsHUDTypesNotificationData_ctor_Original;
+
+			void HooknsHUDTypesNotificationData_ctor(nsHUDTypes::NotificationInfo* a_this, const HUDNotificationEvent* a_event)
+			{
+				nsHUDTypesNotificationData_ctor_Original(a_this, a_event);
+
+				REX::DEBUG("Audio string: {}", a_this->soundName.c_str());
+				a_this->soundName = BSFixedStringCS("MUSDiscoveryBrotherhood");
+			}
+
+			DetourXS hook_REFR_LOCKIsInaccessible;
+			typedef bool(REFR_LOCKIsInaccessibleSig)(std::uint32_t);
+
+			bool HookREFR_LOCKIsInaccessible(std::uint32_t a_lockLevel)
+			{
+				return ((a_lockLevel - 6) & 0xFFFFFFFC) == 0 && a_lockLevel != 7;
+			}
+
+			DetourXS hook_GamePlayFormulasGetLockXPReward;
+			typedef float (GamePlayFormulasGetLockXPRewardSig)(Cascadia::LOCK_LEVEL_EXTENDED);
+
+			float HookGamePlayFormulasGetLockXPReward(LOCK_LEVEL_EXTENDED a_lockLevel)
+			{
+				GameSettingCollection* settings = GameSettingCollection::GetSingleton();
+				switch (a_lockLevel) {
+				case LOCK_LEVEL_EXTENDED::kVeryEasy:
+					return 5.0f;
+				case LOCK_LEVEL_EXTENDED::kEasy:
+					return settings->GetSetting("fLockpickXPRewardEasy")->GetFloat();
+				case LOCK_LEVEL_EXTENDED::kAverage:
+					return settings->GetSetting("fLockpickXPRewardAverage")->GetFloat();
+				case LOCK_LEVEL_EXTENDED::kHard:
+					return settings->GetSetting("fLockpickXPRewardHard")->GetFloat();
+				case LOCK_LEVEL_EXTENDED::kVeryHard:
+					return settings->GetSetting("fLockpickXPRewardVeryHard")->GetFloat();
+				default:
+					return 0.0f;
+				}
+			}
+
+			DetourXS hook_REFR_LOCKNumericValueToEnum;
+			typedef LOCK_LEVEL_EXTENDED(REFR_LOCKNumericValueToEnumSig)(std::uint32_t);
+
+			LOCK_LEVEL_EXTENDED HookREFR_LOCKNumericValueToEnum(std::uint32_t a_val)
+			{
+				if (a_val == 0) {
+					return LOCK_LEVEL_EXTENDED::kVeryEasy;
+				}
+
+				if (a_val <= GetLockLevelMaxEasy())
+				{
+					return LOCK_LEVEL_EXTENDED::kEasy;
+				}
+
+				if (a_val <= GetLockLevelMaxAverage())
+				{
+					return LOCK_LEVEL_EXTENDED::kAverage;
+				}
+
+				if (a_val <= GetLockLevelMaxHard())
+				{
+					return LOCK_LEVEL_EXTENDED::kHard;
+				}
+
+				if (a_val <= GetLockLevelMaxVeryHard())
+				{
+					return LOCK_LEVEL_EXTENDED::kVeryHard;
+				}
+
+				if (a_val <= GetLockLevelMaxBarred())
+				{
+					return LOCK_LEVEL_EXTENDED::kBarred;
+				}
+
+				if (a_val <= GetLockLevelMaxChained())
+				{
+					return LOCK_LEVEL_EXTENDED::kChained;
+				}
+
+				// Special locks - some faster checks for these.
+				if (a_val == 251) return LOCK_LEVEL_EXTENDED::kBarred;
+				if (a_val == 252) return LOCK_LEVEL_EXTENDED::kTerminal;
+				if (a_val == 253) return LOCK_LEVEL_EXTENDED::kInaccessible;
+				if (a_val == 254) return LOCK_LEVEL_EXTENDED::kChained;
+
+				// Default if above all thresholds, which is the same as the highest vanilla lock level.
+				return LOCK_LEVEL_EXTENDED::kRequiresKey;
+			}
+
 			// ========== REGISTERS ==========
+
+			void RegisterGamePlayFormulasGetLockXPReward()
+			{
+				REL::Relocation<GamePlayFormulasGetLockXPRewardSig> functionLocation{ ID::GamePlayFormulas::GetLockXPReward };
+				if (hook_GamePlayFormulasGetLockXPReward.Create(reinterpret_cast<void*>(functionLocation.address()), &HookGamePlayFormulasGetLockXPReward))
+				{
+					REX::DEBUG("Installed 'GamePlayFormulas::GetLockXPReward' hook.");
+				}
+				else
+				{
+					REX::CRITICAL("Failed to hook 'GamePlayFormulas::GetLockXPReward', exiting.");
+				}
+			}
+
+			void RegisterREFR_LOCKIsInaccessible()
+			{
+				REL::Relocation<REFR_LOCKIsInaccessibleSig> functionLocation{ ID::REFR_LOCK::IsInaccessible };
+				if (hook_REFR_LOCKIsInaccessible.Create(reinterpret_cast<void*>(functionLocation.address()), &HookREFR_LOCKIsInaccessible))
+				{
+					REX::DEBUG("Installed 'REFR_LOCK::IsInaccessible' hook.");
+				}
+				else
+				{
+					REX::CRITICAL("Failed to hook 'REFR_LOCK::IsInaccessible', exiting.");
+				}
+			}
+
+			void RegisterREFR_LOCKNumericValueToEnum()
+			{
+				REL::Relocation<REFR_LOCKNumericValueToEnumSig> functionLocation{ ID::REFR_LOCK::NumericValueToEnum };
+				if (hook_REFR_LOCKNumericValueToEnum.Create(reinterpret_cast<void*>(functionLocation.address()), &HookREFR_LOCKNumericValueToEnum))
+				{
+					REX::DEBUG("Installed 'REFR_LOCK::NumericValueToEnum' hook.");
+				}
+				else
+				{
+					REX::CRITICAL("Failed to hook 'REFR_LOC::KNumericValueToEnum', exiting.");
+				}
+			}
+
+			void RegisternsHUDTypesNotificationData_ctor()
+			{
+				REL::Relocation<nsHUDTypesNotificationData_ctorSig> functionLocation{ ID::nsHUDTypes::NotificationInfo::ctor };
+				if (hook_nsHUDTypesNotificationData_ctor.Create(reinterpret_cast<void*>(functionLocation.address()), &HooknsHUDTypesNotificationData_ctor))
+				{
+					REX::DEBUG("Installed 'nsHUDTypes::NotificationData::ctor' hook.");
+					nsHUDTypesNotificationData_ctor_Original = reinterpret_cast<uintptr_t>(hook_nsHUDTypesNotificationData_ctor.GetTrampoline());
+				}
+				else
+				{
+					REX::CRITICAL("Failed to hook 'nsHUDTypes::NotificationData::ctor', exiting.");
+				}
+			}
+
 			void RegisterActorUnequipObject()
 			{
 				REL::Relocation<ActorUnequipObjectSig> functionLocation{ ID::Actor::UnequipObject };
@@ -1382,6 +1743,20 @@ namespace RE
 					REX::CRITICAL("Failed to hook 'GamePlayFormulas::CanHackGateCheck', exiting.");
 				}
 			}
+
+			void RegisterActorSPECIALModifiedCallback()
+			{
+				REL::Relocation<ActorSPECIALModifiedCallbackSig> functionLocation{ ID::Actor::SPECIALModifiedCallback };
+				if (hook_ActorSPECIALModifiedCallback.Create(reinterpret_cast<void*>(functionLocation.address()), &HookActorSPECIALModifiedCallback))
+				{
+					REX::DEBUG("Installed 'Actor::SPECIALModifiedCallback' hook.");
+					ActorSPECIALModifiedCallback_Original = reinterpret_cast<uintptr_t>(hook_ActorSPECIALModifiedCallback.GetTrampoline());
+				}
+				else
+				{
+					REX::CRITICAL("Failed to hook 'Actor::SPECIALModifiedCallback', exiting.");
+				}
+			};
 		}
 	}
 }
