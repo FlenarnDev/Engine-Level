@@ -1428,7 +1428,99 @@ namespace RE
 				return LOCK_LEVEL_EXTENDED::kRequiresKey;
 			}
 
+			DetourXS hook_AIProcessGetActorLightLevel;
+			typedef float(AIProcessGetActorLightLevelSig)(AIProcess*);
+
+			float HookAIProcessGetActorLightLevel(AIProcess* a_this)
+			{
+				float lightLevel = 0.0f;
+
+				if (a_this && a_this->high)
+				{
+					lightLevel = a_this->high->lightLevel;
+				}
+
+				// If process is player and pipboy light is on, add 200 to the light level.
+				PlayerCharacter* playerCharacter = PlayerCharacter::GetSingleton();
+				if (playerCharacter && playerCharacter->currentProcess == a_this) {
+					if (playerCharacter->IsPipboyLightOn())
+					{
+						return lightLevel += 200.0f;
+					}
+				}
+
+				return lightLevel;
+			}
+
+			DetourXS hook_ActorCalculateDetectionFormula;
+			typedef void(ActorCalculateDetectionFormulaSig)(Actor*, Actor*, DetectionData*);
+			REL::Relocation<ActorCalculateDetectionFormulaSig> ActorCalculateDetectionFormula_Original;
+
+			void HookActorCalculateDetectionFormula(Actor* a_this, Actor* a_target, DetectionData* a_detectionData)
+			{
+				if (!ActorCalculateDetectionFormula_Original || !a_this || !a_target || !a_detectionData)
+				{
+					return;
+				}
+
+				ActorCalculateDetectionFormula_Original(a_this, a_target, a_detectionData);
+
+				PlayerCharacter* playerCharacter = PlayerCharacter::GetSingleton();
+				if (!playerCharacter ||a_target != playerCharacter)
+				{
+					return;
+				}
+
+				const float dx = a_this->data.location.x - a_target->data.location.x;
+				const float dy = a_this->data.location.y - a_target->data.location.y;
+				const float dz = a_this->data.location.z - a_target->data.location.z;
+				const float distance = std::sqrt(dx * dx + dy * dy + dz * dz);
+
+				const float soundPrior = a_detectionData->soundDetectionLevel;
+
+				if (RadioManager::QPlayerRadioEnabled() && distance < 2000.0f)
+				{
+					const float normalizedDistance = std::fminf(1.0f, distance / 2000.0f);
+					const float bonus = 98.0f * (1.0f - normalizedDistance) + 2.0f;
+					const float soundBonus = std::clamp(bonus, 0.0f, 30000.0f);
+
+					if (a_detectionData->soundDetectionLevel < soundBonus)
+					{
+						a_detectionData->soundDetectionLevel = soundBonus;
+						REX::DEBUG("Radio is on, applying sound bonus of {} to detection level. Distance: {}", soundBonus, distance);
+					}
+				}
+
+			}
+
 			// ========== REGISTERS ==========
+
+			void RegisterActorCalculateDetectionFormula()
+			{
+				REL::Relocation<ActorCalculateDetectionFormulaSig> functionLocation{ ID::Actor::CalculateDetectionFormula };
+				if (hook_ActorCalculateDetectionFormula.Create(reinterpret_cast<void*>(functionLocation.address()), &HookActorCalculateDetectionFormula))
+				{
+					REX::DEBUG("Installed 'Actor::CalculateDetectionFormula' hook.");
+					ActorCalculateDetectionFormula_Original = reinterpret_cast<uintptr_t>(hook_ActorCalculateDetectionFormula.GetTrampoline());
+				}
+				else
+				{
+					REX::CRITICAL("Failed to hook 'Actor::CalculateDetectionFormula', exiting.");
+				}
+			}
+
+			void RegisterActorProcessGetActorLightLevel()
+			{
+				REL::Relocation<AIProcessGetActorLightLevelSig> functionLocation{ ID::AIProcess::GetActorLightLevel };
+				if (hook_AIProcessGetActorLightLevel.Create(reinterpret_cast<void*>(functionLocation.address()), &HookAIProcessGetActorLightLevel))
+				{
+					REX::DEBUG("Installed 'AIProcess::GetActorLightLevel' hook.");
+				}
+				else
+				{
+					REX::CRITICAL("Failed to hook 'AIProcess::GetActorLightLevel', exiting.");
+				}
+			}
 
 			void RegisterGamePlayFormulasGetLockXPReward()
 			{

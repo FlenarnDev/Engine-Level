@@ -37,6 +37,8 @@ namespace RE
 			void RegisterREFR_LOCKNumericValueToEnum();
 			void RegisterREFR_LOCKIsInaccessible();
 			void RegisterGamePlayFormulasGetLockXPReward();
+			void RegisterActorProcessGetActorLightLevel();
+			void RegisterActorCalculateDetectionFormula();
 
 			void RegisterHooks()
 			{
@@ -64,6 +66,8 @@ namespace RE
 				RegisterREFR_LOCKNumericValueToEnum();
 				RegisterREFR_LOCKIsInaccessible();
 				RegisterGamePlayFormulasGetLockXPReward();
+				RegisterActorProcessGetActorLightLevel();
+				RegisterActorCalculateDetectionFormula();
 			}
 		}
 	}
