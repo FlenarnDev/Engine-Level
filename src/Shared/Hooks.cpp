@@ -199,6 +199,200 @@ namespace RE
 				return a_this->Jump(a_height);
 			}
 
+			void HookTaskQueueInterfaceTaskUnpackFunc_DoHitMe(Actor* a_this, HitData* a_hitData)
+			{
+				const auto targetActor = a_hitData->target.get().get();
+
+				if (!targetActor)
+				{
+					REX::DEBUG("HookedDoHitMe: skipping hit with null target actor.");
+					a_this->DoHitMe(a_hitData);
+					return;
+				}
+
+				if (targetActor->IsDead(false))
+				{
+					REX::DEBUG("HookedDoHitMe: skipping dead actor {:08X}", targetActor->formID);
+					a_this->DoHitMe(a_hitData);
+					return;
+				}
+
+				if (a_hitData->flags.any(HitData::Flag::kExplosion))
+				{
+					REX::DEBUG("HookedDoHitMe: skipping explosion hit on {:08X}", a_this->formID);
+					a_this->DoHitMe(a_hitData);
+					return;
+				}
+
+				std::uint8_t projCount = 1;
+				const auto weapon = a_hitData->weapon.object;
+				if (weapon && weapon->formType == ENUM_FORM_ID::kWEAP)
+				{
+					const auto instanceData = a_hitData->weapon.instanceData.get();
+					const auto weaponData = instanceData
+						? reinterpret_cast<TESObjectWEAP::InstanceData*>(instanceData)
+						: static_cast<TESObjectWEAP::InstanceData*>(&weapon->As<TESObjectWEAP>()->weaponData);
+					if (weaponData && weaponData->type == WEAPON_TYPE::kGun)
+					{
+						const auto rangedData = weaponData->rangedData;
+						if (rangedData)
+							projCount = rangedData->numProjectiles;
+					}
+				}
+
+				Actor* aggressor = a_hitData->aggressor.get().get();
+
+				const auto damageTypes = a_hitData->damageTypes;
+				const bool hasTypedDamage = damageTypes && !damageTypes->empty();
+
+				REX::DEBUG("HookedDoHitMe: target={:08X} aggressor={:08X} projCount={} weapon={:08X} damageTypeCount={}",
+					targetActor->formID,
+					aggressor ? aggressor->formID : 0,
+					projCount,
+					weapon ? weapon->formID : 0,
+					hasTypedDamage ? damageTypes->size() : 0);
+
+				REX::DEBUG("HookedDoHitMe: before -- totalDamage={:.2f} physicalDamage={:.2f} "
+					"resistedPhysicalDamage={:.2f} healthDamage={:.2f} resistedTypedDamage={:.2f} "
+					"sneakMult={:.2f} critMult={:.2f}",
+					a_hitData->totalDamage,
+					a_hitData->physicalDamage,
+					a_hitData->resistedPhysicalDamage,
+					a_hitData->healthDamage,
+					a_hitData->resistedTypedDamage,
+					a_hitData->sneakAttackBonus,
+					a_hitData->criticalDamageMult);
+
+				const float divisor = a_hitData->totalDamage - a_hitData->resistedPhysicalDamage;
+
+				REX::DEBUG("HookedDoHitMe: divisor={:.2f} hasTypedDamage={}", divisor, hasTypedDamage);
+
+				// For pure energy weapons physicalDamage and resistedPhysicalDamage are both 0
+				// so we can't derive bpmMult from physical fields - use 1.0 as fallback
+				if (divisor == 0.0f && !hasTypedDamage)
+				{
+					REX::DEBUG("HookedDoHitMe: no physical or typed damage, skipping.");
+					a_this->DoHitMe(a_hitData);
+					return;
+				}
+
+				const float bpmMult = divisor != 0.0f ? a_hitData->healthDamage / divisor : 1.0f;
+
+				REX::DEBUG("HookedDoHitMe: bpmMult={:.4f}", bpmMult);
+
+				BGSObjectInstance targetInstance(targetActor, nullptr);
+				BGSObjectInstance aggressorInstance(aggressor, nullptr);
+
+
+				a_hitData->healthDamage = 0.0f;
+
+				if (hasTypedDamage)
+				{
+					const auto dmgCount = damageTypes->size();
+					for (std::uint32_t i = 0; i < dmgCount; ++i)
+					{
+						const auto& [form, value] = (*damageTypes)[i];
+
+						float baseDmg = value.f;
+						const float critBonus = (a_hitData->criticalDamageMult - 1.0f) * baseDmg;
+
+						REX::DEBUG("HookedDoHitMe: damageType[{}] form={:08X} rawBaseDmg={:.2f} critBonus={:.2f}",
+							i, form ? form->formID : 0, baseDmg, critBonus);
+
+						if (aggressor)
+						{
+							BGSEntryPoint::HandleEntryPoint(BGSEntryPoint::ENTRY_POINT::kModAttackDamage, aggressor, a_hitData->weapon, targetInstance, &baseDmg);
+							BGSEntryPoint::HandleEntryPoint(BGSEntryPoint::ENTRY_POINT::kModTypedAttackDamage, aggressor, a_hitData->weapon, targetInstance, &baseDmg);
+						}
+
+						REX::DEBUG("HookedDoHitMe: damageType[{}] baseDmg after attack perks={:.2f}", i, baseDmg);
+
+						baseDmg *= a_hitData->sneakAttackBonus;
+						baseDmg += critBonus;
+
+						REX::DEBUG("HookedDoHitMe: damageType[{}] baseDmg after sneak+crit={:.2f}", i, baseDmg);
+
+						const auto dmgType = form && form->formType == RE::ENUM_FORM_ID::kDMGT ? form->As<RE::BGSDamageType>() : nullptr;
+						const auto avInfo = dmgType ? dmgType->data.resistance : nullptr;
+
+						float typedDR = avInfo ? targetActor->GetActorValue(*avInfo) : 0.0f;
+
+						REX::DEBUG("HookedDoHitMe: damageType[{}] avInfo={} typedDR before perks={:.2f}", i, avInfo != nullptr, typedDR);
+
+						if (aggressor && avInfo)
+						{
+							BGSEntryPoint::HandleEntryPoint(BGSEntryPoint::ENTRY_POINT::kModTargetDamageResistance, aggressor, a_hitData->weapon, targetInstance, &typedDR);
+						}
+
+						REX::DEBUG("HookedDoHitMe: damageType[{}] typedDR after perks={:.2f}", i, typedDR);
+
+						float resistedPercentage = CombatFormulas::CalcResistedPercentage(avInfo, baseDmg, typedDR);
+						float contribution = (baseDmg / static_cast<float>(projCount)) * resistedPercentage * bpmMult;
+
+						REX::DEBUG("HookedDoHitMe: damageType[{}] resistedPercentage={:.4f} contribution before incoming perks={:.2f}",
+							i, resistedPercentage, contribution);
+
+						if (aggressor)
+						{
+							BGSEntryPoint::HandleEntryPoint(BGSEntryPoint::ENTRY_POINT::kModIncomingDamage, targetActor, a_hitData->weapon, targetInstance, &contribution);
+						}
+
+						REX::DEBUG("HookedDoHitMe: damageType[{}] contribution after incoming perks={:.2f} healthDamage running total={:.2f}",
+							i, contribution, a_hitData->healthDamage + contribution);
+
+						a_hitData->healthDamage += contribution;
+					}
+				}
+
+				const auto damageResist = RE::ActorValue::GetSingleton()->damageResistance;
+				float physicalDR = targetActor->GetActorValue(*damageResist);
+
+				REX::DEBUG("HookedDoHitMe: physical -- physicalDR before perks={:.2f}", physicalDR);
+
+				if (aggressor)
+				{
+					BGSEntryPoint::HandleEntryPoint(BGSEntryPoint::ENTRY_POINT::kModTargetDamageResistance, aggressor, a_hitData->weapon, targetInstance, &physicalDR);
+				}
+
+				const float physicalDamage = a_hitData->resistedPhysicalDamage + a_hitData->physicalDamage;
+				const float physicalResistPercentage = CombatFormulas::CalcResistedPercentage(damageResist, physicalDamage * static_cast<float>(projCount), physicalDR);
+				const float physicalContribution = (physicalDamage * bpmMult) * physicalResistPercentage;
+
+				REX::DEBUG("HookedDoHitMe: physical -- physicalDR after perks={:.2f} physicalDamage={:.2f} "
+					"physResistPct={:.4f} physContribution={:.2f}",
+					physicalDR, physicalDamage, physicalResistPercentage, physicalContribution);
+
+				a_hitData->healthDamage += physicalContribution;
+
+				float vatsMult = 1.0f;
+				if (UI::GetSingleton()->GetMenuOpen("VATSMenu"))
+				{
+					vatsMult = GameSettingCollection::GetSingleton()->GetSetting("fVATSPlayerDamageMult")->GetFloat();
+				}
+
+				PlayerCharacter* player = PlayerCharacter::GetSingleton();
+				if (targetActor == player && !a_hitData->flags.any(HitData::Flag::kPredictBaseDamage))
+				{
+					REX::DEBUG("HookedDoHitMe: applying VATS mult {:.2f} to player hit", vatsMult);
+					a_hitData->healthDamage *= vatsMult;
+					a_hitData->totalDamage *= vatsMult;
+					a_hitData->physicalDamage *= vatsMult;
+					a_hitData->targetedLimbDamage *= vatsMult;
+					a_hitData->resistedPhysicalDamage *= vatsMult;
+					a_hitData->resistedTypedDamage *= vatsMult;
+				}
+
+				REX::DEBUG("HookedDoHitMe: after -- healthDamage={:.2f} totalDamage={:.2f} physicalDamage={:.2f} "
+					"resistedPhysicalDamage={:.2f} resistedTypedDamage={:.2f}",
+					a_hitData->healthDamage,
+					a_hitData->totalDamage,
+					a_hitData->physicalDamage,
+					a_hitData->resistedPhysicalDamage,
+					a_hitData->resistedTypedDamage);
+
+				a_this->DoHitMe(a_hitData);
+			}
+
 			void Install()
 			{
 				auto& trampoline = REL::GetTrampoline();
@@ -206,6 +400,11 @@ namespace RE
 				// Shared stub for a few patches.
 				Shared::g_lockLevelNamesStub = reinterpret_cast<Setting**>(trampoline.allocate(sizeof(Setting*) * 10));
 				std::uintptr_t stubAddr = reinterpret_cast<std::uintptr_t>(Shared::g_lockLevelNamesStub);
+
+				// TaskQueueInterface::TaskUnpackFunc - { ID 2229323 + 0x8F7 }
+				typedef void(DoHitMe_Sig)(Actor*, HitData*);
+				REL::Relocation<DoHitMe_Sig> DoHitMe_Location{ ID::TaskQueueInterface::TaskUnpackFunc, 0x8F7 };
+				trampoline.write_call<5>(DoHitMe_Location.address(), &HookTaskQueueInterfaceTaskUnpackFunc_DoHitMe);
 
 				// GetInfoForPlayerDialogueOptionHook - { ID 2196817 + 0x40A }
 				typedef TESTopicInfo(GetCurrentTopicInfo_Player_Sig)(BGSSceneActionPlayerDialogue* apPlayerDialogue, BGSScene* apParentScene, TESObjectREFR* apTarget, std::uint32_t aeType);
