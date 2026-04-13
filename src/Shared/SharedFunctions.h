@@ -1,8 +1,10 @@
 #pragma once
 
-namespace RE
+using namespace RE;
+
+namespace Cascadia
 {
-	namespace Cascadia
+	namespace Shared
 	{
 		bool HasVMScript(TESForm* form, const char* scriptName);
 

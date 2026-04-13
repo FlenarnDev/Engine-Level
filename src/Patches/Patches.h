@@ -5,19 +5,16 @@
 #include "Patches/TESObjectREFR.h"
 #include "Patches/MoonRotation.h"
 
-namespace RE
+namespace Cascadia
 {
-	namespace Cascadia
+	namespace Patches
 	{
-		namespace Patches
+		void Install()
 		{
-			void Install()
-			{
-				LoadEditorIDs::Install();
-				TESObjectREFR_ConsoleName::Install();
-				SprintPatch::Install();
-				MoonRotation::Install();
-			}
+			LoadEditorIDs::Install();
+			TESObjectREFR_ConsoleName::Install();
+			SprintPatch::Install();
+			MoonRotation::Install();
 		}
 	}
 }

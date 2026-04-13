@@ -16,18 +16,21 @@
 // "CaptureMessage" = "ToggleArmorDegradation"
 // "CaptureMessages" = "ToggleWeaponDegradation"
 
-namespace ObScript
+namespace Cascadia
 {
-	void Install()
+	namespace ObScript
 	{
-		ObScript::BetaComment::Install();
-		ObScript::GetBaseObject::Install();
-		ObScript::GetDefaultObject::Install();
-		//ObScript::Help::Install();
-		ObScript::SavePlayerFace::Install();
-		ObScript::TestLoadingMenu::Install();
-		ObScript::ToggleArmorDegradation::Install();
-		ObScript::ToggleMarkers::Install();
-		ObScript::ToggleWeaponDegradation::Install();
+		void Install()
+		{
+			BetaComment::Install();
+			GetBaseObject::Install();
+			GetDefaultObject::Install();
+			//ObScript::Help::Install();
+			SavePlayerFace::Install();
+			TestLoadingMenu::Install();
+			ToggleArmorDegradation::Install();
+			ToggleMarkers::Install();
+			ToggleWeaponDegradation::Install();
+		}
 	}
 }

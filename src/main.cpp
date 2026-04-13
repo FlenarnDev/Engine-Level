@@ -2,7 +2,7 @@
 #include "Events/LevelIncreaseEvent.h"
 #include "Events/MenuOpenCloseEvent.h"
 #include "Events/TESCellFullyLoadedEvent.h"
-#include "Events/TESHavestEvent.h"
+#include "Events/TESHarvestEvent.h"
 #include "Events/TESHitEvent.h"
 #include "Events/TESInitScriptEvent.h"
 #include "Events/TESLoadGameEvent.h"
@@ -15,18 +15,15 @@
 #include "Systems/Skills.h"
 #include "Systems/LockLevels.h"
 
-namespace RE
+namespace Cascadia
 {
-	namespace Cascadia
+	namespace Hooks
 	{
-		namespace Hooks
-		{
-			extern void Install();
-			extern void RegisterHooks();
-		}
-		
-		extern void DefineItemDegradationFormsFromGame();
+		extern void Install();
+		extern void RegisterHooks();
 	}
+	
+	extern void DefineItemDegradationFormsFromGame();
 }
 
 namespace
@@ -42,27 +39,27 @@ namespace
 		{
 		case F4SE::MessagingInterface::kGameDataReady:
 
-			RE::Cascadia::AmmoSwitch::DefineAmmoLists();
-			RE::Cascadia::Shared::InitializeSharedGameVariables();
-			if (RE::Cascadia::Skills::DefineSkillsFormsFromGame())
+			Cascadia::AmmoSwitch::DefineAmmoLists();
+			Cascadia::Shared::InitializeSharedGameVariables();
+			if (Cascadia::Skills::DefineSkillsFormsFromGame())
 			{
-				RE::Cascadia::Skills::RegisterForSkillLink();
+				Cascadia::Skills::RegisterForSkillLink();
 			}
 			else
 			{
 				REX::CRITICAL("Failed to define skills.");
 			}
 
-			RE::Cascadia::DefineItemDegradationFormsFromGame();
-			RE::Cascadia::BSAnimationGraphEventWatcher::Install();
-			RE::Cascadia::RegisterTESInitScriptEventSink();
-			RE::Cascadia::RegisterTESHarvestEventSink();
-			RE::Cascadia::RegisterTESHitEventSink();
-			RE::Cascadia::RegisterForCellFullyLoaded();
-			RE::Cascadia::RegisterLevelIncreaseEventSink();
-			RE::Cascadia::RegisterTESLoadGameEventSink();
-			RE::Cascadia::Skills::GetLevelUpFormsFromGame();
-			RE::Cascadia::InitializeLockLevelNamesArray();
+			Cascadia::DefineItemDegradationFormsFromGame();
+			Cascadia::BSAnimationGraphEventWatcher::Install();
+			Cascadia::RegisterTESInitScriptEventSink();
+			Cascadia::RegisterTESHarvestEventSink();
+			Cascadia::RegisterTESHitEventSink();
+			Cascadia::RegisterForCellFullyLoaded();
+			Cascadia::RegisterLevelIncreaseEventSink();
+			Cascadia::RegisterTESLoadGameEventSink();
+			Cascadia::Skills::GetLevelUpFormsFromGame();
+			Cascadia::LockLevels::InitializeLockLevelNamesArray();
 
 			REX::INFO("{:s} - kGameDataReady", "Cascadia Gameplay Systems");
 			break;
@@ -76,7 +73,7 @@ namespace
 			break;
 
 		case F4SE::MessagingInterface::kPostLoadGame:
-			RE::Cascadia::AmmoSwitch::PostLoadGameAmmoFix();
+			Cascadia::AmmoSwitch::PostLoadGameAmmoFix();
 			REX::INFO("{:s} - 'kPostLoadGame'.", "Cascadia Gameplay Systems");
 			break;
 
@@ -118,8 +115,8 @@ F4SE_PLUGIN_LOAD(const F4SE::LoadInterface* a_f4se)
 {
 	F4SE::Init(a_f4se, { .trampoline = true, .trampolineSize = 512 });
 
-	RE::Cascadia::Shared::InitializeSharedVariables();
-	RE::Cascadia::Hooks::Install();
+	Cascadia::Shared::InitializeSharedVariables();
+	Cascadia::Hooks::Install();
 
 	const F4SE::SerializationInterface* serialization = F4SE::GetSerializationInterface();
 	if (!serialization)
@@ -130,9 +127,9 @@ F4SE_PLUGIN_LOAD(const F4SE::LoadInterface* a_f4se)
 	else
 	{
 		serialization->SetUniqueID('CAS');
-		serialization->SetRevertCallback(RE::Cascadia::Serialization::RevertCallback);
-		serialization->SetSaveCallback(RE::Cascadia::Serialization::SaveCallback);
-		serialization->SetLoadCallback(RE::Cascadia::Serialization::LoadCallback);
+		serialization->SetRevertCallback(Cascadia::Serialization::RevertCallback);
+		serialization->SetSaveCallback(Cascadia::Serialization::SaveCallback);
+		serialization->SetLoadCallback(Cascadia::Serialization::LoadCallback);
 	}
 
 	const F4SE::MessagingInterface* messaging = F4SE::GetMessagingInterface();
@@ -150,33 +147,33 @@ F4SE_PLUGIN_LOAD(const F4SE::LoadInterface* a_f4se)
 	}
 	else
 	{
-		if (!scaleform->Register("Cascadia-DialogueMenu", RE::Cascadia::DialogueMenu::RegisterScaleform))
+		if (!scaleform->Register("Cascadia-DialogueMenu", Cascadia::DialogueMenu::RegisterScaleform))
 		{
 			REX::CRITICAL("Failed to register 'DialogueMenu', marking as incompatible."sv);
 			return false;
 		}
 
-		if (!scaleform->Register("Cascadia-ExamineMenu", RE::Cascadia::ExamineMenu::RegisterScaleform))
+		if (!scaleform->Register("Cascadia-ExamineMenu", Cascadia::ExamineMenu::RegisterScaleform))
 		{
 			REX::CRITICAL("Failed to register 'ExamineMenu', marking as incompatible."sv);
 			return false;
 		}
 
-		if (!scaleform->Register("Cascadia-ExamineConfirmMenu", RE::Cascadia::ExamineConfirmMenu::RegisterScaleform))
+		if (!scaleform->Register("Cascadia-ExamineConfirmMenu", Cascadia::ExamineConfirmMenu::RegisterScaleform))
 		{
 			REX::CRITICAL("Failed to register 'ExamineConfirmMenu', marking as incompatible."sv);
 			return false;
 		}
 
-		if (!scaleform->Register("Cascadia-PipboyTabs", RE::Cascadia::PipboyTabs::RegisterScaleform))
+		if (!scaleform->Register("Cascadia-PipboyTabs", Cascadia::PipboyTabs::RegisterScaleform))
 		{
 			REX::CRITICAL("Failed to register 'PipboyTabs', marking as incompatible."sv);
 			return false;
 		}
 
 
-		RE::Cascadia::LevelUpMenu::RegisterMenu();
-		if (!scaleform->Register("CASLevelUpMenu", RE::Cascadia::LevelUpMenu::RegisterScaleform))
+		Cascadia::LevelUpMenu::RegisterMenu();
+		if (!scaleform->Register("CASLevelUpMenu", Cascadia::LevelUpMenu::RegisterScaleform))
 		{
 			REX::CRITICAL("Failed to register 'LevelUpMenu', marking as incompatible."sv);
 			return false;
@@ -190,11 +187,11 @@ F4SE_PLUGIN_LOAD(const F4SE::LoadInterface* a_f4se)
 		return false;
 	}
 
-	RE::Cascadia::RegisterMenuOpenCloseEventSink();
-	RE::Cascadia::ExamineMenu::hkOnButtonEvent::InstallHook();
-	RE::Cascadia::Hooks::RegisterHooks();
-	RE::Cascadia::Patches::Install();
-	ObScript::Install();
+	Cascadia::RegisterMenuOpenCloseEventSink();
+	Cascadia::ExamineMenu::hkOnButtonEvent::InstallHook();
+	Cascadia::Hooks::RegisterHooks();
+	Cascadia::Patches::Install();
+	Cascadia::ObScript::Install();
 
 	REX::INFO(("{:s} finished loading."), "Cascadia Gameplay Systems");
 

@@ -1,20 +1,17 @@
 #pragma once
 
-namespace RE
+namespace Cascadia
 {
-	namespace Cascadia
+	namespace SprintPatch
 	{
-		namespace SprintPatch
+		void Install()
 		{
-			void Install()
-			{
-				REX::DEBUG("Installed Patch: 'SprintLimit'.");
+			REX::DEBUG("Installed Patch: 'SprintLimit'.");
 
-				float limit = 1100.0f;
+			float limit = 1100.0f;
 
-				REL::Relocation<std::uintptr_t> sprintLimit{ REL::ID(2664490) };
-				REL::WriteSafe(sprintLimit.address(), &limit, sizeof(float));
-			}
+			REL::Relocation<std::uintptr_t> sprintLimit{ REL::ID(2664490) };
+			REL::WriteSafe(sprintLimit.address(), &limit, sizeof(float));
 		}
 	}
 }

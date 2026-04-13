@@ -4,38 +4,35 @@
 #include "Menus/DialogueMenu.h"
 #include "Menus/LevelUpMenu.h"
 
-namespace RE
+namespace Cascadia
 {
-	namespace Cascadia
+	class MenuOpenCloseEventWatcher :
+		public BSTEventSink<MenuOpenCloseEvent>
 	{
-		class MenuOpenCloseEventWatcher :
-			public BSTEventSink<MenuOpenCloseEvent>
+		virtual BSEventNotifyControl ProcessEvent(const MenuOpenCloseEvent& a_event, BSTEventSource<MenuOpenCloseEvent>*) override
 		{
-			virtual BSEventNotifyControl ProcessEvent(const MenuOpenCloseEvent& a_event, BSTEventSource<MenuOpenCloseEvent>*) override
+			if (a_event.menuName == BSFixedString("DialogueMenu"))
 			{
-				if (a_event.menuName == BSFixedString("DialogueMenu"))
+				if (a_event.opening)
 				{
-					if (a_event.opening)
-					{
-						DialogueMenu::savedSubtitlePosition = DialogueMenu::GetSubtitlePosition();
-					}
-					else
-					{
-						DialogueMenu::SetSubtitlePosition(DialogueMenu::savedSubtitlePosition.first, DialogueMenu::savedSubtitlePosition.second);
-					}
+					DialogueMenu::savedSubtitlePosition = DialogueMenu::GetSubtitlePosition();
 				}
-
-				REX::DEBUG("Menu: {}, opening: {}", a_event.menuName, a_event.opening);
-
-				return BSEventNotifyControl::kContinue;
+				else
+				{
+					DialogueMenu::SetSubtitlePosition(DialogueMenu::savedSubtitlePosition.first, DialogueMenu::savedSubtitlePosition.second);
+				}
 			}
-		};
 
-		void RegisterMenuOpenCloseEventSink()
-		{
-			MenuOpenCloseEventWatcher* menuOpenCloseEvent = new MenuOpenCloseEventWatcher();
-			UI::GetSingleton()->GetEventSource<MenuOpenCloseEvent>()->RegisterSink(menuOpenCloseEvent);
-			REX::DEBUG("Registered 'MenuOpenCloseEvent' sink.");
+			REX::DEBUG("Menu: {}, opening: {}", a_event.menuName, a_event.opening);
+
+			return BSEventNotifyControl::kContinue;
 		}
+	};
+
+	void RegisterMenuOpenCloseEventSink()
+	{
+		MenuOpenCloseEventWatcher* menuOpenCloseEvent = new MenuOpenCloseEventWatcher();
+		UI::GetSingleton()->GetEventSource<MenuOpenCloseEvent>()->RegisterSink(menuOpenCloseEvent);
+		REX::DEBUG("Registered 'MenuOpenCloseEvent' sink.");
 	}
 }

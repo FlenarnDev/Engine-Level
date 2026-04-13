@@ -2,12 +2,11 @@
 
 #include "Shared/SharedDeclarations.h"
 
-namespace RE
+namespace Cascadia
 {
-	namespace Cascadia
+	namespace LockLevels
 	{
-		;
-
+		inline Setting** g_lockLevelNamesStub = nullptr;
 
 		static Setting* pLockLevelNamesExtended[10] = { nullptr };
 

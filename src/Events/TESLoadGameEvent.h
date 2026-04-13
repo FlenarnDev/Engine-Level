@@ -2,27 +2,24 @@
 
 #include "Menus/LevelUpMenu.h"
 
-namespace RE
+namespace Cascadia
 {
-	namespace Cascadia
+	class TESLoadGameEventWatcher :
+		public BSTEventSink<TESLoadGameEvent>
 	{
-		class TESLoadGameEventWatcher :
-			public BSTEventSink<TESLoadGameEvent>
+		virtual BSEventNotifyControl ProcessEvent(const TESLoadGameEvent& a_event, BSTEventSource<TESLoadGameEvent>*) override
 		{
-			virtual BSEventNotifyControl ProcessEvent(const TESLoadGameEvent& a_event, BSTEventSource<TESLoadGameEvent>*) override
-			{
-				REX::DEBUG("'TESLoadGameEvent' fired!");
-				LevelUpMenu::CheckForLevelUp();
+			REX::DEBUG("'TESLoadGameEvent' fired!");
+			LevelUpMenu::CheckForLevelUp();
 
-				return BSEventNotifyControl::kContinue;
-			}
-		};
-
-		void RegisterTESLoadGameEventSink()
-		{
-			TESLoadGameEventWatcher* tesLoadGameEvent = new TESLoadGameEventWatcher();
-			TESLoadGameEvent::GetEventSource()->RegisterSink(tesLoadGameEvent);
-			REX::DEBUG("Registered 'TESLoadGameEvent' sink.");
+			return BSEventNotifyControl::kContinue;
 		}
+	};
+
+	void RegisterTESLoadGameEventSink()
+	{
+		TESLoadGameEventWatcher* tesLoadGameEvent = new TESLoadGameEventWatcher();
+		TESLoadGameEvent::GetEventSource()->RegisterSink(tesLoadGameEvent);
+		REX::DEBUG("Registered 'TESLoadGameEvent' sink.");
 	}
 }

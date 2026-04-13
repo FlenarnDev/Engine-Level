@@ -1,10 +1,8 @@
 #include "SharedFunctions.h"
 
-using namespace RE::BSScript;
-
-namespace RE
+namespace Cascadia
 {
-	namespace Cascadia
+	namespace Shared
 	{
 		//	Converts a UInt8 percentage to float (eg. 38% becomes 0.38)
 		float ConvertPercentageToFloat(std::uint8_t percentage)
@@ -18,7 +16,7 @@ namespace RE
 			const BSScript::IObjectHandlePolicy& handlePolicy = vm->GetObjectHandlePolicy();
 			std::size_t handle = handlePolicy.GetHandleForObject(form->formType.underlying(), form);
 
-			BSTSmartPointer<Object> identifier;
+			BSTSmartPointer<BSScript::Object> identifier;
 
 			return vm->FindBoundObject(handle, scriptName, 1, identifier, 0);
 		}

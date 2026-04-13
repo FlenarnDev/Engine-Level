@@ -2,12 +2,9 @@
 
 #include "Shared/SharedFunctions.h"
 
-namespace RE
+namespace Cascadia
 {
-	namespace Cascadia
-	{
-		void DefineItemDegradationFormsFromGame();
+	void DefineItemDegradationFormsFromGame();
 
-		std::map<TESAmmo*, float> ammoDegradationMap;
-	}
+	std::map<TESAmmo*, float> ammoDegradationMap;
 }

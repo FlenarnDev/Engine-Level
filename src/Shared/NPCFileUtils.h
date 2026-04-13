@@ -1,8 +1,10 @@
 #pragma once
 
-namespace RE
+using namespace RE;
+
+namespace Cascadia
 {
-	namespace Cascadia
+	namespace NPCFileUtils
 	{
 		struct BodyMorphRegions
 		{
@@ -53,34 +55,34 @@ namespace RE
 			std::vector<TintEntry> tintEntriesA;
 		};
 
-		namespace NPCFileDefaults
-		{
-			BodyMorphRegions DefaultBodyMorphRegions(std::uint32_t gender);
-			std::vector<FacialBoneRegion> DefaultFacialBoneRegions(std::uint32_t gender);
-			std::stringstream DefaultMorphSliders();
-			std::vector<TintEntry> DefaultTintEntries();
-		}
-
 		BodyMorphRegions GetBodyMorphRegionsFromNPC(TESNPC* npc);
 		std::vector<MorphSlider> GetMorphSliderValuesFromNPC(TESNPC* npc);
 		std::vector<FacialBoneRegion> GetFacialBoneRegionsFromNPC(TESNPC* npc);
 		std::vector<TintIDSet> GetTintIDsFromRace(TESRace* race, std::uint32_t gender);
 		std::vector<TintEntry> GetTintEntriesFromNPC(TESNPC* npc, std::uint32_t gender);
+	}
 
-		namespace NPCFileExport
-		{
-			void ExportNPCFile(NPCFile npcFile, const char* fileName);
-			std::string GenerateBodyMorphRegionsOutput(NPCFile npcFile);
-			std::string GenerateComplexionOutput(TESNPC* npc);
-			std::string GenerateFacialBoneMorphIntensity(NPCFile npcFile);
-			std::string GenerateFacialBoneRegions(NPCFile npcFile);
-			std::string GenerateHairColor(TESNPC* npc, bool bHairColor);
-			std::string GenerateHeadPart(TESNPC* npc, BGSHeadPart::HeadPartType type);
-			std::string GenerateMorphSliders(NPCFile npcFile);
-			std::string GenerateRace(TESNPC* npc);
-			std::string GenerateSex(TESNPC* npc);
-			std::string GenerateTintEntries(NPCFile npcFile);
-			std::string GenerateWeight(TESNPC* npc);
-		}
+	namespace NPCFileDefaults
+	{
+		NPCFileUtils::BodyMorphRegions DefaultBodyMorphRegions(std::uint32_t gender);
+		std::vector<NPCFileUtils::FacialBoneRegion> DefaultFacialBoneRegions(std::uint32_t gender);
+		std::stringstream DefaultMorphSliders();
+		std::vector<NPCFileUtils::TintEntry> DefaultTintEntries();
+	}
+
+	namespace NPCFileExport
+	{
+		void ExportNPCFile(NPCFileUtils::NPCFile npcFile, const char* fileName);
+		std::string GenerateBodyMorphRegionsOutput(NPCFileUtils::NPCFile npcFile);
+		std::string GenerateComplexionOutput(TESNPC* npc);
+		std::string GenerateFacialBoneMorphIntensity(NPCFileUtils::NPCFile npcFile);
+		std::string GenerateFacialBoneRegions(NPCFileUtils::NPCFile npcFile);
+		std::string GenerateHairColor(TESNPC* npc, bool bHairColor);
+		std::string GenerateHeadPart(TESNPC* npc, BGSHeadPart::HeadPartType type);
+		std::string GenerateMorphSliders(NPCFileUtils::NPCFile npcFile);
+		std::string GenerateRace(TESNPC* npc);
+		std::string GenerateSex(TESNPC* npc);
+		std::string GenerateTintEntries(NPCFileUtils::NPCFile npcFile);
+		std::string GenerateWeight(TESNPC* npc);
 	}
 }
