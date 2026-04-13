@@ -1,9 +1,4 @@
 #include "Shared/Hooks.h"
-#include "Systems/LockLevels.h"
-#include "detourXS/detourxs.h"
-#undef min
-#undef max
-#undef GetForm
 
 using namespace RE;
 
@@ -1665,7 +1660,7 @@ namespace Cascadia
 			ActorCalculateDetectionFormula_Original(a_this, a_target, a_detectionData);
 
 			PlayerCharacter* playerCharacter = PlayerCharacter::GetSingleton();
-			if (!playerCharacter ||a_target != playerCharacter)
+			if (!playerCharacter || a_target != playerCharacter)
 			{
 				return;
 			}
@@ -1674,8 +1669,6 @@ namespace Cascadia
 			const float dy = a_this->data.location.y - a_target->data.location.y;
 			const float dz = a_this->data.location.z - a_target->data.location.z;
 			const float distance = std::sqrt(dx * dx + dy * dy + dz * dz);
-
-			const float soundPrior = a_detectionData->soundDetectionLevel;
 
 			if (RadioManager::QPlayerRadioEnabled() && distance < 2000.0f)
 			{

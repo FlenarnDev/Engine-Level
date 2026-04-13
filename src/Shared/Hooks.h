@@ -5,6 +5,15 @@
 #include "Shared/SharedFunctions.h"
 #include "Systems/AmmoSwitch.h"
 #include "Systems/Skills.h"
+#include "Systems/LockLevels.h"
+
+#define DETECTION_TYPE DETECTION_TYPE_WINDOWS
+#include "detourXS/detourxs.h"
+#undef DETECTION_TYPE
+
+#undef min
+#undef max
+#undef GetForm
 
 namespace Cascadia
 {
