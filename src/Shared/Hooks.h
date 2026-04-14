@@ -46,6 +46,7 @@ namespace Cascadia
 		void RegisterGamePlayFormulasGetLockXPReward();
 		void RegisterActorProcessGetActorLightLevel();
 		void RegisterActorCalculateDetectionFormula();
+		void RegisterAIFormulasComputePickpocketSuccess();
 
 		void RegisterHooks()
 		{
@@ -75,6 +76,7 @@ namespace Cascadia
 			RegisterGamePlayFormulasGetLockXPReward();
 			RegisterActorProcessGetActorLightLevel();
 			RegisterActorCalculateDetectionFormula();
+			RegisterAIFormulasComputePickpocketSuccess();
 		}
 	}
 }

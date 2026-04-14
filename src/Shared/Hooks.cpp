@@ -23,7 +23,7 @@ namespace Cascadia
 				std::uint32_t cndIndexPosition = a_inventoryItem->object->GetFormType() == ENUM_FORM_ID::kWEAP ? 1 : 0;
 
 				PipboyValue* cndEntry = std::move(pipboyArray->elements.back());
-				for (std::size_t i = pipboyArray->elements.size() - 1; i > cndIndexPosition; --i)
+				for (std::uint32_t i = static_cast<std::uint32_t>(pipboyArray->elements.size()) - 1; i > cndIndexPosition; --i)
 				{
 					pipboyArray->elements[i] = std::move(pipboyArray->elements[i - 1]);
 				}
@@ -107,7 +107,7 @@ namespace Cascadia
 			va_list args;
 			va_start(args, a_perkOwner);
 
-			BGSObjectInstance* objectInstance = va_arg(args, BGSObjectInstance*);
+			va_arg(args, BGSObjectInstance*);	
 			float* newPrice = va_arg(args, float*);
 
 			PlayerCharacter* playerCharacter = PlayerCharacter::GetSingleton();
@@ -148,9 +148,7 @@ namespace Cascadia
 		float JumpCostCalculator(Actor* a_actor)
 		{
 			ActorValue* actorValue = ActorValue::GetSingleton();
-
 			float calculatedCost = 5.0;
-			float maxActionPoints = a_actor->GetActorValue(*actorValue->actionPoints);
 
 			std::uint32_t brokenLegs = 0;
 			if (a_actor->GetActorValue(*actorValue->leftMobiltyCondition) == 0.0f )
@@ -306,7 +304,7 @@ namespace Cascadia
 
 					REX::DEBUG("HookedDoHitMe: damageType[{}] baseDmg after sneak+crit={:.2f}", i, baseDmg);
 
-					const auto dmgType = form && form->formType == RE::ENUM_FORM_ID::kDMGT ? form->As<RE::BGSDamageType>() : nullptr;
+					const auto dmgType = form && form->formType == ENUM_FORM_ID::kDMGT ? form->As<BGSDamageType>() : nullptr;
 					const auto avInfo = dmgType ? dmgType->data.resistance : nullptr;
 
 					float typedDR = avInfo ? targetActor->GetActorValue(*avInfo) : 0.0f;
@@ -338,7 +336,7 @@ namespace Cascadia
 				}
 			}
 
-			const auto damageResist = RE::ActorValue::GetSingleton()->damageResistance;
+			const auto damageResist = ActorValue::GetSingleton()->damageResistance;
 			float physicalDR = targetActor->GetActorValue(*damageResist);
 
 			REX::DEBUG("HookedDoHitMe: physical -- physicalDR before perks={:.2f}", physicalDR);
@@ -622,7 +620,7 @@ namespace Cascadia
 						BSTArray<BSTTuple<TESForm*, BGSTypedFormValuePair::SharedVal>>* requiredItems = a_this->QCurrentModChoiceData()->recipe->requiredItems;
 						if (requiredItems)
 						{
-							RE::RepairFailureCallback* repairFailureCallback = new RE::RepairFailureCallback(examineMenu.get());
+							RepairFailureCallback* repairFailureCallback = new RepairFailureCallback(examineMenu.get());
 							RE::ExamineConfirmMenu::InitDataRepairFailure* initDataRepair = new RE::ExamineConfirmMenu::InitDataRepairFailure(requiredItems);
 
 							BSTHashMap<TESBoundObject*, std::uint32_t> availableComponents;
@@ -815,6 +813,7 @@ namespace Cascadia
 		// they're picked up and serialized.
 		void HookBGSInventoryListAddItem(BGSInventoryList* a_this, TESBoundObject* a_boundObject, const BGSInventoryItem::Stack* a_stack, std::uint32_t* a_oldCount, std::uint32_t* a_newCount)
 		{
+
 			ENUM_FORM_ID formType = a_boundObject->GetFormType();
 			if (a_boundObject)
 			{
@@ -1034,7 +1033,7 @@ namespace Cascadia
 					REX::DEBUG("Weapon '{}' is missing skill value - please correct this in the weapon record in XEdit.", a_weapon->object->GetFormEditorID());
 				}
 				
-				float reductionPercentFromSkill = (gunsSkillValue / 100.0f) * 0.2;
+				float reductionPercentFromSkill = (gunsSkillValue / 100.0f) * 0.2f;
 				conditionReduction *= (1.0f - reductionPercentFromSkill);
 
 				ExtraDataList* extraDataList = inventoryItem->stackData->extra.get();
@@ -1063,7 +1062,7 @@ namespace Cascadia
 			float retailDamage = CombatFormulasCalcWeaponDamageOriginal(a_actorForm, a_weapon, a_ammo, a_condition, a_damageMultiplier);
 			if (a_condition != -1.0f || a_condition < 0.75f)
 			{
-				retailDamage = retailDamage * (0.5f + std::min((0.5f * a_condition) / 0.75, 0.5));
+				retailDamage = retailDamage * (0.5f + std::min((0.5f * a_condition) / 0.75f, 0.5f));
 			}
 			return retailDamage;
 		}
@@ -1084,7 +1083,6 @@ namespace Cascadia
 			{
 				BGSInventoryList* inventoryList = a_actor->inventoryList;
 				inventoryList->rwLock.lock_read();
-				std::uint32_t inventoryListSize = inventoryList->data.size();
 
 				for (BGSInventoryItem& item : inventoryList->data)
 				{
@@ -1128,7 +1126,7 @@ namespace Cascadia
 		{
 			IUUIIUtilsAddItemCardInfoEntryOriginal(a_array, a_newEntry, a_textID, a_value, a_difference, a_totalDamage, a_compareDamage);
 
-			if (std::string(a_textID.c_str()) == "CND")
+			if (a_textID == BSFixedStringCS("CND"))
 			{
 				bool showAsPercent = true;
 				std::uint32_t precision = 1;
@@ -1146,7 +1144,7 @@ namespace Cascadia
 		{
 			PipboyObject* result = PipboyInventoryDataBaseAddItemCardInfoEntryOriginal(a_inventory, a_textID, a_array);
 
-			if (a_textID->c_str() == "CND")
+			if (*a_textID == BSFixedStringCS("CND"))
 			{
 				PipboyPrimitiveValue<bool>* showAsPercent = new PipboyPrimitiveValue<bool>(true, result);
 				PipboyPrimitiveValue<std::uint32_t>* precision = new PipboyPrimitiveValue<std::uint32_t>(1, result);
@@ -1220,7 +1218,7 @@ namespace Cascadia
 				float resistance = a_resistValuesPerType->at(type).second;
 				if (resistance != 0.0f && type == 0)
 				{
-					a_resistValuesPerType->at(type).second = resistance * (0.66f + std::min(0.34 * condition / 0.5, 0.34));
+					a_resistValuesPerType->at(type).second = resistance * (0.66f + std::min(0.34f * condition / 0.5f, 0.34f));
 				}
 			}
 		}
@@ -1681,10 +1679,84 @@ namespace Cascadia
 					REX::DEBUG("Radio is on, applying sound bonus of {} to detection level. Distance: {}", soundBonus, distance);
 				}
 			}
+		}
 
+		DetourXS hook_AIFormulasComputePickpocketSuccess;
+		typedef std::uint32_t(AIFormulasComputePickpocketSuccessSig)(float, float, std::int32_t, float, Actor*, Actor*, TESForm*, bool);
+
+		std::uint32_t HookAIFormulasComputePickpocketSuccess(
+			float a_thiefSkill,
+			float a_targetSkill,
+			std::int32_t a_valueStolen,
+			float a_weightStolen,
+			Actor* a_thief,
+			Actor* a_target,
+			TESForm* a_itemPickpocketing,
+			bool a_placingItem)
+		{
+			a_thiefSkill = a_thief->GetActorValue(*Skills::CascadiaActorValues.Sneak);
+			a_targetSkill = a_target->GetActorValue(*Skills::CascadiaActorValues.Sneak);
+
+			GameSettingCollection* settings = GameSettingCollection::GetSingleton();
+
+			const float actorBase = settings->GetSetting("fPickPocketActorSkillBase")->GetFloat();
+			const float actorMult = settings->GetSetting("fPickPocketActorSkillMult")->GetFloat();
+			const float targetBase = settings->GetSetting("fPickPocketTargetSkillBase")->GetFloat();
+			const float targetMult = settings->GetSetting("fPickPocketTargetSkillMult")->GetFloat();
+			const float amountBase = settings->GetSetting("fPickPocketAmountBase")->GetFloat();
+			const float amountMult = settings->GetSetting("fPickPocketAmountMult")->GetFloat();
+			const float weightBase = settings->GetSetting("fPickPocketWeightBase")->GetFloat();
+			const float weightMult = settings->GetSetting("fPickPocketWeightMult")->GetFloat();
+			const float placeMult = settings->GetSetting("fPickPocketPlantChanceMult")->GetFloat();
+			const float maxChance = settings->GetSetting("fPickPocketMaxChance")->GetFloat();
+			const float minChance = settings->GetSetting("fPickPocketMinChance")->GetFloat();
+
+			// FNV-style: each component is (base + mult * value), summed together.
+			// Weight penalty is added on top as the FO4 extension to the formula.
+			const float actorContrib = actorBase + actorMult * a_thiefSkill;
+			const float targetContrib = targetBase + targetMult * a_targetSkill;
+			const float valueContrib = amountBase + amountMult * static_cast<float>(a_valueStolen);
+			const float weightContrib = weightBase + weightMult * a_weightStolen;
+
+			float chance = actorContrib + targetContrib + valueContrib + weightContrib;
+
+			REX::DEBUG("ComputePickpocketSuccess: thiefSneak={:.1f} targetSneak={:.1f} value={} weight={:.2f} placing={}", a_thiefSkill, a_targetSkill, a_valueStolen, a_weightStolen, a_placingItem);
+			REX::DEBUG("  actor={:.2f}  target={:.2f}  value={:.2f}  weight={:.2f}  raw={:.2f}", actorContrib, targetContrib, valueContrib, weightContrib, chance);
+
+			// Allow perks to modify the raw chance before clamping.
+			{
+				BGSObjectInstance targetInstance(a_target, nullptr);
+				BGSObjectInstance itemInstance(a_itemPickpocketing, nullptr);
+				BGSEntryPoint::HandleEntryPoint(BGSEntryPoint::ENTRY_POINT::kModPickpocketChance, a_thief, &targetInstance, &itemInstance, &chance);
+			}
+
+			if (a_placingItem)
+			{
+				chance *= placeMult;
+			}
+
+			chance = std::clamp(chance, minChance, maxChance);
+
+			REX::DEBUG("  post-perks/place/clamp => final={:.2f} -> {}", chance, static_cast<std::uint32_t>(chance));
+
+			// FNV uses integer truncation, not rounding.
+			return static_cast<std::uint32_t>(chance);
 		}
 
 		// ========== REGISTERS ==========
+
+		void RegisterAIFormulasComputePickpocketSuccess()
+		{
+			REL::Relocation<AIFormulasComputePickpocketSuccessSig> functionLocation{ ID::AIFormulas::ComputePickpocketSuccess };
+			if (hook_AIFormulasComputePickpocketSuccess.Create(reinterpret_cast<void*>(functionLocation.address()), &HookAIFormulasComputePickpocketSuccess))
+			{
+				REX::DEBUG("Installed 'AIFormulas::ComputePickpocketSuccess' hook.");
+			}
+			else
+			{
+				REX::CRITICAL("Failed to hook 'AIFormulas::ComputePickpocketSuccess', exiting.");
+			}
+		}
 
 		void RegisterActorCalculateDetectionFormula()
 		{
