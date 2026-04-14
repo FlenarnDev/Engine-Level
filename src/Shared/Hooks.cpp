@@ -44,8 +44,7 @@ namespace Cascadia
 				BGSInventoryItem::Stack* pointer = a_item->stackData.get();
 				while (pointer)
 				{
-					// BGSInventoryItem::Stack::Flag::kSlotMask = 7
-					if (!a_this->checkEquipped || (stack ==	 nullptr && (pointer->flags.underlying() & 7) != 0))
+					if (!a_this->checkEquipped || (stack ==	 nullptr && (pointer->flags.any(BGSInventoryItem::Stack::Flag::kSlotMask))))
 					{
 						stack = pointer;
 					}
