@@ -132,6 +132,15 @@ namespace Cascadia
 			return 1;
 		}
 
+		// Retail 'Perception' value is here, change it to use 'Sneak' skill instead.
+		float HookGatherDetectionFormulaData(RE::ActorValueOwner* a_owner, RE::ActorValueInfo*)
+		{
+			auto* actor = reinterpret_cast<RE::Actor*>(reinterpret_cast<std::uintptr_t>(a_owner) - 0x58);
+			auto* sneak = Skills::CascadiaActorValues.Sneak;
+
+			return actor->GetActorValue(*sneak) / 10.0f;
+		}
+
 		// We don't want the players 'Charisma' stat to influence prices, new calculation is based purely on 'Barter' level.
 		float HookGamePlayFormulasCalculateItemValue_GetBarterValue(float a_baseValue, float a_charisma, bool a_selling, TESObjectREFR* a_refTarget)
 		{
@@ -275,7 +284,6 @@ namespace Cascadia
 			BGSObjectInstance targetInstance(targetActor, nullptr);
 			BGSObjectInstance aggressorInstance(aggressor, nullptr);
 
-
 			a_hitData->healthDamage = 0.0f;
 
 			if (hasTypedDamage)
@@ -288,8 +296,7 @@ namespace Cascadia
 					float baseDmg = value.f;
 					const float critBonus = (a_hitData->criticalDamageMult - 1.0f) * baseDmg;
 
-					REX::DEBUG("HookedDoHitMe: damageType[{}] form={:08X} rawBaseDmg={:.2f} critBonus={:.2f}",
-						i, form ? form->formID : 0, baseDmg, critBonus);
+					REX::DEBUG("HookedDoHitMe: damageType[{}] form={:08X} rawBaseDmg={:.2f} critBonus={:.2f}", i, form ? form->formID : 0, baseDmg, critBonus);
 
 					if (aggressor)
 					{
@@ -321,16 +328,14 @@ namespace Cascadia
 					float resistedPercentage = CombatFormulas::CalcResistedPercentage(avInfo, baseDmg, typedDR);
 					float contribution = (baseDmg / static_cast<float>(projCount)) * resistedPercentage * bpmMult;
 
-					REX::DEBUG("HookedDoHitMe: damageType[{}] resistedPercentage={:.4f} contribution before incoming perks={:.2f}",
-						i, resistedPercentage, contribution);
+					REX::DEBUG("HookedDoHitMe: damageType[{}] resistedPercentage={:.4f} contribution before incoming perks={:.2f}", i, resistedPercentage, contribution);
 
 					if (aggressor)
 					{
 						BGSEntryPoint::HandleEntryPoint(BGSEntryPoint::ENTRY_POINT::kModIncomingDamage, targetActor, a_hitData->weapon, targetInstance, &contribution);
 					}
 
-					REX::DEBUG("HookedDoHitMe: damageType[{}] contribution after incoming perks={:.2f} healthDamage running total={:.2f}",
-						i, contribution, a_hitData->healthDamage + contribution);
+					REX::DEBUG("HookedDoHitMe: damageType[{}] contribution after incoming perks={:.2f} healthDamage running total={:.2f}", i, contribution, a_hitData->healthDamage + contribution);
 
 					a_hitData->healthDamage += contribution;
 				}
@@ -598,6 +603,11 @@ namespace Cascadia
 			// TESObjectDOOR::CalculateDoFavor { 2198692 + 0x108 }
 			REL::Relocation<std::uintptr_t> TESObjectDOORCalculateDoFavor{ ID::TESObjectDOOR::CalculateDoFavor, 0x108 };
 			TESObjectDOORCalculateDoFavor.write<0>(static_cast<std::uint8_t>(0x05));
+
+			// GatherDetectionFormulaData { 2230824 + 0x1B3 }
+			REL::Relocation<std::uintptr_t> GatherDetectionFormulaData{ REL::ID(2230824), 0x1B3 };
+			trampoline.write_call<5>(GatherDetectionFormulaData.address(), &HookGatherDetectionFormulaData);
+			REL::WriteSafeFill(GatherDetectionFormulaData.address() + 5, REL::NOP, 6);
 		}
 
 		DetourXS hook_ShowBuildFailureMessage;
