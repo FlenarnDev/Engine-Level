@@ -5,8 +5,8 @@ Engine-Level is a native F4SE plugin project for Fallout 4 for Fallout Cascadia,
 ## Requirements
 
 - C++23 Compiler (MSVC or Clang-CL)  
-- [XMake]([url](https://xmake.io/)) [3.0.0+]
-- [CommonLibF4]([url](https://github.com/libxse/commonlibf4))  
+- [XMake](https://xmake.io/) [3.0.0+]
+- [CommonLibF4](https://github.com/libxse/commonlibf4)
 
 ## Building
 
