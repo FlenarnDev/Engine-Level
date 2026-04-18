@@ -156,7 +156,7 @@ namespace Cascadia
 								BGSInventoryItem::Stack* stack = inventoryItem->GetStackByID(inventoryUUIEntry->stackIndex.at(0));
 								if (stack)
 								{
-
+									// TODO - Check for 'Master Mechanic', if player has the perk, repair amount is set to 100% instead of scaling with repair skill.
 									float repairSkill = playerCharacter->GetActorValue(*Skills::CascadiaActorValues.Repair);
 									float repairAmount = 0.2f + 0.3f * (repairSkill / 100.0f); // Repair amount scales from 20% at 0 repair skill to 50% at 100 repair skill.
 
