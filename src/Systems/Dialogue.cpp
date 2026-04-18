@@ -139,15 +139,18 @@ namespace Cascadia
 
 						const std::string failedPrefix = "[FAILED] ";
 						const std::string succeededPrefix = "[SUCCEEDED] ";
-						switch (conditionItem->data.condition)
+						ENUM_COMPARISON_CONDITION compareCondition = static_cast<ENUM_COMPARISON_CONDITION>(static_cast<std::int32_t>(conditionItem->data.condition));
+
+
+						switch (compareCondition)
 						{
-						case 4: // ENUM_COMPARISON_CONDITION::kLessThan
+						case ENUM_COMPARISON_CONDITION::kLessThan:
 							if (responseText.find(failedPrefix) != 0)
 							{
 								responseText.insert(0, failedPrefix);
 							}
 							break;
-						case 3: // ENUM_COMPARISON_CONDITION::kGreaterThanEqual
+						case ENUM_COMPARISON_CONDITION::kGreaterThanEqual:
 							if (responseText.find(succeededPrefix) != 0)
 							{
 								responseText.insert(0, succeededPrefix);
@@ -175,7 +178,7 @@ namespace Cascadia
 
 			for (TESTopicInfo* info : npcInfos)
 			{
-				if ((info->formFlags >> 5) & 1) // Check if 'Deleted'.
+				if (info->IsDeleted()) // Check if 'Deleted'.
 				{
 					continue;
 				}
@@ -208,19 +211,19 @@ namespace Cascadia
 					}
 				}
 
-				if ((info->data.flags & TOPIC_INFO_DATA::TOPIC_INFO_FLAGS::kSayOnce) && (info->data.flags & TOPIC_INFO_DATA::TOPIC_INFO_FLAGS::kDialogueInfoSaid))
+				if ((info->IsSayOnce()) && (info->data.flags & TOPIC_INFO_DATA::TOPIC_INFO_FLAGS::kDialogueInfoSaid))
 				{
 					continue;
 				}
 
-				if (info->data.flags & TOPIC_INFO_DATA::TOPIC_INFO_FLAGS::kRandom)
+				if (info->IsRandom())
 				{
 					if (EvaluateInfoConditions(info, playerDialogue, true))
 					{
 						randomOptions.push_back(info);
 					}
 
-					if (info->data.flags & TOPIC_INFO_DATA::TOPIC_INFO_FLAGS::kRandomEnd && randomOptions.size() > 0)
+					if (info->IsRandomEnd() && randomOptions.size() > 0)
 					{
 						return PrependNPCSkillCheckText(randomOptions[BSRandom::UnsignedInt(0, randomOptions.size())]);
 					}
@@ -526,7 +529,7 @@ namespace Cascadia
 						}
 					}
 
-					if ((info->formFlags >> 5) & 1) // Check if form is 'Deleted'.
+					if (info->IsDeleted())
 					{
 						continue;
 					}
@@ -702,16 +705,13 @@ namespace Cascadia
 					TOPIC_INFO_SCENEDATA* sceneData = npcResponseInfo ? GetSceneData(npcResponseInfo) : nullptr;
 
 					bool endsScene = false;
-					if (info->data.flags.all(TOPIC_INFO_DATA::TOPIC_INFO_FLAGS::kEndRunningScene))
+					if (npcResponseInfo)
 					{
-						endsScene = true;
+						endsScene = npcResponseInfo->EndsRunningScene();
 					}
-					else if (npcResponseInfo)
+					else
 					{
-						if (npcResponseInfo->data.flags.all(TOPIC_INFO_DATA::TOPIC_INFO_FLAGS::kEndRunningScene))
-						{
-							endsScene = true;
-						}
+						endsScene = info->EndsRunningScene();
 					}
 
 					DialogueOption option = {};
