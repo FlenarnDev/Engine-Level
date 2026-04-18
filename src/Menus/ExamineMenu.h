@@ -156,13 +156,17 @@ namespace Cascadia
 								BGSInventoryItem::Stack* stack = inventoryItem->GetStackByID(inventoryUUIEntry->stackIndex.at(0));
 								if (stack)
 								{
-									if (stack->extra->GetHealthPerc() + 0.5f > 1.0f)
+
+									float repairSkill = playerCharacter->GetActorValue(*Skills::CascadiaActorValues.Repair);
+									float repairAmount = 0.2f + 0.3f * (repairSkill / 100.0f); // Repair amount scales from 20% at 0 repair skill to 50% at 100 repair skill.
+
+									if (stack->extra->GetHealthPerc() + repairAmount > 1.0f)
 									{
 										stack->extra->SetHealthPerc(1.0f);
 									}
 									else
 									{
-										stack->extra->SetHealthPerc(stack->extra->GetHealthPerc() + 0.5f);
+										stack->extra->SetHealthPerc(stack->extra->GetHealthPerc() + repairAmount);
 									}
 
 									BGSInventoryItem::CheckStackIDFunctor compareFunction(inventoryUUIEntry->stackIndex.at(0));
