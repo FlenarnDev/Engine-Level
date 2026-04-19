@@ -131,25 +131,25 @@ namespace Cascadia
 
 					switch (temporaryAVI->formID)
 					{
-					case 706:
+					case Skills::SPECIALFormIDs::StrengthID:
 						requirementString += "$CAS_STR";
 						break;
-					case 707:
+					case Skills::SPECIALFormIDs::PerceptionID:
 						requirementString += "$CAS_PER";
 						break;
-					case 708:
+					case Skills::SPECIALFormIDs::EnduranceID:
 						requirementString += "$CAS_END";
 						break;
-					case 709:
+					case Skills::SPECIALFormIDs::CharismaID:
 						requirementString += "$CAS_CHA";
 						break;
-					case 710:
+					case Skills::SPECIALFormIDs::IntelligenceID:
 						requirementString += "$CAS_INT";
 						break;
-					case 711:
+					case Skills::SPECIALFormIDs::AgilityID:
 						requirementString += "$CAS_AGI";
 						break;
-					case 712:
+					case Skills::SPECIALFormIDs::LuckID:
 						requirementString += "$CAS_LCK";
 						break;
 					default:

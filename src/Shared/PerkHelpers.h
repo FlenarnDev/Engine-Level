@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Systems/Skills.h"
+
 using namespace RE;
 
 namespace Cascadia
