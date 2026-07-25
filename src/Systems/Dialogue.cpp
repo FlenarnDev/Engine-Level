@@ -704,14 +704,10 @@ namespace Cascadia
 					// Get scene links for response.
 					TOPIC_INFO_SCENEDATA* sceneData = npcResponseInfo ? GetSceneData(npcResponseInfo) : nullptr;
 
-					bool endsScene = false;
+					bool endsScene = info->IsEndRunningScene();
 					if (npcResponseInfo)
 					{
-						endsScene = npcResponseInfo->EndsRunningScene();
-					}
-					else
-					{
-						endsScene = info->EndsRunningScene();
+						endsScene = npcResponseInfo->IsEndRunningScene();
 					}
 
 					DialogueOption option = {};
@@ -844,8 +840,8 @@ namespace Cascadia
 				}
 				else
 				{
-					// Info not found...
-					// reset playerInput to 4 so that the game doesn't keep trying to ask us for a non-existent TESTopicInfo.
+					// Info not found.
+					// Reset playerInput to 4 so that the game doesn't keep trying to ask us for a non-existent TESTopicInfo.
 					apPlayerDialogue->playerInput = 4;
 				}
 				return info;
