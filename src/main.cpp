@@ -14,17 +14,8 @@
 #include "Shared/SharedDeclarations.h"
 #include "Systems/Skills.h"
 #include "Systems/LockLevels.h"
-
-namespace Cascadia
-{
-	namespace Hooks
-	{
-		extern void Install();
-		extern void RegisterHooks();
-	}
-	
-	extern void DefineItemDegradationFormsFromGame();
-}
+#include "Shared/Hooks.h"
+#include "Systems/ItemDegradation.h"
 
 namespace
 {
@@ -189,7 +180,7 @@ F4SE_PLUGIN_LOAD(const F4SE::LoadInterface* a_f4se)
 
 	Cascadia::RegisterMenuOpenCloseEventSink();
 	Cascadia::ExamineMenu::hkOnButtonEvent::InstallHook();
-	Cascadia::Hooks::RegisterHooks();
+	Cascadia::Hooks::RegisterAllHooks();
 	Cascadia::Patches::Install();
 	Cascadia::ObScript::Install();
 

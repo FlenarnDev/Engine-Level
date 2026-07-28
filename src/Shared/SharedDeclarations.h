@@ -2,15 +2,56 @@
 
 using namespace RE;
 
+#define MOD_ESM "FalloutCascadia.esm"
+#define CURRENT_ESP "XXXXXX.esp"
+
 namespace Cascadia
 {
 	namespace Shared
 	{
 		extern BGSKeyword* noDegradation;
+		extern BGSKeyword* notScrappableKeyword;
+
 		extern TESLoadScreen* forcedLoadScreen;
 		void InitializeSharedVariables();
 		void InitializeSharedGameVariables();
 		extern bool noArmorDegradation;
 		extern bool noWeaponDegradation;
 	}
+
+	namespace Additions {
+		namespace Workbench_Additions {
+			extern bool bIsScrappingAllJunk;
+			extern TESGlobal* Scrap_SkillMult;
+		}
+
+		namespace Bartering_Additions {
+			extern TESGlobal* Barter_SkillMult;
+			extern TESGlobal* Barter_SkillBuyAddition;
+			extern TESGlobal* Barter_SkillSellAddition;
+		}
+
+		namespace ItemDegradation {
+			extern TESGlobal* Armor_CND_ReductionPerPercent;
+			extern TESGlobal* Weapon_CND_ReductionPerPercent;
+			extern TESGlobal* Weapon_AutomaticMult;
+			extern TESGlobal* Weapon_BoltMult;
+		}
+
+		namespace AI_Detection {
+			extern TESGlobal* Radio_MaxDistanceEffect;
+			extern TESGlobal* Radio_DistanceScaling;
+			extern TESGlobal* Radio_AdditionBase;
+			extern TESGlobal* Light_Addition;
+		}
+
+		namespace Mobility {
+			extern TESGlobal* JumpCost_BaseCost;
+			extern TESGlobal* JumpCost_BrokenLegsAdditionalMult;
+		}
+	}
+
+	
+
+	
 }

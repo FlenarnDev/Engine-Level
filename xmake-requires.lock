@@ -3,28 +3,29 @@
         version = "1.0"
     },
     ["windows|x64"] = {
-        ["cmake#31fecfc4"] = {
+        ["cmake#f56260b5"] = {
             repo = {
                 branch = "master",
-                commit = "30bf09689d5f65e9ea4e3904ceb675f8f04f0789",
-                url = "https://github.com/xmake-io/xmake-repo.git"
+                commit = "435c8191bcd0e17cb1519c25402da45653c7bc32",
+                url = "https://gitlab.com/tboox/xmake-repo.git"
             },
-            version = "4.0.2"
+            version = "4.2.3"
         },
-        ["commonlib-shared 9f05bd7de2c8cdbbc3f15128f17e5f7b1c72bce0#0defcfe0"] = {
-            repo = {
-                commit = "47eca6ffcb79208b9f757df369b2ddad322aac16",
-                url = "https://github.com/libxse/libxse-xrepo"
-            },
-            version = "9f05bd7de2c8cdbbc3f15128f17e5f7b1c72bce0"
-        },
-        ["spdlog#9c36f0a9"] = {
+        ["ninja#f56260b5"] = {
             repo = {
                 branch = "master",
-                commit = "d885463d7cea3253b436ded2f4f17fd8423c4eaa",
-                url = "https://github.com/xmake-io/xmake-repo.git"
+                commit = "435c8191bcd0e17cb1519c25402da45653c7bc32",
+                url = "https://gitlab.com/tboox/xmake-repo.git"
             },
-            version = "v1.13.0"
+            version = "v1.13.1"
+        },
+        ["spdlog v1.16.0#09c8c173"] = {
+            repo = {
+                branch = "master",
+                commit = "435c8191bcd0e17cb1519c25402da45653c7bc32",
+                url = "https://gitlab.com/tboox/xmake-repo.git"
+            },
+            version = "v1.16.0"
         }
     }
 }

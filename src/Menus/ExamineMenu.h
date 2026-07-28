@@ -1,12 +1,42 @@
 #pragma once
 
 #include "Shared/SharedFunctions.h"
+#include <string.h>
+#include <cstdarg>
+#include <cstdint>
+#include <RE/B/BGSInventoryInterface.h>
+#include <RE/B/BGSInventoryItem.h>
+#include <RE/B/BSFixedString.h>
+#include <RE/B/BSInputEventUser.h>
+#include <RE/B/BS_BUTTON_CODE.h>
+#include <RE/B/ButtonEvent.h>
+#include <RE/E/ENUM_FORM_ID.h>
+#include <RE/E/ExamineMenu.h>
+#include <RE/I/IMenu.h>
+#include <RE/I/InventoryUserUIInterfaceEntry.h>
+#include <RE/P/PipboyDataManager.h>
+#include <RE/P/PlayerCharacter.h>
+#include <RE/S/SendHUDMessage.h>
+#include <RE/S/Setting.h>
+#include <RE/T/TESDataHandler.h>
+#include <RE/T/TESObjectMISC.h>
+#include <RE/T/TESObjectREFR.h>
+#include <RE/U/UI.h>
+#include <Scaleform/G/GFx_FunctionHandler.h>
+#include <Scaleform/G/GFx_Movie.h>
+#include <Scaleform/G/GFx_Value.h>
+#include <Scaleform/P/Ptr.h>
+#include <REL/Relocation.h>
+#include <REX/LOG.h>
+#include <Shared/SharedDeclarations.h>
+#include <Systems/Skills.h>
 
 
 namespace Cascadia
 {
 	namespace ExamineMenu
 	{
+
 		class hkOnButtonEvent
 		{
 		public:
@@ -85,7 +115,7 @@ namespace Cascadia
 		public:
 			virtual void Call(const Params& a_params)
 			{
-				TESObjectMISC* repairKit = TESDataHandler::GetSingleton()->LookupForm<TESObjectMISC>(0x1D59F7, "FalloutCascadia.esm");
+				TESObjectMISC* repairKit = TESDataHandler::GetSingleton()->LookupForm<TESObjectMISC>(0x1D59F7, MOD_ESM);
 				std::uint32_t itemCount;
 				PlayerCharacter::GetSingleton()->GetItemCount(itemCount, repairKit, 0);
 				*a_params.retVal = itemCount;
@@ -97,7 +127,7 @@ namespace Cascadia
 		public:
 			virtual void Call(const Params& a_params)
 			{
-				TESObjectMISC* repairKit = TESDataHandler::GetSingleton()->LookupForm<TESObjectMISC>(0x1D59F7, "FalloutCascadia.esm");
+				TESObjectMISC* repairKit = TESDataHandler::GetSingleton()->LookupForm<TESObjectMISC>(0x1D59F7, MOD_ESM);
 				std::uint32_t itemCount;
 				PlayerCharacter::GetSingleton()->GetItemCount(itemCount, repairKit, 0);
 				*a_params.retVal = (itemCount > 0);
@@ -144,7 +174,7 @@ namespace Cascadia
 
 							if (!playerCharacter->IsGodMode())
 							{
-								TESObjectMISC* repairKit = TESDataHandler::GetSingleton()->LookupForm<TESObjectMISC>(0x1D59F7, "FalloutCascadia.esm");
+								TESObjectMISC* repairKit = TESDataHandler::GetSingleton()->LookupForm<TESObjectMISC>(0x1D59F7, MOD_ESM);
 								TESObjectREFR::RemoveItemData removeItemData{ repairKit, 1 };
 								playerCharacter->RemoveItem(removeItemData);
 							}
@@ -196,6 +226,8 @@ namespace Cascadia
 		public:
 			virtual void Call(const Params& a_params)
 			{
+				if (!UI::GetSingleton()->GetMenuOpen<RE::ExamineMenu>()) return;
+
 				Scaleform::Ptr<RE::ExamineMenu> examineMenu = UI::GetSingleton()->GetMenu<RE::ExamineMenu>();
 
 				examineMenu->repairing = true;
@@ -209,6 +241,7 @@ namespace Cascadia
 			virtual void Call(const Params& a_params)
 			{
 				*a_params.retVal = nullptr;
+				if (!UI::GetSingleton()->GetMenuOpen<RE::ExamineMenu>()) return;
 				Scaleform::Ptr<RE::ExamineMenu> examineMenu = UI::GetSingleton()->GetMenu<RE::ExamineMenu>();
 
 				std::uint32_t selectedIndex = examineMenu->GetSelectedIndex();
@@ -244,6 +277,108 @@ namespace Cascadia
 			}
 		};
 
+		class NoJunk : public Scaleform::GFx::FunctionHandler
+		{
+		public:
+			virtual void Call(const Params& a_params)
+			{
+				RE::GameSettingCollection* gameSettingCollection = RE::GameSettingCollection::GetSingleton();
+				// @TODO: Translations
+				RE::SendHUDMessage::ShowHUDMessage("You don't have any junk to scrap!", nullptr, true, true);
+			}
+		};
+
+		class OnEscapePress : public Scaleform::GFx::FunctionHandler
+		{
+		public:
+			virtual void Call(const Params& a_params)
+			{
+				REX::DEBUG("this.BGSCodeObj.OnEscapePress");
+				Scaleform::Ptr<RE::ExamineMenu> examineMenu = RE::UI::GetSingleton()->GetMenu<RE::ExamineMenu>();
+				if (examineMenu)
+				{
+					REX::DEBUG("Examine menu!");
+					examineMenu->repairing = false;
+					// examineMenu->uiMovie->asMovieRoot->Invoke("root.BaseInstance.UpdateButtons", nullptr, nullptr, 0);
+				}
+
+				Cascadia::Additions::Workbench_Additions::bIsScrappingAllJunk = false;
+			}
+		};
+
+		class HasAnyJunk : public Scaleform::GFx::FunctionHandler
+		{
+		public:
+			virtual void Call(const Params& a_params)
+			{
+				auto player = RE::PlayerCharacter::GetSingleton();
+
+				bool bHasJunk = false;
+
+				for (std::uint32_t i = 0; i < player->inventoryList->data.size(); i++)
+				{
+					RE::BGSInventoryItem inventoryItem = player->inventoryList->data.at(i);
+
+					if (!inventoryItem.object || !Shared::IsJunkItem(inventoryItem.object) || inventoryItem.IsQuestObject(0))
+						continue;
+
+					auto baseComp = Shared::GetBaseComponentFromForm(inventoryItem.object);
+					if (!baseComp || !baseComp->scrapItem || baseComp->scrapItem->GetFormID() == inventoryItem.object->GetFormID())
+						continue;
+
+
+
+					switch (inventoryItem.object->GetFormType())
+					{
+					case RE::ENUM_FORM_ID::kWEAP: {
+						if (static_cast<RE::TESObjectWEAP*>(inventoryItem.object)->HasKeyword(Shared::notScrappableKeyword)) {
+							continue;
+						}
+						break;
+					}
+					case RE::ENUM_FORM_ID::kARMO: {
+						if (static_cast<RE::TESObjectARMO*>(inventoryItem.object)->HasKeyword(Shared::notScrappableKeyword)) {
+							continue;
+						}
+						break;
+					}
+					default:
+						break;
+					}
+
+					bHasJunk = true;
+					break;
+				}
+
+				*a_params.retVal = bHasJunk;
+			}
+		};
+
+		class IsInAllJunk : public Scaleform::GFx::FunctionHandler
+		{
+		public:
+			virtual void Call(const Params& a_params)
+			{
+				*a_params.retVal = Cascadia::Additions::Workbench_Additions::bIsScrappingAllJunk;
+			}
+		};
+
+		class ScrapAllJunk : public Scaleform::GFx::FunctionHandler
+		{
+		public:
+			virtual void Call(const Params& a_params)
+			{
+				Scaleform::Ptr<RE::ExamineMenu> examineMenu = RE::UI::GetSingleton()->GetMenu<RE::ExamineMenu>();
+				if (!examineMenu) return;
+				Cascadia::Additions::Workbench_Additions::bIsScrappingAllJunk = true;
+				//examineMenu->BuildWeaponScrappingArray();
+				// @TODO: Add this to .as file.
+				examineMenu->uiMovie->asMovieRoot->Invoke("root.BaseInstance.scrapAllJunkCallbackFromCPP", nullptr, nullptr, 0);
+			}
+		};
+
+
+
 		bool RegisterScaleform(Scaleform::GFx::Movie* a_view, Scaleform::GFx::Value* a_value)
 		{
 			Scaleform::GFx::Value currentSWFPath;
@@ -263,6 +398,12 @@ namespace Cascadia
 					Shared::RegisterFunction<NeedsRepair>(&bgsCodeObj, a_view->asMovieRoot, "needsRepair");
 					Shared::RegisterFunction<RepairFunction>(&bgsCodeObj, a_view->asMovieRoot, "CASRepairItem");
 					Shared::RegisterFunction<RepairWorkbench>(&bgsCodeObj, a_view->asMovieRoot, "RepairWorkbench");
+
+					Shared::RegisterFunction<ScrapAllJunk>(&bgsCodeObj, a_view->asMovieRoot, "ScrapAllJunk");
+					Shared::RegisterFunction<IsInAllJunk>(&bgsCodeObj, a_view->asMovieRoot, "IsInAllJunk");
+					Shared::RegisterFunction<HasAnyJunk>(&bgsCodeObj, a_view->asMovieRoot, "HasAnyJunk");
+					Shared::RegisterFunction<NoJunk>(&bgsCodeObj, a_view->asMovieRoot, "NoJunk");
+					Shared::RegisterFunction<OnEscapePress>(&bgsCodeObj, a_view->asMovieRoot, "CancelBackPressed");
 				}
 				return true;
 			}

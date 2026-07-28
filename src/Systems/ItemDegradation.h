@@ -6,5 +6,5 @@ namespace Cascadia
 {
 	void DefineItemDegradationFormsFromGame();
 
-	std::map<TESAmmo*, float> ammoDegradationMap;
+	extern std::map<TESAmmo*, float> ammoDegradationMap;
 }

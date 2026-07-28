@@ -1,4 +1,5 @@
 #include "AmmoSwitch.h"
+#include "../Shared/SharedDeclarations.h"
 
 namespace Cascadia
 {
@@ -199,9 +200,9 @@ namespace Cascadia
 			BSTArray<TESForm*> ammoEntries = dataHandler->formArrays[std::to_underlying(ENUM_FORM_ID::kAMMO)];
 			BSTArray<TESForm*> keywordEntries = dataHandler->formArrays[std::to_underlying(ENUM_FORM_ID::kKYWD)];
 			BSTArray<TESForm*> omodEntries = dataHandler->formArrays[std::to_underlying(ENUM_FORM_ID::kOMOD)];
-			noFormlistWEAP = dataHandler->LookupForm<BGSKeyword>(0x2D9AB8, "FalloutCascadia.esm");
-			uniqueFormlistWEAP = dataHandler->LookupForm<BGSKeyword>(0x2D9AB9, "FalloutCascadia.esm");
-			omodAPKeyword = dataHandler->LookupForm<BGSKeyword>(0x2F32F2, "FalloutCascadia.esm");
+			noFormlistWEAP = dataHandler->LookupForm<BGSKeyword>(0x2D9AB8, MOD_ESM);
+			uniqueFormlistWEAP = dataHandler->LookupForm<BGSKeyword>(0x2D9AB9, MOD_ESM);
+			omodAPKeyword = dataHandler->LookupForm<BGSKeyword>(0x2F32F2, MOD_ESM);
 			materialChange = dataHandler->LookupForm<BGSKeyword>(0x000001, "CAS_AmmoSwitch_Extension.esp");
 			
 			const char* standardListPrefix = "CAS_AmmoSwitch_Standard_";

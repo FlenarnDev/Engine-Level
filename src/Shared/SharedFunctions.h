@@ -46,5 +46,9 @@ namespace Cascadia
 		bool IsXPMetervisible();
 
 		BGSKeyword* GetAmmoKeywordStandard(TESAmmo* ammo);
+
+		bool IsJunkItem(RE::TESBoundObject* obj);
+
+		RE::BGSComponent* GetBaseComponentFromForm(RE::TESForm* a_form);
 	}
 }

@@ -1,4 +1,108 @@
 #include "Shared/Hooks.h"
+#include <cstdint>
+#include <string.h>
+#include <algorithm>
+#include <cmath>
+#include <cstdarg>
+#include <cstdio>
+#include <format>
+#include <map>
+#include <string_view>
+#include <utility>
+#include <vector>
+#include <RE/A/Actor.h>
+#include <RE/A/ActorEquipManager.h>
+#include <RE/A/ActorUtils.h>
+#include <RE/A/ActorValue.h>
+#include <RE/A/ActorValueInfo.h>
+#include <RE/A/ActorValueOwner.h>
+#include <RE/A/ACTOR_VALUE_MODIFIER.h>
+#include <RE/A/AIFormulas.h>
+#include <RE/A/AIProcess.h>
+#include <RE/A/AlchemyItem.h>
+#include <RE/B/BaseFormComponent.h>
+#include <RE/B/BGSBodyPart.h>
+#include <RE/B/BGSDamageType.h>
+#include <RE/B/BGSDefaultObject.h>
+#include <RE/B/BGSEntryPoint.h>
+#include <RE/B/BGSEquipIndex.h>
+#include <RE/B/BGSInventoryInterface.h>
+#include <RE/B/BGSInventoryItem.h>
+#include <RE/B/BGSInventoryList.h>
+#include <RE/B/BGSObjectInstance.h>
+#include <RE/B/BGSScene.h>
+#include <RE/B/BGSSceneActionNPCResponseDialogue.h>
+#include <RE/B/BGSSceneActionPlayerDialogue.h>
+#include <RE/B/BGSSoundDescriptorForm.h>
+#include <RE/B/BGSTypedFormValuePair.h>
+#include <RE/B/bhkCharacterController.h>
+#include <RE/B/BSCoreTypes.h>
+#include <RE/B/BSFixedString.h>
+#include <RE/B/BSRandom.h>
+#include <RE/B/BSTArray.h>
+#include <RE/B/BSTHashMap.h>
+#include <RE/B/BSTTuple.h>
+#include <RE/C/CombatFormulas.h>
+#include <RE/D/DetectionData.h>
+#include <RE/E/ENUM_FORM_ID.h>
+#include <RE/E/EquippedItem.h>
+#include <RE/E/ExamineConfirmMenu.h>
+#include <RE/E/ExamineMenu.h>
+#include <RE/E/ExtraDataList.h>
+#include <RE/E/ExtraHealth.h>
+#include <RE/E/EXTRA_DATA_TYPE.h>
+#include <RE/F/FavoritesManager.h>
+#include <RE/G/GamePlayFormulas.h>
+#include <RE/H/HitData.h>
+#include <RE/H/HUDNotificationEvent.h>
+#include <RE/IDs.h>
+#include <RE/I/InventoryUserUIInterfaceEntry.h>
+#include <RE/I/InventoryUserUIUtils.h>
+#include <RE/L/LoadingMenu.h>
+#include <RE/N/nsHUDTypes.h>
+#include <RE/O/ObjectEquipParams.h>
+#include <RE/P/PipboyArray.h>
+#include <RE/P/PipboyDataManager.h>
+#include <RE/P/PipboyInventoryData.h>
+#include <RE/P/PipboyObject.h>
+#include <RE/P/PipboyPrimitiveValue.h>
+#include <RE/P/PipboyValue.h>
+#include <RE/P/PlayerCharacter.h>
+#include <RE/P/PowerArmorModMenu.h>
+#include <RE/R/RadioManager.h>
+#include <RE/R/RepairFailureCallback.h>
+#include <RE/S/SendHUDMessage.h>
+#include <RE/S/Setting.h>
+#include <RE/T/TBO_InstanceData.h>
+#include <RE/T/TESAmmo.h>
+#include <RE/T/TESBoundObject.h>
+#include <RE/T/TESDataHandler.h>
+#include <RE/T/TESForm.h>
+#include <RE/T/TESFullName.h>
+#include <RE/T/TESObjectARMO.h>
+#include <RE/T/TESObjectMISC.h>
+#include <RE/T/TESObjectREFR.h>
+#include <RE/T/TESObjectWEAP.h>
+#include <RE/T/TESTopicInfo.h>
+#include <RE/U/UI.h>
+#include <RE/W/WEAPON_FLAGS.h>
+#include <RE/W/WEAPON_TYPE.h>
+#include <RE/W/WorkbenchMenuBase.h>
+#include <Scaleform/G/GFx_Value.h>
+#include <Scaleform/P/Ptr.h>
+#include <REL/ID.h>
+#include <REL/Relocation.h>
+#include <REL/Trampoline.h>
+#include <REL/Utility.h>
+#include <REX/LOG.h>
+#include <detourXS/detourxs.h>
+#include "SharedDeclarations.h"
+#include "SharedFunctions.h"
+#include <Systems/AmmoSwitch.h>
+#include <Systems/Dialogue.h>
+#include <Systems/LockLevels.h>
+#include <Systems/Skills.h>
+#include "InventoryHelpers.h"
 
 using namespace RE;
 
@@ -102,6 +206,8 @@ namespace Cascadia
 
 		char HookAIFormulasGetBarterValue_HandleEntryPoint(std::int32_t a_EntryPoint, Actor* a_perkOwner, ...)
 		{
+			using namespace Cascadia::Additions::Bartering_Additions;
+
 			bool selling = (static_cast<BGSEntryPoint::ENTRY_POINT>(a_EntryPoint) == BGSEntryPoint::ENTRY_POINT::kModSellPrices);
 
 			va_list args;
@@ -116,11 +222,11 @@ namespace Cascadia
 
 			if (selling)
 			{
-				barterMultiplier = 0.45f * playerCharacter->GetActorValue(*Skills::CascadiaActorValues.Barter) + 45.0f;
+				barterMultiplier = Barter_SkillMult->GetValue() * playerCharacter->GetActorValue(*Skills::CascadiaActorValues.Barter) + Barter_SkillSellAddition->GetValue();
 			}
 			else
 			{
-				barterMultiplier = -0.45f * playerCharacter->GetActorValue(*Skills::CascadiaActorValues.Barter) + 155.0f;
+				barterMultiplier = -Barter_SkillMult->GetValue() * playerCharacter->GetActorValue(*Skills::CascadiaActorValues.Barter) + Barter_SkillBuyAddition->GetValue();
 				
 			}
 
@@ -156,8 +262,10 @@ namespace Cascadia
 		// Util function for Actor::Jump hooks
 		float JumpCostCalculator(Actor* a_actor)
 		{
+			using namespace Cascadia::Additions::Mobility;
+
 			ActorValue* actorValue = ActorValue::GetSingleton();
-			float calculatedCost = 5.0;
+			float calculatedCost = JumpCost_BaseCost->GetValue();
 
 			std::uint32_t brokenLegs = 0;
 			if (a_actor->GetActorValue(*actorValue->leftMobiltyCondition) == 0.0f )
@@ -170,7 +278,7 @@ namespace Cascadia
 				brokenLegs += 1;
 			}
 
-			calculatedCost += calculatedCost * (brokenLegs * 0.5f);
+			calculatedCost += calculatedCost * (brokenLegs * JumpCost_BrokenLegsAdditionalMult->GetValue());
 
 			return calculatedCost;
 		}
@@ -612,7 +720,7 @@ namespace Cascadia
 
 		DetourXS hook_ShowBuildFailureMessage;
 		typedef void(ShowBuildFailureMessageSig)(WorkbenchMenuBase*);
-
+		REL::Relocation<ShowBuildFailureMessageSig> WorkbenchMenuBaseShowBuildFailureMessage_Original;
 		void HookWorkbenchMenuBaseShowBuildFailureMessage(WorkbenchMenuBase* a_this)
 		{
 			if (a_this->repairing)
@@ -688,12 +796,18 @@ namespace Cascadia
 
 		DetourXS hook_GetBuildConfirmQuestion;
 		typedef void(GetBuildConfirmQuestionSig)(RE::ExamineMenu*, char*, std::uint32_t);
-
+		REL::Relocation<GetBuildConfirmQuestionSig> ExamineMenuGetBuildConfirmQuestion_Original;
 		void HookExamineMenuGetBuildConfirmQuestion(RE::ExamineMenu* a_this, char* a_buffer, std::uint32_t a_bufferLength)
 		{
 			const WorkbenchMenuBase::ModChoiceData* modChoiceData;
 			const char* fullName;
 			const char* type;
+
+			if (Cascadia::Additions::Workbench_Additions::bIsScrappingAllJunk) {
+				// @TODO: Translations
+				snprintf(a_buffer, a_bufferLength, "Scrap all junk items?");
+				return;
+			}
 
 			if (a_this->QCurrentModChoiceData()->recipe)
 			{
@@ -738,7 +852,7 @@ namespace Cascadia
 
 		DetourXS hook_QCurrentModChoiceData;
 		typedef const WorkbenchMenuBase::ModChoiceData* (QCurrentModChoiceDataSig)(WorkbenchMenuBase*);
-
+		REL::Relocation<QCurrentModChoiceDataSig> WorkbenchMenuBaseQCurrentModChoiceData_Original;
 		const WorkbenchMenuBase::ModChoiceData* HookWorkbenchMenuBaseQCurrentModChoiceData(WorkbenchMenuBase* a_this)
 		{
 			if (a_this->repairing)
@@ -1022,11 +1136,11 @@ namespace Cascadia
 				std::uint32_t flags = data->flags.underlying();
 				if (flags & std::uint32_t(WEAPON_FLAGS::kAutomatic))
 				{
-					conditionReduction *= 0.5f;
+					conditionReduction *= Cascadia::Additions::ItemDegradation::Weapon_AutomaticMult->GetValue();
 				}
 				else if (flags & std::uint32_t(WEAPON_FLAGS::kBoltAction))
 				{
-					conditionReduction *= 2.0f;
+					conditionReduction *= Cascadia::Additions::ItemDegradation::Weapon_BoltMult->GetValue();
 				}
 
 				// Reduces damage to weapon depending on players relevant weapon skill level.
@@ -1280,6 +1394,8 @@ namespace Cascadia
 					inventoryList->rwLock.lock_read();
 					std::uint32_t inventoryListSize = inventoryList->data.size();
 
+					const double CND_ReductionPerPercent = Cascadia::Additions::ItemDegradation::Armor_CND_ReductionPerPercent->GetValue();
+
 					for (BGSInventoryItem& item : inventoryList->data)
 					{
 						if (item.IsEquipped(0))
@@ -1298,7 +1414,7 @@ namespace Cascadia
 									{
 										REX::DEBUG("Hit item: {}, condition prior to degradation: {}", item.object->GetFormEditorID(), currentHealth);
 
-										float conditionReduction = (a_physicalDamage - damageResistanceForHitLimb) / damageResistanceForHitLimb * 0.0025f; // 0.0025% per percent.
+										float conditionReduction = (a_physicalDamage - damageResistanceForHitLimb) / damageResistanceForHitLimb * CND_ReductionPerPercent; // 0.0025% per percent.
 										float newHealth = std::max(currentHealth - conditionReduction, 0.0f);
 
 										if (newHealth == 0.0f)
@@ -1347,6 +1463,7 @@ namespace Cascadia
 
 		DetourXS hook_GamePlayFormulasCanPickLockGateCheck;
 		typedef bool(GamePlayFormulasCanPickLockGateCheckSig)(LockLevels::LOCK_LEVEL_EXTENDED);
+		REL::Relocation<GamePlayFormulasCanPickLockGateCheckSig> GamePlayFormulasCanPickLockGateCheck_Original;
 		bool HookGamePlayFormulasCanPickLockGateCheck(LockLevels::LOCK_LEVEL_EXTENDED a_lockLevel)
 		{
 			PlayerCharacter* playerCharacter = PlayerCharacter::GetSingleton();
@@ -1390,6 +1507,7 @@ namespace Cascadia
 
 		DetourXS hook_GamePlayFormulasCanHackGateCheck;
 		typedef bool(GamePlayFormulasCanHackGateCheckSig)(LockLevels::LOCK_LEVEL_EXTENDED);
+		REL::Relocation<GamePlayFormulasCanHackGateCheckSig> GamePlayFormulasCanHackGateCheck_Original;
 		bool HookGamePlayFormulasCanHackGateCheck(LockLevels::LOCK_LEVEL_EXTENDED a_lockLevel)
 		{
 			PlayerCharacter* playerCharacter = PlayerCharacter::GetSingleton();
@@ -1552,7 +1670,7 @@ namespace Cascadia
 
 		DetourXS hook_REFR_LOCKIsInaccessible;
 		typedef bool(REFR_LOCKIsInaccessibleSig)(std::uint32_t);
-
+		REL::Relocation<REFR_LOCKIsInaccessibleSig> REFR_LOCKIsInaccessible_Original;
 		bool HookREFR_LOCKIsInaccessible(std::uint32_t a_lockLevel)
 		{
 			return ((a_lockLevel - 6) & 0xFFFFFFFC) == 0 && a_lockLevel != 7;
@@ -1560,7 +1678,7 @@ namespace Cascadia
 
 		DetourXS hook_GamePlayFormulasGetLockXPReward;
 		typedef float (GamePlayFormulasGetLockXPRewardSig)(LockLevels::LOCK_LEVEL_EXTENDED);
-
+		REL::Relocation<GamePlayFormulasGetLockXPRewardSig> GamePlayFormulasGetLockXPReward_Original;
 		float HookGamePlayFormulasGetLockXPReward(LockLevels::LOCK_LEVEL_EXTENDED a_lockLevel)
 		{
 			GameSettingCollection* settings = GameSettingCollection::GetSingleton();
@@ -1582,7 +1700,7 @@ namespace Cascadia
 
 		DetourXS hook_REFR_LOCKNumericValueToEnum;
 		typedef LockLevels::LOCK_LEVEL_EXTENDED(REFR_LOCKNumericValueToEnumSig)(std::uint32_t);
-
+		REL::Relocation<REFR_LOCKNumericValueToEnumSig> REFR_LOCKNumericValueToEnum_Original;
 		LockLevels::LOCK_LEVEL_EXTENDED HookREFR_LOCKNumericValueToEnum(std::int32_t a_val)
 		{
 			if (a_val <= 1) {
@@ -1631,7 +1749,7 @@ namespace Cascadia
 
 		DetourXS hook_AIProcessGetActorLightLevel;
 		typedef float(AIProcessGetActorLightLevelSig)(AIProcess*);
-
+		REL::Relocation<AIProcessGetActorLightLevelSig> AIProcessGetActorLightLevel_Original;
 		float HookAIProcessGetActorLightLevel(AIProcess* a_this)
 		{
 			float lightLevel = 0.0f;
@@ -1646,7 +1764,7 @@ namespace Cascadia
 			if (playerCharacter && playerCharacter->currentProcess == a_this) {
 				if (playerCharacter->IsPipboyLightOn())
 				{
-					return lightLevel += 200.0f;
+					return lightLevel += Cascadia::Additions::AI_Detection::Light_Addition->GetValue();
 				}
 			}
 
@@ -1659,6 +1777,7 @@ namespace Cascadia
 
 		void HookActorCalculateDetectionFormula(Actor* a_this, Actor* a_target, DetectionData* a_detectionData)
 		{
+			using namespace Cascadia::Additions::AI_Detection;
 			if (!ActorCalculateDetectionFormula_Original || !a_this || !a_target || !a_detectionData)
 			{
 				return;
@@ -1677,10 +1796,11 @@ namespace Cascadia
 			const float dz = a_this->data.location.z - a_target->data.location.z;
 			const float distance = std::sqrt(dx * dx + dy * dy + dz * dz);
 
-			if (RadioManager::QPlayerRadioEnabled() && distance < 2000.0f)
+			const float RadioMaxDistanceEffectOnDetection = Radio_MaxDistanceEffect->GetValue();
+			if (RadioManager::QPlayerRadioEnabled() && distance < RadioMaxDistanceEffectOnDetection)
 			{
-				const float normalizedDistance = std::fminf(1.0f, distance / 2000.0f);
-				const float bonus = 98.0f * (1.0f - normalizedDistance) + 2.0f;
+				const float normalizedDistance = std::fminf(1.0f, distance / RadioMaxDistanceEffectOnDetection);
+				const float bonus = Radio_DistanceScaling->GetValue() * (1.0f - normalizedDistance) + Radio_AdditionBase->GetValue();
 				const float soundBonus = std::clamp(bonus, 0.0f, 30000.0f);
 
 				if (a_detectionData->soundDetectionLevel < soundBonus)
@@ -1693,7 +1813,7 @@ namespace Cascadia
 
 		DetourXS hook_AIFormulasComputePickpocketSuccess;
 		typedef std::uint32_t(AIFormulasComputePickpocketSuccessSig)(float, float, std::int32_t, float, Actor*, Actor*, TESForm*, bool);
-
+		REL::Relocation<AIFormulasComputePickpocketSuccessSig> AIFormulasComputePickpocketSuccess_Original;  // @TODO: Flenarn did not have this.
 		std::uint32_t HookAIFormulasComputePickpocketSuccess(
 			float a_thiefSkill,
 			float a_targetSkill,
@@ -1753,375 +1873,213 @@ namespace Cascadia
 			return static_cast<std::uint32_t>(chance);
 		}
 
+		DetourXS hook_BuildWeaponScrappingArray;
+		typedef void(BuildWeaponScrappingArraySig)(RE::ExamineMenu*);
+		REL::Relocation<BuildWeaponScrappingArraySig> BuildWeaponScrappingArrayOriginal;
+		void HookBuildWeaponScrappingArray(RE::ExamineMenu* a_this)
+		{
+			using namespace Cascadia::Additions::Workbench_Additions;
+			if (!bIsScrappingAllJunk) {
+				// Vanilla scrapping based on CND.
+				BuildWeaponScrappingArrayOriginal(a_this);
+
+				std::uint32_t selectedIndex = a_this->GetSelectedIndex();
+				if (!a_this->invInterface.entriesInvalid && (selectedIndex & 0x80000000) == 0 && selectedIndex < a_this->invInterface.stackedEntries.size())
+				{
+					RE::InventoryUserUIInterfaceEntry* inventoryUUIEntry = (a_this->invInterface.stackedEntries.data() + selectedIndex);
+					const RE::BGSInventoryItem* inventoryItem = RE::BGSInventoryInterface::GetSingleton()->RequestInventoryItem(inventoryUUIEntry->invHandle.id);
+					if (inventoryItem) {
+
+						if (inventoryItem->stackData->extra->GetHealthPerc() >= 0) {
+							const float oneMinusCND = inventoryItem->stackData->extra->GetHealthPerc();
+							for (std::uint32_t i = 0; i < a_this->scrappingArray.size(); i++) {
+								a_this->scrappingArray[i].second = a_this->scrappingArray[i].second * oneMinusCND;
+								auto baseCompObj = Shared::GetBaseComponentFromForm(a_this->scrappingArray[i].first);
+								if (baseCompObj && baseCompObj->scrapItem) {
+									a_this->scrappingArray[i].first = baseCompObj->scrapItem;
+								}
+
+							}
+						}
+					}
+				}
+
+				return;
+			}
+
+			a_this->scrappingArray.clear();
+
+			// Scrap all junk logic.
+			auto player = RE::PlayerCharacter::GetSingleton();
+			const double salvageSkillMod = (Cascadia::Skills::GetPlayerAVValue(Cascadia::Skills::CascadiaActorValues.Repair) / 100.0f) * Scrap_SkillMult->GetValue();
+			player->inventoryList->rwLock.lock_read();
+			for (std::uint32_t i = 0; i < player->inventoryList->data.size(); i++)
+			{
+				RE::BGSInventoryItem inventoryItem = player->inventoryList->data.at(i);
+
+				if (!inventoryItem.object || !Shared::IsJunkItem(inventoryItem.object) || inventoryItem.IsQuestObject(0))
+					continue;
+
+				auto baseComp = Shared::GetBaseComponentFromForm(inventoryItem.object);
+				if (!baseComp || !baseComp->scrapItem || baseComp->scrapItem->GetFormID() == inventoryItem.object->GetFormID())
+					continue;
+
+
+				RE::TESObjectMISC* miscObject = static_cast<RE::TESObjectMISC*>(inventoryItem.object);
+				if (!miscObject)
+					continue;
+
+				if (!miscObject->componentData || miscObject->componentData->empty())
+					continue;
+
+				for (auto it = miscObject->componentData->begin(); it != miscObject->componentData->end(); ++it) {
+					//auto compObj = static_cast<RE::BGSComponent*>(it->first);
+					//if (!it->first->IsBoundObject() && (compObj->scrapItem != nullptr && compObj->scrapItem->GetFormID() == miscObject->GetFormID()))
+						//continue;
+
+					auto boundObj = reinterpret_cast<RE::TESBoundObject*>(it->first);
+
+					auto baseCompObj = Shared::GetBaseComponentFromForm(it->first);
+					if (baseCompObj && baseCompObj->scrapItem) {
+						boundObj = baseCompObj->scrapItem;
+						//a_this->scrappingArray[i].first = baseCompObj;
+					}
+
+					//
+					// REX::DEBUG("BuildWeaponScrappingArray - scrapItem found with count: {}", it->second.i);
+
+
+					const auto oldCount = it->second.i * inventoryItem.GetCount();
+
+					std::uint32_t count = std::max(oldCount * salvageSkillMod, 1.0);
+
+					if (count != 0) {
+						a_this->scrappingArray.push_back(RE::BSTTuple<RE::TESBoundObject*, std::uint32_t>(boundObj, count));
+					}
+
+					REX::DEBUG("BuildWeaponScrappingArray - scrapItem found with count: {}. New Count: {}", oldCount, count);
+
+
+				}
+			}
+			player->inventoryList->rwLock.unlock_read();
+
+		}
+
+		using RemoveItem_t = RE::ObjectRefHandle(*)(RE::TESObjectREFR*, RE::TESObjectREFR::RemoveItemData&);
+		inline REL::Relocation<RemoveItem_t> _OriginalRemoveItem;
+
+		RE::ObjectRefHandle Hooked_RemoveItem(RE::TESObjectREFR* a_this, RE::TESObjectREFR::RemoveItemData& a_data)
+		{
+			using namespace Cascadia::Additions::Workbench_Additions;
+
+			if (bIsScrappingAllJunk) {
+				if (!RE::UI::GetSingleton()->GetMenuOpen<RE::ExamineMenu>()) {
+					bIsScrappingAllJunk = false;
+					return _OriginalRemoveItem(a_this, a_data);
+				}
+
+				if (!Shared::IsJunkItem(a_data.object)) {
+					bIsScrappingAllJunk = false;
+					auto player = RE::PlayerCharacter::GetSingleton();
+					player->inventoryList->rwLock.lock_read();
+					for (std::uint32_t i = 0; i < player->inventoryList->data.size(); i++)
+					{
+						RE::BGSInventoryItem inventoryItem = player->inventoryList->data.at(i);
+						if (!inventoryItem.object || !Shared::IsJunkItem(inventoryItem.object) || inventoryItem.IsQuestObject(0))
+							continue;
+
+
+						//RE::TESObjectMISC* miscObj = static_cast<RE::TESObjectMISC*>(inventoryItem.object);
+
+						//if (!miscObj->componentData)
+							//continue;
+
+						//const auto first = miscObj->componentData->at(0).first;
+
+						//RE::BGSComponent* compObj = static_cast<RE::BGSComponent*>(first);
+
+						//if ((compObj && compObj->scrapItem != nullptr && compObj->scrapItem->GetFormID() == miscObj->GetFormID()))
+							//continue;
+
+						//auto miscCompObj = static_cast<RE::TESObjectMISC*>(first);
+
+						//if (miscCompObj && miscCompObj->componentData && !miscCompObj->componentData->empty() && miscCompObj->componentData->at(0).first && miscCompObj->componentData->at(0).first->GetFormID() == miscObj->GetFormID())
+							//continue;
+
+
+						auto baseComp = Shared::GetBaseComponentFromForm(inventoryItem.object);
+						if (!baseComp || !baseComp->scrapItem || baseComp->scrapItem->GetFormID() == inventoryItem.object->GetFormID())
+							continue;
+
+						//if (inventoryItem.GetCount() == 0) {
+
+						//}
+
+
+
+						auto removeData = RE::TESObjectREFR::RemoveItemData(inventoryItem.object, inventoryItem.GetCount());
+						player->inventoryList->rwLock.unlock_read();
+						player->RemoveItem(removeData);
+						player->inventoryList->rwLock.lock_read();
+					}
+					player->inventoryList->rwLock.unlock_read();
+					RE::UIUtils::PlayMenuSound("OBJLunchboxKidsRobotBuild");
+					RE::SendHUDMessage::ShowHUDMessage("All junk items were scrapped!", nullptr, false, true);
+					RE::UI::GetSingleton()->GetMenu<RE::ExamineMenu>()->uiMovie->asMovieRoot->Invoke("root.BaseInstance.UpdateButtons", nullptr, nullptr, 0);
+
+					RE::TESObjectREFR::RemoveItemData a = RE::TESObjectREFR::RemoveItemData(a_this, 0);
+					return _OriginalRemoveItem(a_this, a);
+				}
+				else {
+					return _OriginalRemoveItem(a_this, a_data);
+				}
+			}
+
+
+			return _OriginalRemoveItem(a_this, a_data);
+		}
+
 		// ========== REGISTERS ==========
 
-		void RegisterAIFormulasComputePickpocketSuccess()
+		static void InstallRemoveItemHook()
 		{
-			REL::Relocation<AIFormulasComputePickpocketSuccessSig> functionLocation{ ID::AIFormulas::ComputePickpocketSuccess };
-			if (hook_AIFormulasComputePickpocketSuccess.Create(reinterpret_cast<void*>(functionLocation.address()), &HookAIFormulasComputePickpocketSuccess))
-			{
-				REX::DEBUG("Installed 'AIFormulas::ComputePickpocketSuccess' hook.");
-			}
-			else
-			{
-				REX::CRITICAL("Failed to hook 'AIFormulas::ComputePickpocketSuccess', exiting.");
-			}
+			REL::Relocation<std::uintptr_t> vtbl{ RE::PlayerCharacter::VTABLE[0] };
+			_OriginalRemoveItem = vtbl.write_vfunc(0x6D, &Hooked_RemoveItem);
 		}
 
-		void RegisterActorCalculateDetectionFormula()
+		void RegisterAllHooks()
 		{
-			REL::Relocation<ActorCalculateDetectionFormulaSig> functionLocation{ ID::Actor::CalculateDetectionFormula };
-			if (hook_ActorCalculateDetectionFormula.Create(reinterpret_cast<void*>(functionLocation.address()), &HookActorCalculateDetectionFormula))
-			{
-				REX::DEBUG("Installed 'Actor::CalculateDetectionFormula' hook.");
-				ActorCalculateDetectionFormula_Original = reinterpret_cast<uintptr_t>(hook_ActorCalculateDetectionFormula.GetTrampoline());
-			}
-			else
-			{
-				REX::CRITICAL("Failed to hook 'Actor::CalculateDetectionFormula', exiting.");
-			}
-		}
+			RegisterDetourFunction(hook_GetBuildConfirmQuestion, ID::ExamineMenu::GetBuildConfirmQuestion, &HookExamineMenuGetBuildConfirmQuestion, ExamineMenuGetBuildConfirmQuestion_Original, "ExamineMenuGetBuildConfirmQuestion"sv);
+			RegisterDetourFunction(hook_AIProcessGetActorLightLevel, ID::AIProcess::GetActorLightLevel, &HookAIProcessGetActorLightLevel, AIProcessGetActorLightLevel_Original, "AIProcessGetActorLightLevel"sv);
+			RegisterDetourFunction(hook_GamePlayFormulasGetLockXPReward, ID::GamePlayFormulas::GetLockXPReward, &HookGamePlayFormulasGetLockXPReward, GamePlayFormulasGetLockXPReward_Original, "GamePlayFormulasGetLockXPReward"sv);
+			RegisterDetourFunction(hook_REFR_LOCKIsInaccessible, ID::REFR_LOCK::IsInaccessible, &HookREFR_LOCKIsInaccessible, REFR_LOCKIsInaccessible_Original, "REFR_LOCKIsInaccessible"sv);
+			RegisterDetourFunction(hook_AIFormulasComputePickpocketSuccess, ID::AIFormulas::ComputePickpocketSuccess, &HookAIFormulasComputePickpocketSuccess, AIFormulasComputePickpocketSuccess_Original, "AIFormulasComputePickpocketSuccess"sv);
+			RegisterDetourFunction(hook_REFR_LOCKNumericValueToEnum, ID::REFR_LOCK::NumericValueToEnum, &HookREFR_LOCKNumericValueToEnum, REFR_LOCKNumericValueToEnum_Original, "REFR_LOCKNumericValueToEnum"sv);
+			RegisterDetourFunction(hook_ActorCalculateDetectionFormula, ID::Actor::CalculateDetectionFormula, &HookActorCalculateDetectionFormula, ActorCalculateDetectionFormula_Original, "ActorCalculateDetectionFormula"sv);
+			RegisterDetourFunction(hook_nsHUDTypesNotificationData_ctor, ID::nsHUDTypes::NotificationInfo::ctor, &HooknsHUDTypesNotificationData_ctor, nsHUDTypesNotificationData_ctor_Original, "nsHUDTypesNotificationData_ctor"sv);
+			RegisterDetourFunction(hook_ActorUnequipObject, ID::Actor::UnequipObject, &HookActorUnequipObject, ActorUnequipObject_Original, "ActorUnequipObject"sv);
+			RegisterDetourFunction(hook_ShowBuildFailureMessage, ID::WorkbenchMenuBase::ShowBuildFailureMessage, &HookWorkbenchMenuBaseShowBuildFailureMessage, WorkbenchMenuBaseShowBuildFailureMessage_Original, "WorkbenchMenuBaseShowBuildFailureMessage"sv);
+			RegisterDetourFunction(hook_SetHealthPerc, ID::ExtraDataList::SetHealthPerc, &HookExtraDataListSetHealthPerc, SetHealthPercOriginal, "ExtraDataListSetHealthPerc"sv);
+			RegisterDetourFunction(hook_AddItem, ID::BGSInventoryList::AddItem1, &HookBGSInventoryListAddItem, AddItemOriginal, "BGSInventoryListAddItem"sv);
+			RegisterDetourFunction(hook_GetInventoryValue, ID::BGSInventoryItemUtils::GetInventoryValue, &HookBGSInventoryItemUtilsGetInventoryValue, GetInventoryValueOriginal, "BGSInventoryItemUtilsGetInventoryValue"sv);
+			RegisterDetourFunction(hook_QCurrentModChoiceData, ID::WorkbenchMenuBase::QCurrentModChoiceData, &HookWorkbenchMenuBaseQCurrentModChoiceData, WorkbenchMenuBaseQCurrentModChoiceData_Original, "WorkbenchMenuBaseQCurrentModChoiceData"sv);
+			RegisterDetourFunction(hook_ExamineMenuBuildConfirmed, ID::ExamineMenu::BuildConfirmed, &HookExamineMenuBuildConfirmed, ExamineMenuBuildConfirmedOriginal, "ExamineMenuBuildConfirmed"sv);
+			RegisterDetourFunction(hook_TESObjectWEAPFire, ID::TESObjectWEAP::Fire, &HookTESObjectWEAPFire, TESObjectWEAPFireOriginal, "TESObjectWEAPFire"sv);
+			RegisterDetourFunction(hook_CombatFormulasCalcWeaponDamage, ID::CombatFormulas::CalcWeaponDamage, &HookCombatFormulasCalcWeaponDamage, CombatFormulasCalcWeaponDamageOriginal, "CombatFormulasCalcWeaponDamage"sv);
+			RegisterDetourFunction(hook_GetEquippedArmorDamageResistance, ID::ActorUtils::GetEquippedArmorDamageResistance, &HookGetEquippedDamageResistance, GetEquippedArmorDamageResistanceOriginal, "GetEquippedArmorDamageResistance"sv);
+			RegisterDetourFunction(hook_IUUIIUtilsAddItemCardInfoEntry, ID::InventoryUserUIUtils::AddItemCardInfoEntry, &HookIUUIIUtilsAddItemCardInfoEntry, IUUIIUtilsAddItemCardInfoEntryOriginal, "IUUIIUtilsAddItemCardInfoEntry"sv);
+			RegisterDetourFunction(hook_PipboyInventoryDataBaseAddItemCardInfoEntry, ID::PipboyInventoryData::BaseAddItemCardInfoEntry, &HookPipboyInventoryDataBaseAddItemCardInfoEntry, PipboyInventoryDataBaseAddItemCardInfoEntryOriginal, "PipboyInventoryDataBaseAddItemCardInfoEntry"sv);
+			RegisterDetourFunction(hook_IUUIIUtilsPopulateItemCardInfo_Helper, ID::InventoryUserUIUtils::PopulateItemCardInfo_Helper, &HookIUUIIUtilsPopulateItemCardInfo_Helper, IUUIIUtilsPopulateItemCardInfo_HelperOriginal, "IUUIIUtilsPopulateItemCardInfo_Helper"sv);
+			RegisterDetourFunction(hook_PipboyInventoryUtilsFillResistTypeInfo, ID::PipboyInventoryUtils::FillResistTypeInfo, &HookPipboyInventoryUtilsFillResistTypeInfo, PipboyInventoryUtilsFillResistTypeInfo_Original, "PipboyInventoryUtilsFillResistTypeInfo"sv);
+			RegisterDetourFunction(hook_LoadingMenuPopulateLoadScreens, ID::LoadingMenu::PopulateLoadScreens, &HookLoadingMenuPopulateLoadScreens, LoadingMenuPopulateLoadScreens_Original, "LoadingMenuPopulateLoadScreens"sv);
+			RegisterDetourFunction(hook_GamePlayFormulasCanPickLockGateCheck, ID::GamePlayFormulas::CanPickLockGateCheck, &HookGamePlayFormulasCanPickLockGateCheck, GamePlayFormulasCanPickLockGateCheck_Original, "GamePlayFormulasCanPickLockGateCheck"sv);
+			RegisterDetourFunction(hook_GamePlayFormulasCanHackGateCheck, ID::GamePlayFormulas::CanHackGateCheck, &HookGamePlayFormulasCanHackGateCheck, GamePlayFormulasCanHackGateCheck_Original, "GamePlayFormulasCanHackGateCheck"sv);
+			RegisterDetourFunction(hook_ActorSPECIALModifiedCallback, ID::Actor::SPECIALModifiedCallback, &HookActorSPECIALModifiedCallback, ActorSPECIALModifiedCallback_Original, "ActorSPECIALModifiedCallback"sv);
+			RegisterDetourFunction(hook_BuildWeaponScrappingArray, RE::ID::ExamineMenu::BuildWeaponScrappingArray, &HookBuildWeaponScrappingArray, BuildWeaponScrappingArrayOriginal, "BuildWeaponScrappingArray");
 
-		void RegisterActorProcessGetActorLightLevel()
-		{
-			REL::Relocation<AIProcessGetActorLightLevelSig> functionLocation{ ID::AIProcess::GetActorLightLevel };
-			if (hook_AIProcessGetActorLightLevel.Create(reinterpret_cast<void*>(functionLocation.address()), &HookAIProcessGetActorLightLevel))
-			{
-				REX::DEBUG("Installed 'AIProcess::GetActorLightLevel' hook.");
-			}
-			else
-			{
-				REX::CRITICAL("Failed to hook 'AIProcess::GetActorLightLevel', exiting.");
-			}
+			InstallRemoveItemHook();
 		}
-
-		void RegisterGamePlayFormulasGetLockXPReward()
-		{
-			REL::Relocation<GamePlayFormulasGetLockXPRewardSig> functionLocation{ ID::GamePlayFormulas::GetLockXPReward };
-			if (hook_GamePlayFormulasGetLockXPReward.Create(reinterpret_cast<void*>(functionLocation.address()), &HookGamePlayFormulasGetLockXPReward))
-			{
-				REX::DEBUG("Installed 'GamePlayFormulas::GetLockXPReward' hook.");
-			}
-			else
-			{
-				REX::CRITICAL("Failed to hook 'GamePlayFormulas::GetLockXPReward', exiting.");
-			}
-		}
-
-		void RegisterREFR_LOCKIsInaccessible()
-		{
-			REL::Relocation<REFR_LOCKIsInaccessibleSig> functionLocation{ ID::REFR_LOCK::IsInaccessible };
-			if (hook_REFR_LOCKIsInaccessible.Create(reinterpret_cast<void*>(functionLocation.address()), &HookREFR_LOCKIsInaccessible))
-			{
-				REX::DEBUG("Installed 'REFR_LOCK::IsInaccessible' hook.");
-			}
-			else
-			{
-				REX::CRITICAL("Failed to hook 'REFR_LOCK::IsInaccessible', exiting.");
-			}
-		}
-
-		void RegisterREFR_LOCKNumericValueToEnum()
-		{
-			REL::Relocation<REFR_LOCKNumericValueToEnumSig> functionLocation{ ID::REFR_LOCK::NumericValueToEnum };
-			if (hook_REFR_LOCKNumericValueToEnum.Create(reinterpret_cast<void*>(functionLocation.address()), &HookREFR_LOCKNumericValueToEnum))
-			{
-				REX::DEBUG("Installed 'REFR_LOCK::NumericValueToEnum' hook.");
-			}
-			else
-			{
-				REX::CRITICAL("Failed to hook 'REFR_LOC::KNumericValueToEnum', exiting.");
-			}
-		}
-
-		void RegisternsHUDTypesNotificationData_ctor()
-		{
-			REL::Relocation<nsHUDTypesNotificationData_ctorSig> functionLocation{ ID::nsHUDTypes::NotificationInfo::ctor };
-			if (hook_nsHUDTypesNotificationData_ctor.Create(reinterpret_cast<void*>(functionLocation.address()), &HooknsHUDTypesNotificationData_ctor))
-			{
-				REX::DEBUG("Installed 'nsHUDTypes::NotificationData::ctor' hook.");
-				nsHUDTypesNotificationData_ctor_Original = reinterpret_cast<uintptr_t>(hook_nsHUDTypesNotificationData_ctor.GetTrampoline());
-			}
-			else
-			{
-				REX::CRITICAL("Failed to hook 'nsHUDTypes::NotificationData::ctor', exiting.");
-			}
-		}
-
-		void RegisterActorUnequipObject()
-		{
-			REL::Relocation<ActorUnequipObjectSig> functionLocation{ ID::Actor::UnequipObject };
-			if (hook_ActorUnequipObject.Create(reinterpret_cast<void*>(functionLocation.address()), &HookActorUnequipObject))
-			{
-				REX::DEBUG("Installed 'Actor::UnequipObject' hook.");
-				ActorUnequipObject_Original = reinterpret_cast<uintptr_t>(hook_ActorUnequipObject.GetTrampoline());
-			}
-			else
-			{
-				REX::CRITICAL("Failed to hook 'Actor::UnequipObject', exiting.");
-			}
-		}
-
-		void RegisterCalcTargetedLimbDamage()
-		{
-			REL::Relocation<CombatFormulasCalcTargetedLimbDamageSig> functionLocation{ ID::CombatFormulas::CalcTargetedLimbDamage };
-			if (hook_CombatFormulasCalcTargetedLimbDamage.Create(reinterpret_cast<void*>(functionLocation.address()), &HookCombatFormulasCalcTargetedLimbDamage))
-			{
-				REX::DEBUG("Installed 'CombatFormulas::CalcTargetedLimbDamage' hook.");
-				CombatFormulasCalcTargetedLimbDamage_Original = reinterpret_cast<uintptr_t>(hook_CombatFormulasCalcTargetedLimbDamage.GetTrampoline());
-			}
-			else
-			{
-				REX::CRITICAL("Failed to hook 'CombatFormulas::CalcTargetedLimbDamage', exiting.");
-			}
-		}
-
-		void RegisterGetBuildConfirmQuestion()
-		{
-			REL::Relocation<GetBuildConfirmQuestionSig> functionLocation{ ID::ExamineMenu::GetBuildConfirmQuestion };
-			if (hook_GetBuildConfirmQuestion.Create(reinterpret_cast<void*>(functionLocation.address()), &HookExamineMenuGetBuildConfirmQuestion))
-			{
-				REX::DEBUG("Installed 'ExamineMenu::GetBuildConfirmQuestion' hook.");
-			}
-			else
-			{
-				REX::CRITICAL("Failed to hook 'ExamineMenu::GetBuildConfirmQuestion', exiting.");
-			}
-		}
-
-		void RegisterShowBuildFailureMessage()
-		{
-			REL::Relocation<ShowBuildFailureMessageSig> functionLocation{ ID::WorkbenchMenuBase::ShowBuildFailureMessage };
-			if (hook_ShowBuildFailureMessage.Create(reinterpret_cast<void*>(functionLocation.address()), &HookWorkbenchMenuBaseShowBuildFailureMessage))
-			{
-				REX::DEBUG("Installed 'WorkbenchMenuBase::ShowBuildFailureMessage' hook.");
-			}
-			else
-			{
-				REX::CRITICAL("Failed to hook 'WorkbenchMenuBase::ShowBuildFailureMessage', exiting.");
-			}
-		}
-
-		void RegisterSetHealthPercHook()
-		{
-			REL::Relocation<SetHealthPercSig> functionLocation{ ID::ExtraDataList::SetHealthPerc };
-			if (hook_SetHealthPerc.Create(reinterpret_cast<void*>(functionLocation.address()), &HookExtraDataListSetHealthPerc))
-			{
-				REX::DEBUG("Installed 'ExtraDataList::SetHealthPerc' hook.");
-				SetHealthPercOriginal = reinterpret_cast<uintptr_t>(hook_SetHealthPerc.GetTrampoline());
-			}
-			else
-			{
-				REX::CRITICAL("Failed to hook 'ExtraDataList::SetHealthPerc', exiting.");
-			}
-		}
-
-		void RegisterAddItemHook()
-		{
-			REL::Relocation<AddItemSig> functionLocation{ ID::BGSInventoryList::AddItem };
-			if (hook_AddItem.Create(reinterpret_cast<void*>(functionLocation.address()), &HookBGSInventoryListAddItem))
-			{
-				REX::DEBUG("Installed 'BGSInventoryList::AddItem' hook.");
-				AddItemOriginal = reinterpret_cast<uintptr_t>(hook_AddItem.GetTrampoline());
-			}
-			else
-			{
-				REX::CRITICAL("Failed to hook 'BGSInventoryList::AddItem', exiting.");
-			}
-		}
-
-		void RegisterGetInventoryValueHook()
-		{
-			REL::Relocation<GetInventoryValueSig> functionLocation{ ID::BGSInventoryItemUtils::GetInventoryValue };
-			if (hook_GetInventoryValue.Create(reinterpret_cast<void*>(functionLocation.address()), &HookBGSInventoryItemUtilsGetInventoryValue))
-			{
-				REX::DEBUG("Installed 'BGSInventoryItemUtils::GetInventoryValue' hook.");
-				GetInventoryValueOriginal = reinterpret_cast<uintptr_t>(hook_GetInventoryValue.GetTrampoline());
-			}
-			else
-			{
-				REX::CRITICAL("Failed to hook 'BGSInventoryItemUtils::GetInventoryValue', exiting.");
-			}
-		}
-
-		void RegisterQCurrentModChoiceData()
-		{
-			REL::Relocation<QCurrentModChoiceDataSig> functionLocation{ ID::WorkbenchMenuBase::QCurrentModChoiceData };
-			if (hook_QCurrentModChoiceData.Create(reinterpret_cast<void*>(functionLocation.address()), &HookWorkbenchMenuBaseQCurrentModChoiceData))
-			{
-				REX::DEBUG("Installed 'WorkbenchMenuBase::QCurrentModChoiceData' hook.");
-			}
-			else
-			{
-				REX::CRITICAL("Failed to hook 'BGSInventoryItemUtils::GetInventoryValue', exiting.");
-			}
-		}
-
-		void RegisterExamineMenuBuildConfirmed()
-		{
-			REL::Relocation<ExamineMenuBuildConfirmedSig> functionLocation{ ID::ExamineMenu::BuildConfirmed };
-			if (hook_ExamineMenuBuildConfirmed.Create(reinterpret_cast<void*>(functionLocation.address()), &HookExamineMenuBuildConfirmed))
-			{
-				REX::DEBUG("Installed 'ExamineMenu::BuildConfirmed' hook.");
-				ExamineMenuBuildConfirmedOriginal = reinterpret_cast<uintptr_t>(hook_ExamineMenuBuildConfirmed.GetTrampoline());
-			}
-			else
-			{
-				REX::CRITICAL("Failed to hook 'ExamineMenu::BuildConfirmed', exiting.");
-			}
-		}
-
-		void RegisterTESObjectWEAPFire()
-		{
-			REL::Relocation<TESObjectWEAPFireSig> functionLocation{ ID::TESObjectWEAP::Fire };
-			if (hook_TESObjectWEAPFire.Create(reinterpret_cast<void*>(functionLocation.address()), &HookTESObjectWEAPFire))
-			{
-				REX::DEBUG("Installed 'TESObjectWEAP::Fire' hook.");
-				TESObjectWEAPFireOriginal = reinterpret_cast<uintptr_t>(hook_TESObjectWEAPFire.GetTrampoline());
-			}
-			else
-			{
-				REX::CRITICAL("Failed to hook 'TESObjectWEAP::Fire', exiting.");
-			}
-		}
-
-		void RegisterCombatFormulasCalcWeaponDamage()
-		{
-			REL::Relocation<CombatFormulasCalcWeaponDamageSig> functionLocation{ ID::CombatFormulas::CalcWeaponDamage };
-			if (hook_CombatFormulasCalcWeaponDamage.Create(reinterpret_cast<void*>(functionLocation.address()), &HookCombatFormulasCalcWeaponDamage))
-			{
-				REX::DEBUG("Installed 'CombatFormulas::CalcWeaponDamage' hook.");
-				CombatFormulasCalcWeaponDamageOriginal = reinterpret_cast<uintptr_t>(hook_CombatFormulasCalcWeaponDamage.GetTrampoline());
-			}
-			else
-			{
-				REX::CRITICAL("Failed to hook 'CombatFormulas::CalcWeaponDamage', exiting.");
-			}
-		}
-
-		void RegisterGetEquippedArmorDamageResistance()
-		{
-			REL::Relocation<GetEquippedArmorDamageResistanceSig> functionLocation{ ID::ActorUtils::GetEquippedArmorDamageResistance };
-			if (hook_GetEquippedArmorDamageResistance.Create(reinterpret_cast<void*>(functionLocation.address()), &HookGetEquippedDamageResistance))
-			{
-				REX::DEBUG("Installed 'ActorUtils::GetEquippedArmorDamageResistance' hook.");
-				GetEquippedArmorDamageResistanceOriginal = reinterpret_cast<uintptr_t>(hook_GetEquippedArmorDamageResistance.GetTrampoline());
-			}
-			else
-			{
-				REX::CRITICAL("Failed to hook 'ActorUtils::GetEquippedArmorDamageResistance', exiting.");
-			}
-		}
-
-		void RegisterIUUIIUtilsAddItemCardInfoEntry()
-		{
-			REL::Relocation<IUUIIUtilsAddItemCardInfoEntrySig> functionLocation{ ID::InventoryUserUIUtils::AddItemCardInfoEntry };
-			if (hook_IUUIIUtilsAddItemCardInfoEntry.Create(reinterpret_cast<void*>(functionLocation.address()), &HookIUUIIUtilsAddItemCardInfoEntry))
-			{
-				REX::DEBUG("Installed 'IUUIIUtils::AddItemCardInfoEntry' hook.");
-				IUUIIUtilsAddItemCardInfoEntryOriginal = reinterpret_cast<uintptr_t>(hook_IUUIIUtilsAddItemCardInfoEntry.GetTrampoline());
-			}
-			else
-			{
-				REX::CRITICAL("Failed to hook 'IUUIIUtils::AddItemCardInfoEntry', exiting.");
-			}
-		}
-
-		void RegisterPipboyInventoryDataBaseAddItemsCardInfoEntry()
-		{
-			REL::Relocation<PipboyInventoryDataBaseAddItemCardInfoEntrySig> functionLocation{ ID::PipboyInventoryData::BaseAddItemCardInfoEntry };
-			if (hook_PipboyInventoryDataBaseAddItemCardInfoEntry.Create(reinterpret_cast<void*>(functionLocation.address()), &HookPipboyInventoryDataBaseAddItemCardInfoEntry))
-			{
-				REX::DEBUG("Installed 'PipboyInventoryData::BaseAddItemCardInfoEntry' hook.");
-				PipboyInventoryDataBaseAddItemCardInfoEntryOriginal = reinterpret_cast<uintptr_t>(hook_PipboyInventoryDataBaseAddItemCardInfoEntry.GetTrampoline());
-			}
-			else
-			{
-				REX::CRITICAL("Failed to hook 'PipboyInventoryData::BaseAddItemCardInfoEntry', exiting.");
-			}
-		}
-
-		void RegisterIUUIIUtilsPopulateItemCardInfo_Helper()
-		{
-			REL::Relocation<IUUIIUtilsPopulateItemCardInfo_HelperSig> functionLocation{ ID::InventoryUserUIUtils::PopulateItemCardInfo_Helper };
-			if (hook_IUUIIUtilsPopulateItemCardInfo_Helper.Create(reinterpret_cast<void*>(functionLocation.address()), &HookIUUIIUtilsPopulateItemCardInfo_Helper))
-			{
-				REX::DEBUG("Installed 'IUUIIUtils::PopulateItemCardInfo_Helper' hook.");
-				IUUIIUtilsPopulateItemCardInfo_HelperOriginal = reinterpret_cast<uintptr_t>(hook_IUUIIUtilsPopulateItemCardInfo_Helper.GetTrampoline());
-			}
-			else
-			{
-				REX::CRITICAL("Failed to hook 'IUUIIUtils::PopulateItemCardInfo_Helper', exiting.");
-			}
-		}
-
-		void RegisterPipboyInventoryUtilsFillResistTypeInfo()
-		{
-			REL::Relocation<PipboyInventoryUtilsFillResistTypeInfoSig> functionLocation{ ID::PipboyInventoryUtils::FillResistTypeInfo };
-			if (hook_PipboyInventoryUtilsFillResistTypeInfo.Create(reinterpret_cast<void*>(functionLocation.address()), &HookPipboyInventoryUtilsFillResistTypeInfo))
-			{
-				REX::DEBUG("Installed 'PipboyInventoryUtils::FillResistTypeInfo' hook.");
-				PipboyInventoryUtilsFillResistTypeInfo_Original = reinterpret_cast<uintptr_t>(hook_PipboyInventoryUtilsFillResistTypeInfo.GetTrampoline());
-			}
-			else
-			{
-				REX::CRITICAL("Failed to hook 'PipboyInventoryUtils::FillResistTypeInfo', exiting.");
-			}
-		}
-
-		void RegisterLoadingMenuPopulateLoadScreens()
-		{
-			REL::Relocation<LoadingMenuPopulateLoadScreensSig> functionLocation{ ID::LoadingMenu::PopulateLoadScreens };
-			if (hook_LoadingMenuPopulateLoadScreens.Create(reinterpret_cast<void*>(functionLocation.address()), &HookLoadingMenuPopulateLoadScreens))
-			{
-				REX::DEBUG("Installed 'LoadingMenu::PopulateLoadScreens' hook.");
-				LoadingMenuPopulateLoadScreens_Original = reinterpret_cast<uintptr_t>(hook_LoadingMenuPopulateLoadScreens.GetTrampoline());
-			}
-			else
-			{
-				REX::CRITICAL("Failed to hook 'LoadingMenu::PopulateLoadScreens', exiting.");
-			}
-		}
-
-		void RegisterGamePlayFormulasCanPickLockGateCheck()
-		{
-			REL::Relocation<GamePlayFormulasCanPickLockGateCheckSig> functionLocation{ ID::GamePlayFormulas::CanPickLockGateCheck };
-			if (hook_GamePlayFormulasCanPickLockGateCheck.Create(reinterpret_cast<void*>(functionLocation.address()), &HookGamePlayFormulasCanPickLockGateCheck))
-			{
-				REX::DEBUG("Installed 'GamePlayFormulas::CanPickLockGate' hook.");
-			}
-			else
-			{
-				REX::CRITICAL("Failed to hook 'GamePlayFormulas::CanPickLockGate', exiting.");
-			}
-		}
-
-		void RegisterGamePlayFormulasCanHackGateCheck()
-		{
-			REL::Relocation<GamePlayFormulasCanHackGateCheckSig> functionLocation{ ID::GamePlayFormulas::CanHackGateCheck };
-			if (hook_GamePlayFormulasCanHackGateCheck.Create(reinterpret_cast<void*>(functionLocation.address()), &HookGamePlayFormulasCanHackGateCheck))
-			{
-				REX::DEBUG("Installed 'GamePlayFormulas::CanHackGateCheck' hook.");
-			}
-			else
-			{
-				REX::CRITICAL("Failed to hook 'GamePlayFormulas::CanHackGateCheck', exiting.");
-			}
-		}
-
-		void RegisterActorSPECIALModifiedCallback()
-		{
-			REL::Relocation<ActorSPECIALModifiedCallbackSig> functionLocation{ ID::Actor::SPECIALModifiedCallback };
-			if (hook_ActorSPECIALModifiedCallback.Create(reinterpret_cast<void*>(functionLocation.address()), &HookActorSPECIALModifiedCallback))
-			{
-				REX::DEBUG("Installed 'Actor::SPECIALModifiedCallback' hook.");
-				ActorSPECIALModifiedCallback_Original = reinterpret_cast<uintptr_t>(hook_ActorSPECIALModifiedCallback.GetTrampoline());
-			}
-			else
-			{
-				REX::CRITICAL("Failed to hook 'Actor::SPECIALModifiedCallback', exiting.");
-			}
-		};
 	}
 }
 
