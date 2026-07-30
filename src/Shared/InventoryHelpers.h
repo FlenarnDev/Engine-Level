@@ -22,4 +22,8 @@ namespace InventoryUtils
     const RE::BGSInventoryItem* GetInventoryItemByForm(RE::TESForm* a_form);
     RE::ExtraDataList* GetExtraDataListByStackID(const RE::BGSInventoryItem* Item, int StackID);
     RE::ExtraDataList* GetExtraDataListByIndex(std::uint32_t index);
+
+    RE::TESObjectWEAP::InstanceData* GetWeaponInstanceData(RE::ExtraDataList* myExtraDataList);
+
+	RE::TESObjectARMO::InstanceData* GetArmorInstanceData(RE::ExtraDataList* myExtraDataList);
 }

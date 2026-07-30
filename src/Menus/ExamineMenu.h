@@ -377,6 +377,57 @@ namespace Cascadia
 			}
 		};
 
+		class Workbench_HasAnyJunkExamine : public Scaleform::GFx::FunctionHandler
+		{
+		public:
+			virtual void Call(const Params& a_params)
+			{
+				if (!Cascadia::Additions::Workbench_Additions::bIsScrappingAllJunk) {
+					*a_params.retVal = false;
+					return;
+				}
+
+				auto player = RE::PlayerCharacter::GetSingleton();
+
+				bool bHasJunk = false;
+
+				for (std::uint32_t i = 0; i < player->inventoryList->data.size(); i++)
+				{
+					RE::BGSInventoryItem inventoryItem = player->inventoryList->data.at(i);
+
+					if (!inventoryItem.object || !Shared::IsJunkItem(inventoryItem.object) || inventoryItem.IsQuestObject(0))
+						continue;
+
+					auto baseComp = Shared::GetBaseComponentFromForm(inventoryItem.object);
+					if (!baseComp || !baseComp->scrapItem || baseComp->scrapItem->GetFormID() == inventoryItem.object->GetFormID())
+						continue;
+
+					switch (inventoryItem.object->GetFormType())
+					{
+					case RE::ENUM_FORM_ID::kWEAP: {
+						if (static_cast<RE::TESObjectWEAP*>(inventoryItem.object)->HasKeyword(Shared::notScrappableKeyword)) {
+							continue;
+						}
+						break;
+					}
+					case RE::ENUM_FORM_ID::kARMO: {
+						if (static_cast<RE::TESObjectARMO*>(inventoryItem.object)->HasKeyword(Shared::notScrappableKeyword)) {
+							continue;
+						}
+						break;
+					}
+					default:
+						break;
+					}
+
+
+					bHasJunk = true;
+					break;
+				}
+
+				*a_params.retVal = bHasJunk;
+			}
+		};
 
 
 		bool RegisterScaleform(Scaleform::GFx::Movie* a_view, Scaleform::GFx::Value* a_value)
@@ -404,6 +455,17 @@ namespace Cascadia
 					Shared::RegisterFunction<HasAnyJunk>(&bgsCodeObj, a_view->asMovieRoot, "HasAnyJunk");
 					Shared::RegisterFunction<NoJunk>(&bgsCodeObj, a_view->asMovieRoot, "NoJunk");
 					Shared::RegisterFunction<OnEscapePress>(&bgsCodeObj, a_view->asMovieRoot, "CancelBackPressed");
+				}
+				if (_stricmp(currentSWFPath.GetString(), "Interface/ExamineConfirmMenu.swf") == 0)
+				{
+					Scaleform::GFx::Value bgsCodeObj;
+					a_view->asMovieRoot->GetVariable(&bgsCodeObj, "root.Menu_mc.BGSCodeObj");
+
+					//Shared::RegisterFunction<Debug_ActionScript>(&bgsCodeObj, a_view->asMovieRoot, "DebugPrintExamine");
+					Shared::RegisterFunction<OnEscapePress>(&bgsCodeObj, a_view->asMovieRoot, "OnEscapePress");
+					Shared::RegisterFunction<Workbench_HasAnyJunkExamine>(&bgsCodeObj, a_view->asMovieRoot, "HasAnyJunkExamine");
+					Shared::RegisterFunction<OnEscapePress>(&bgsCodeObj, a_view->asMovieRoot, "CancelConfirmMenu");
+					//Shared::RegisterFunction<Workbench_CompleteScrapAllJunk>(&bgsCodeObj, a_view->asMovieRoot, "CompleteScrapAllJunk");
 				}
 				return true;
 			}

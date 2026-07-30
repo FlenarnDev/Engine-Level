@@ -199,4 +199,59 @@ namespace InventoryUtils
 		const BGSInventoryItem::Stack* stack = GetStackByStackID(Item, StackID);
 		return stack->extra.get() ? stack->extra.get() : nullptr;
 	}
+	
+	RE::TESObjectWEAP::InstanceData* GetWeaponInstanceData(RE::ExtraDataList* myExtraDataList)
+	{
+		RE::TESObjectWEAP::InstanceData* result = nullptr;
+		RE::TBO_InstanceData* myInstanceData = nullptr;
+
+		myExtraDataList->extraRWLock.lock_read();
+
+		if (myExtraDataList)
+		{
+			RE::BSExtraData* myExtraData = myExtraDataList->HasType<RE::ExtraInstanceData>() ? myExtraDataList->GetByType<RE::ExtraInstanceData>() : nullptr;
+
+			if (myExtraData)
+			{
+				RE::ExtraInstanceData* myExtraInstanceData = static_cast<RE::ExtraInstanceData*>(myExtraData);
+				if (myExtraInstanceData)
+				{
+					myInstanceData = myExtraInstanceData->data.get();
+				}
+			}
+		}
+
+		myExtraDataList->extraRWLock.unlock_read();
+		if (!myInstanceData)
+			return nullptr;
+
+		result = static_cast<RE::TESObjectWEAP::InstanceData*>(myInstanceData);
+		return result;
+	}
+
+	RE::TESObjectARMO::InstanceData* GetArmorInstanceData(RE::ExtraDataList* myExtraDataList)
+	{
+		RE::TESObjectARMO::InstanceData* result = nullptr;
+		RE::TBO_InstanceData* myInstanceData = nullptr;
+		myExtraDataList->extraRWLock.lock_read();
+		if (myExtraDataList)
+		{
+			RE::BSExtraData* myExtraData = myExtraDataList->HasType<RE::ExtraInstanceData>() ? myExtraDataList->GetByType<RE::ExtraInstanceData>() : nullptr;
+
+			if (myExtraData)
+			{
+				RE::ExtraInstanceData* myExtraInstanceData = static_cast<RE::ExtraInstanceData*>(myExtraData);
+				if (myExtraInstanceData)
+				{
+					myInstanceData = myExtraInstanceData->data.get();
+				}
+			}
+		}
+		myExtraDataList->extraRWLock.unlock_read();
+		if (!myInstanceData)
+			return nullptr;
+
+		result = static_cast<RE::TESObjectARMO::InstanceData*>(myInstanceData);
+		return result;
+	}
 }

@@ -858,30 +858,277 @@ namespace Cascadia
 			if (a_this->repairing)
 			{
 				// TODO: Merge this into singular function returning dynamic repair cost.
-				if (typeid(*a_this) == typeid(PowerArmorModMenu))
+				if (typeid(*a_this) == typeid(RE::PowerArmorModMenu))
 				{
-					PowerArmorModMenu* powerArmorModMenu = dynamic_cast<PowerArmorModMenu*>(a_this);
+					RE::PowerArmorModMenu* powerArmorModMenu = dynamic_cast<RE::PowerArmorModMenu*>(a_this);
 					return &powerArmorModMenu->repairData;
 				}
 				else
 				{
+
+
+					// return 0;
 					std::uint32_t modChoiceIndex = a_this->modChoiceIndex;
-					if (modChoiceIndex >= a_this->modChoiceArray.size())
+					if (a_this->modChoiceArray.empty() || modChoiceIndex >= a_this->modChoiceArray.size())
 					{
+
+						//RE::WorkbenchMenuBase::ModChoiceData* currentModChoiceDatasss = (a_this->modChoiceArray.data() + modChoiceIndex);
+
+
+
+						Scaleform::Ptr<RE::ExamineMenu> examineMenu = RE::UI::GetSingleton()->GetMenu<RE::ExamineMenu>();
+						std::uint32_t selectedIndex = examineMenu->GetSelectedIndex();
+
+						if (!examineMenu->invInterface.entriesInvalid && (selectedIndex & 0x80000000) == 0 && selectedIndex < examineMenu->invInterface.stackedEntries.size())
+						{
+
+							RE::InventoryUserUIInterfaceEntry* inventoryUUIEntry = (examineMenu->invInterface.stackedEntries.data() + selectedIndex);
+							const RE::BGSInventoryItem* inventoryItem = RE::BGSInventoryInterface::GetSingleton()->RequestInventoryItem(inventoryUUIEntry->invHandle.id);
+							if (!inventoryItem)
+								return 0;
+
+							RE::WorkbenchMenuBase::ModChoiceData* currentModChoiceData = new RE::WorkbenchMenuBase::ModChoiceData();
+							currentModChoiceData->index = 0;
+							currentModChoiceData->mod = nullptr;
+							currentModChoiceData->object = inventoryItem->object;
+							currentModChoiceData->rank = 0;
+							currentModChoiceData->recipe = nullptr;
+							currentModChoiceData->requiredItems = new RE::BSTArray<RE::BSTTuple<RE::TESForm*, RE::BGSTypedFormValuePair::SharedVal>>();
+							currentModChoiceData->requiredPerks = RE::BSTArray<RE::BSTTuple<RE::BGSPerk*, std::uint32_t>>();
+
+							const RE::BGSConstructibleObject* COBJGrabbed = nullptr;
+							if (inventoryItem->object->GetFormType() == RE::ENUM_FORM_ID::kWEAP) {
+								COBJGrabbed = Recipes::GetCOBJ_FromWeapon(static_cast<RE::TESObjectWEAP*>(inventoryItem->object), inventoryItem->stackData->extra.get());
+							}
+							else if (inventoryItem->object->GetFormType() == RE::ENUM_FORM_ID::kARMO) {
+								COBJGrabbed = Recipes::GetCOBJ_FromArmor(static_cast<RE::TESObjectARMO*>(inventoryItem->object));
+							}
+
+							if (inventoryItem->object->GetFormType() == RE::ENUM_FORM_ID::kWEAP) {
+								auto player = RE::PlayerCharacter::GetSingleton();
+								auto weapOb = static_cast<RE::TESObjectWEAP*>(inventoryItem->object);
+								auto weaponType = InventoryUtils::GetWeaponInstanceData(inventoryItem->stackData->extra.get())->type.get();
+								REX::DEBUG("Weapon type is: TwoHanded: {}, Melee: {}, Ranged: {}", weapOb->IsTwoHandedWeapon() ? 1 : 0, Shared::IsMeleeWeapon(weaponType) ? 1 : 0, weapOb->IsRangedWeapon() ? 1 : 0);
+							}
+							//currentModChoiceData->recipe = COBJGrabbed;
+
+
+
+
+
+							if (!COBJGrabbed && inventoryItem->object->GetFormType() == RE::ENUM_FORM_ID::kWEAP) {
+
+								auto weapOb = static_cast<RE::TESObjectWEAP*>(inventoryItem->object);
+								auto player = RE::PlayerCharacter::GetSingleton();
+								auto weaponType = InventoryUtils::GetWeaponInstanceData(inventoryItem->stackData->extra.get())->type.get();
+
+								if (Shared::IsMeleeWeapon(weaponType)) {
+									// Shared::VanillaMeleeWeaponsList->arrayOfForms
+									COBJGrabbed = Recipes::DefaultMeleeRecipe;
+								}
+								else if (weapOb->IsTwoHandedWeapon()) {
+									COBJGrabbed = Recipes::DefaultTwoHandedRecipe;
+								}
+								else {
+									COBJGrabbed = Recipes::DefaultOneHandedRecipe;
+								}
+							}
+							if (!COBJGrabbed && inventoryItem->object->GetFormType() == RE::ENUM_FORM_ID::kARMO) {
+								COBJGrabbed = Recipes::DefaultArmorRecipe;
+							}
+							if (!COBJGrabbed)
+								return 0;
+
+							currentModChoiceData->recipe = COBJGrabbed;
+
+							if (!currentModChoiceData->recipe || !currentModChoiceData->recipe->requiredItems) {
+
+								return 0;
+							}
+
+							// Remove any possible required perks, as we don't take that into account when repairing.
+							if (!currentModChoiceData->requiredPerks.empty())
+							{
+								currentModChoiceData->requiredPerks.clear();
+							}
+							if (currentModChoiceData->recipe && currentModChoiceData->recipe->conditions)
+								currentModChoiceData->recipe->conditions.ClearAllConditionItems();
+							COBJGrabbed = currentModChoiceData->recipe;
+
+							const float currentCondition = inventoryItem->GetStackByID(inventoryUUIEntry->stackIndex.at(0))->extra->GetHealthPerc();
+							const float repairSkill = Cascadia::Skills::GetPlayerAVValue(Cascadia::Skills::CascadiaActorValues.Repair);
+
+							Shared::ApplyFormulaForRepairRequirements(examineMenu->modChoiceArray, inventoryItem->stackData->extra.get(), *currentModChoiceData->recipe->requiredItems, *currentModChoiceData->requiredItems, currentCondition, repairSkill);
+
+							return currentModChoiceData;
+						}
+
 						return 0;
 					}
 					else
 					{
-						WorkbenchMenuBase::ModChoiceData* currentModChoiceData = (a_this->modChoiceArray.data() + modChoiceIndex);
 
-						// Remove any possible required perks, as we don't take that into account when repairing.
-						if (currentModChoiceData->requiredPerks.size() > 0)
+
+						RE::WorkbenchMenuBase::ModChoiceData* currentModChoiceDatasss = (a_this->modChoiceArray.data() + modChoiceIndex);
+
+						RE::WorkbenchMenuBase::ModChoiceData* currentModChoiceData = new RE::WorkbenchMenuBase::ModChoiceData();
+						currentModChoiceData->index = currentModChoiceDatasss->index;
+						currentModChoiceData->mod = currentModChoiceDatasss->mod;
+						currentModChoiceData->object = currentModChoiceDatasss->object;
+						currentModChoiceData->rank = currentModChoiceDatasss->rank;
+						currentModChoiceData->recipe = currentModChoiceDatasss->recipe;
+						currentModChoiceData->requiredItems = new RE::BSTArray<RE::BSTTuple<RE::TESForm*, RE::BGSTypedFormValuePair::SharedVal>>();
+						currentModChoiceData->requiredPerks = RE::BSTArray<RE::BSTTuple<RE::BGSPerk*, std::uint32_t>>();
+
+
+
+
+
+
+
+						Scaleform::Ptr<RE::ExamineMenu> examineMenu = RE::UI::GetSingleton()->GetMenu<RE::ExamineMenu>();
+						std::uint32_t selectedIndex = examineMenu->GetSelectedIndex();
+
+						if (!examineMenu->invInterface.entriesInvalid && (selectedIndex & 0x80000000) == 0 && selectedIndex < examineMenu->invInterface.stackedEntries.size())
 						{
-							currentModChoiceData->requiredPerks.clear();
+
+							RE::InventoryUserUIInterfaceEntry* inventoryUUIEntry = (examineMenu->invInterface.stackedEntries.data() + selectedIndex);
+							const RE::BGSInventoryItem* inventoryItem = RE::BGSInventoryInterface::GetSingleton()->RequestInventoryItem(inventoryUUIEntry->invHandle.id);
+
+							const RE::BGSConstructibleObject* COBJGrabbed = nullptr;
+							if (inventoryItem->object->GetFormType() == RE::ENUM_FORM_ID::kWEAP) {
+								COBJGrabbed = Recipes::GetCOBJ_FromWeapon(static_cast<RE::TESObjectWEAP*>(inventoryItem->object), inventoryItem->stackData->extra.get());
+							}
+							else if (inventoryItem->object->GetFormType() == RE::ENUM_FORM_ID::kARMO) {
+								COBJGrabbed = Recipes::GetCOBJ_FromArmor(static_cast<RE::TESObjectARMO*>(inventoryItem->object));
+							}
+
+							if (inventoryItem->object->GetFormType() == RE::ENUM_FORM_ID::kWEAP) {
+								auto player = RE::PlayerCharacter::GetSingleton();
+								auto weapOb = static_cast<RE::TESObjectWEAP*>(inventoryItem->object);
+								auto weaponType = InventoryUtils::GetWeaponInstanceData(inventoryItem->stackData->extra.get())->type.get();
+								REX::DEBUG("Weapon type is: TwoHanded: {}, Melee: {}, Ranged: {}", weapOb->IsTwoHandedWeapon() ? 1 : 0, Shared::IsMeleeWeapon(weaponType) ? 1 : 0, weapOb->IsRangedWeapon() ? 1 : 0);
+							}
+
+							if (!COBJGrabbed) {
+								REX::WARN("No COBJ found from object, defaulting to first mod.");
+								std::uint32_t modChoiceIndex = a_this->modChoiceIndex;
+								if (a_this->modChoiceArray.empty() || modChoiceIndex >= a_this->modChoiceArray.size())
+								{
+									if (inventoryItem->object->GetFormType() == RE::ENUM_FORM_ID::kWEAP) {
+
+										auto weapOb = static_cast<RE::TESObjectWEAP*>(inventoryItem->object);
+										auto player = RE::PlayerCharacter::GetSingleton();
+										auto weaponType = InventoryUtils::GetWeaponInstanceData(inventoryItem->stackData->extra.get())->type.get();
+
+										if (Shared::IsMeleeWeapon(weaponType)) {
+											// Shared::VanillaMeleeWeaponsList->arrayOfForms
+											COBJGrabbed = Recipes::DefaultMeleeRecipe;
+										}
+										else if (weapOb->IsTwoHandedWeapon()) {
+											COBJGrabbed = Recipes::DefaultTwoHandedRecipe;
+										}
+										else {
+											COBJGrabbed = Recipes::DefaultOneHandedRecipe;
+										}
+									}
+									else if (inventoryItem->object->GetFormType() == RE::ENUM_FORM_ID::kARMO) {
+										COBJGrabbed = Recipes::DefaultArmorRecipe;
+									}
+								}
+								else {
+									if (inventoryItem->object->GetFormType() == RE::ENUM_FORM_ID::kWEAP) {
+
+										auto weapOb = static_cast<RE::TESObjectWEAP*>(inventoryItem->object);
+										auto player = RE::PlayerCharacter::GetSingleton();
+										auto weaponType = InventoryUtils::GetWeaponInstanceData(inventoryItem->stackData->extra.get())->type.get();
+
+										if (Shared::IsMeleeWeapon(weaponType)) {
+											// Shared::VanillaMeleeWeaponsList->arrayOfForms
+											COBJGrabbed = Recipes::DefaultMeleeRecipe;
+										}
+										else if (weapOb->IsTwoHandedWeapon()) {
+											COBJGrabbed = Recipes::DefaultTwoHandedRecipe;
+										}
+										else {
+											COBJGrabbed = Recipes::DefaultOneHandedRecipe;
+										}
+									}
+									else if (inventoryItem->object->GetFormType() == RE::ENUM_FORM_ID::kARMO) {
+										COBJGrabbed = Recipes::DefaultArmorRecipe;
+									}
+									if (!COBJGrabbed) {
+										RE::WorkbenchMenuBase::ModChoiceData* currentModChoiceDatasss = (a_this->modChoiceArray.data() + modChoiceIndex);
+										// Remove any possible required perks, as we don't take that into account when repairing.
+										if (!currentModChoiceDatasss->requiredPerks.empty())
+										{
+											currentModChoiceDatasss->requiredPerks.clear();
+										}
+										if (currentModChoiceDatasss->recipe && currentModChoiceDatasss->recipe->conditions)
+											currentModChoiceDatasss->recipe->conditions.ClearAllConditionItems();
+
+										COBJGrabbed = currentModChoiceDatasss->recipe;
+									}
+
+								}
+
+
+								// Remove any possible conditions on the recipe, as we don't take that into account when repairing.
+								//
+								//return 0;
+							}
+
+							if (!COBJGrabbed) {
+								//return 0;
+								auto weapOb = static_cast<RE::TESObjectWEAP*>(inventoryItem->object);
+								if (weapOb) {
+									auto player = RE::PlayerCharacter::GetSingleton();
+									auto weaponType = InventoryUtils::GetWeaponInstanceData(inventoryItem->stackData->extra.get())->type.get();
+
+									if (Shared::IsMeleeWeapon(weaponType)) {
+										// Shared::VanillaMeleeWeaponsList->arrayOfForms
+										COBJGrabbed = Recipes::DefaultMeleeRecipe;
+									}
+									else if (weapOb->IsTwoHandedWeapon()) {
+										COBJGrabbed = Recipes::DefaultTwoHandedRecipe;
+									}
+									else {
+										COBJGrabbed = Recipes::DefaultOneHandedRecipe;
+									}
+								}
+								if (!COBJGrabbed)
+									COBJGrabbed = Recipes::DefaultMeleeRecipe;
+							}
+
+							if (!COBJGrabbed)
+								COBJGrabbed = Recipes::DefaultMeleeRecipe;
+
+							currentModChoiceData->recipe = COBJGrabbed;
+
+							if (!currentModChoiceData || !currentModChoiceData->recipe || !currentModChoiceData->recipe->requiredItems) {
+
+								return 0;
+							}
+
+							// Remove any possible required perks, as we don't take that into account when repairing.
+							if (!currentModChoiceData->requiredPerks.empty())
+							{
+								currentModChoiceData->requiredPerks.clear();
+							}
+							if (currentModChoiceData->recipe->conditions)
+								currentModChoiceData->recipe->conditions.ClearAllConditionItems();
+
+							const float currentCondition = inventoryItem->GetStackByID(inventoryUUIEntry->stackIndex.at(0))->extra->GetHealthPerc();
+							const float repairSkill = Cascadia::Skills::GetPlayerAVValue(Cascadia::Skills::CascadiaActorValues.Repair);
+
+							Shared::ApplyFormulaForRepairRequirements(examineMenu->modChoiceArray, inventoryItem->stackData->extra.get(), *currentModChoiceData->recipe->requiredItems, *currentModChoiceData->requiredItems, currentCondition, repairSkill);
+
 						}
 
-						// Remove any possible conditions on the recipe, as we don't take that into account when repairing.
-						currentModChoiceData->recipe->conditions.ClearAllConditionItems();
+
+
+
+
 
 						return (currentModChoiceData);
 					}
@@ -889,8 +1136,10 @@ namespace Cascadia
 			}
 			else // Retail logic come into play here.
 			{
+				//return WorkbenchMenuBaseQCurrentModChoiceDataOriginal(a_this);
+
 				std::uint32_t modChoiceIndex = a_this->modChoiceIndex;
-				if (modChoiceIndex >= a_this->modChoiceArray.size())
+				if (a_this->modChoiceArray.empty() || modChoiceIndex >= a_this->modChoiceArray.size())
 				{
 					return 0;
 				}
@@ -898,7 +1147,10 @@ namespace Cascadia
 				{
 					return (a_this->modChoiceArray.data() + modChoiceIndex);
 				}
+
 			}
+
+			//return WorkbenchMenuBaseQCurrentModChoiceDataOriginal(a_this);
 		}
 
 		DetourXS hook_GetInventoryValue;
@@ -951,6 +1203,7 @@ namespace Cascadia
 							break;
 						}
 
+						bool willHaveHealth = false;
 						if (formType == ENUM_FORM_ID::kWEAP)
 						{
 							TESObjectWEAP* tempREFR = static_cast<TESObjectWEAP*>(a_boundObject);
@@ -966,9 +1219,10 @@ namespace Cascadia
 								REX::DEBUG("'CAS_NoDegradation' keyword found on weapon: {}.", tempREFR->GetFormEditorID());
 								break;
 							}
-						}
 
-						if (formType == ENUM_FORM_ID::kARMO)
+							willHaveHealth = true;
+						}
+						else if (formType == ENUM_FORM_ID::kARMO)
 						{
 							TESObjectARMO* tempREFR = static_cast<TESObjectARMO*>(a_boundObject);
 							// Set to '1.0' when initializing if the 'noDegradation' keyword is on the object.
@@ -983,10 +1237,28 @@ namespace Cascadia
 								REX::DEBUG("'CAS_NoDegradation' keyword found on armor: {}.", tempREFR->GetFormEditorID());
 								break;
 							}
+
+							willHaveHealth = true;
+						}
+
+						if (a_boundObject->GetFormType() == RE::ENUM_FORM_ID::kCMPO || a_boundObject->GetFormType() == RE::ENUM_FORM_ID::kMISC) {
+							auto player = RE::PlayerCharacter::GetSingleton();
+
+							auto baseComp = Shared::GetBaseComponentFromForm(a_boundObject);
+							if (baseComp && baseComp->scrapItem) {
+								std::uint32_t oldCountNew = 0;
+								auto removeData = RE::TESObjectREFR::RemoveItemData(a_boundObject, *a_newCount);
+								player->RemoveItem(removeData);
+
+								player->inventoryList->AddItem2(baseComp->scrapItem, *a_newCount);
+							}
+
+							//AddItem_Original(a_this, baseComp->scrapItem, a_stack, &oldCountNew, a_newCount);
+
 						}
 
 						// GetHealthPerc returns -1.0 if it can't find the 'kHealth' type.
-						if (traverse->extra->GetHealthPerc() < 0.0f)
+						if (willHaveHealth && traverse->extra->GetHealthPerc() < 0.0f)
 						{
 							traverse->extra->SetHealthPerc(BSRandom::Float(0.45f, 0.85f));
 							break;
@@ -1157,7 +1429,7 @@ namespace Cascadia
 					REX::DEBUG("Weapon '{}' is missing skill value - please correct this in the weapon record in XEdit.", a_weapon->object->GetFormEditorID());
 				}
 				
-				float reductionPercentFromSkill = (gunsSkillValue / 100.0f) * 0.2f;
+				float reductionPercentFromSkill = (gunsSkillValue / 100.0f) * Cascadia::Additions::ItemDegradation::Weapon_CND_ReductionPerPercent->GetValue();
 				conditionReduction *= (1.0f - reductionPercentFromSkill);
 
 				ExtraDataList* extraDataList = inventoryItem->stackData->extra.get();
@@ -1186,7 +1458,7 @@ namespace Cascadia
 			float retailDamage = CombatFormulasCalcWeaponDamageOriginal(a_actorForm, a_weapon, a_ammo, a_condition, a_damageMultiplier);
 			if (a_condition != -1.0f || a_condition < 0.75f)
 			{
-				retailDamage = retailDamage * (0.5f + std::min((0.5f * a_condition) / 0.75f, 0.5f));
+				retailDamage *= 0.5f + std::min((0.5f * a_condition) / 0.75f, 0.5f);
 			}
 			return retailDamage;
 		}

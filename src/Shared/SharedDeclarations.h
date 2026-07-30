@@ -3,7 +3,7 @@
 using namespace RE;
 
 #define MOD_ESM "FalloutCascadia.esm"
-#define CURRENT_ESP "XXXXXX.esp"
+#define CURRENT_ESP "CAS_TBM_01.esp"
 
 namespace Cascadia
 {
@@ -23,6 +23,7 @@ namespace Cascadia
 		namespace Workbench_Additions {
 			extern bool bIsScrappingAllJunk;
 			extern TESGlobal* Scrap_SkillMult;
+			extern TESGlobal* Repair_workbenchSkillEffectReduction;
 		}
 
 		namespace Bartering_Additions {
@@ -49,6 +50,30 @@ namespace Cascadia
 			extern TESGlobal* JumpCost_BaseCost;
 			extern TESGlobal* JumpCost_BrokenLegsAdditionalMult;
 		}
+	}
+
+	namespace Recipes {
+		extern RE::BGSListForm* WeaponRecipesRepairList;
+		extern RE::BGSListForm* ArmorRecipesRepairList;
+
+		extern RE::BGSListForm* CustomRecipesListWeapon;
+		extern RE::BGSListForm* CustomRecipesListArmor;
+
+		extern RE::BGSConstructibleObject* DefaultOneHandedRecipe;
+		extern RE::BGSConstructibleObject* DefaultMeleeRecipe;
+		extern RE::BGSConstructibleObject* DefaultTwoHandedRecipe;
+		extern RE::BGSConstructibleObject* DefaultArmorRecipe;
+
+		extern std::unordered_map<const RE::TESObjectWEAP*, const RE::BGSConstructibleObject*> weaponToCOBJ_Map;
+		extern std::unordered_map<const RE::TESObjectARMO*, const RE::BGSConstructibleObject*> armorToCOBJ_Map;
+
+		extern std::unordered_map<const RE::TESObjectWEAP*, const RE::BGSConstructibleObject*> custom_weaponToCOBJ_Map;
+		extern std::unordered_map<const RE::TESObjectARMO*, const RE::BGSConstructibleObject*> custom_armorToCOBJ_Map;
+
+		const RE::BGSConstructibleObject* GetCOBJ_FromWeapon(RE::TESObjectWEAP* weaponObj, RE::ExtraDataList* weaponInstanceData);
+		const RE::BGSConstructibleObject* GetCOBJ_FromArmor(const RE::TESObjectARMO* armorObj);
+
+		void InitializeRecipes(RE::TESDataHandler* dataHandler);
 	}
 
 	
