@@ -2220,16 +2220,16 @@ namespace Cascadia
 					//
 					// REX::DEBUG("BuildWeaponScrappingArray - scrapItem found with count: {}", it->second.i);
 
+					const auto invCount = inventoryItem.GetCount();
+					const auto oldCount = it->second.i;
 
-					const auto oldCount = it->second.i * inventoryItem.GetCount();
-
-					std::uint32_t count = std::max(oldCount * salvageSkillMod, 1.0);
+					int count = std::max(oldCount * salvageSkillMod, 1.0) * invCount;
 
 					if (count != 0) {
 						a_this->scrappingArray.push_back(RE::BSTTuple<RE::TESBoundObject*, std::uint32_t>(boundObj, count));
 					}
 
-					REX::DEBUG("BuildWeaponScrappingArray - scrapItem found with count: {}. New Count: {}", oldCount, count);
+					REX::DEBUG("BuildWeaponScrappingArray - scrapItem found with count: {}. New Count: {}", oldCount * invCount, count);
 
 
 				}
@@ -2312,6 +2312,44 @@ namespace Cascadia
 			return _OriginalRemoveItem(a_this, a_data);
 		}
 
+		DetourXS hook_PlayerCharacterHandlePositionPlayerRequest;
+		typedef void(PlayerCharacterHandlePositionPlayerRequestSig)(RE::PlayerCharacter*);
+		REL::Relocation<PlayerCharacterHandlePositionPlayerRequestSig> PlayerCharacterHandlePositionPlayerRequest_Original;
+
+		void HookPlayerCharacterHandlePositionPlayerRequest(RE::PlayerCharacter* a_this)
+		{
+			RE::TESObjectREFR* marker = nullptr;
+			RE::TESObjectREFR* chosenChild = nullptr;
+
+			if (Shared::bIsMultiTravelling && a_this->queuedTargetLoc.isValid && a_this->queuedTargetLoc.fastTravelMarker.get_handle() != 0)
+			{
+				marker = a_this->queuedTargetLoc.fastTravelMarker.get().get();
+				if (marker)
+				{
+					auto* children = marker->extraList->GetByType<RE::ExtraLinkedRefChildren>();
+					if (children && !children->linkedChildren.empty())
+					{
+						chosenChild = children->linkedChildren.at(Shared::chosenI).REFR.get().get();
+						if (chosenChild)
+						{
+							chosenChild->SetLinkedRef(nullptr, nullptr);
+							marker->SetLinkedRef(chosenChild, nullptr);
+						}
+					}
+				}
+
+				Shared::bIsMultiTravelling = false;
+			}
+
+			PlayerCharacterHandlePositionPlayerRequest_Original(a_this);
+
+			if (chosenChild)
+			{
+				marker->SetLinkedRef(nullptr, nullptr);
+				chosenChild->SetLinkedRef(marker, nullptr);
+			}
+		}
+
 		// ========== REGISTERS ==========
 
 		static void InstallRemoveItemHook()
@@ -2349,6 +2387,8 @@ namespace Cascadia
 			RegisterDetourFunction(hook_GamePlayFormulasCanHackGateCheck, ID::GamePlayFormulas::CanHackGateCheck, &HookGamePlayFormulasCanHackGateCheck, GamePlayFormulasCanHackGateCheck_Original, "GamePlayFormulasCanHackGateCheck"sv);
 			RegisterDetourFunction(hook_ActorSPECIALModifiedCallback, ID::Actor::SPECIALModifiedCallback, &HookActorSPECIALModifiedCallback, ActorSPECIALModifiedCallback_Original, "ActorSPECIALModifiedCallback"sv);
 			RegisterDetourFunction(hook_BuildWeaponScrappingArray, RE::ID::ExamineMenu::BuildWeaponScrappingArray, &HookBuildWeaponScrappingArray, BuildWeaponScrappingArrayOriginal, "BuildWeaponScrappingArray");
+			RegisterDetourFunction(hook_PlayerCharacterHandlePositionPlayerRequest, RE::ID::PlayerCharacter::HandlePositionPlayerRequest, &HookPlayerCharacterHandlePositionPlayerRequest, PlayerCharacterHandlePositionPlayerRequest_Original, "PlayerCharacterHandlePositionPlayerRequest");
+
 
 			InstallRemoveItemHook();
 		}

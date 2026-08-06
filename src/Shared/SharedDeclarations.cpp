@@ -45,6 +45,13 @@ namespace Cascadia
 		bool noArmorDegradation;
 		bool noWeaponDegradation;
 
+		// Multi Location Pipboy Travel
+		bool bIsMultiTravelling;
+		RE::ObjectRefHandle CurrentMultiLoc_Target;
+		RE::TESObjectREFR* FinalMultiDestination;
+		std::uint32_t chosenI;
+		std::uint32_t markerID;
+
 		void InitializeGameAdditionalVars(RE::TESDataHandler* dataHandler) {
 			using namespace Additions;
 			Workbench_Additions::Scrap_SkillMult = dataHandler->LookupForm<TESGlobal>(0x0009A0, CURRENT_ESP);

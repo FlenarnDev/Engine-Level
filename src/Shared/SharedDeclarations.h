@@ -17,6 +17,13 @@ namespace Cascadia
 		void InitializeSharedGameVariables();
 		extern bool noArmorDegradation;
 		extern bool noWeaponDegradation;
+
+		// Multi Location Pipboy Travel
+		extern bool bIsMultiTravelling;
+		extern RE::ObjectRefHandle CurrentMultiLoc_Target;
+		extern RE::TESObjectREFR* FinalMultiDestination;
+		extern std::uint32_t chosenI;
+		extern std::uint32_t markerID;
 	}
 
 	namespace Additions {

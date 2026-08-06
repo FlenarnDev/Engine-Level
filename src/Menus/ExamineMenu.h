@@ -294,15 +294,17 @@ namespace Cascadia
 			virtual void Call(const Params& a_params)
 			{
 				REX::DEBUG("this.BGSCodeObj.OnEscapePress");
+				Cascadia::Additions::Workbench_Additions::bIsScrappingAllJunk = false;
 				Scaleform::Ptr<RE::ExamineMenu> examineMenu = RE::UI::GetSingleton()->GetMenu<RE::ExamineMenu>();
 				if (examineMenu)
 				{
-					REX::DEBUG("Examine menu!");
+					REX::DEBUG("Examine menu OnEscapePress!");
 					examineMenu->repairing = false;
+					//examineMenu->uiMovie->Invoke("ForceInventorySelectionMode", nullptr, nullptr, 0); // TODO - update custom buttons for this functionality.
 					// examineMenu->uiMovie->asMovieRoot->Invoke("root.BaseInstance.UpdateButtons", nullptr, nullptr, 0);
 				}
 
-				Cascadia::Additions::Workbench_Additions::bIsScrappingAllJunk = false;
+				
 			}
 		};
 
@@ -429,6 +431,32 @@ namespace Cascadia
 			}
 		};
 
+		class Debug_ActionScript : public Scaleform::GFx::FunctionHandler
+		{
+		public:
+			virtual void Call(const Params& a_params) {
+				std::string s = std::format("Type is not registered for debug: {}", (std::int32_t)a_params.args[0].GetType());
+				switch (a_params.args[0].GetType()) {
+				case Scaleform::GFx::Value::ValueType::kUInt:
+					s = std::to_string(a_params.args[0].GetUInt());
+					break;
+				case Scaleform::GFx::Value::ValueType::kInt:
+					s = std::to_string(a_params.args[0].GetInt());
+					break;
+				case Scaleform::GFx::Value::ValueType::kBoolean:
+					s = std::to_string(a_params.args[0].GetBoolean());
+					break;
+				case Scaleform::GFx::Value::ValueType::kString:
+					s = a_params.args[0].GetString();
+					break;
+				default:
+					break;
+				}
+
+				REX::DEBUG(std::format("Debug_ActionScript: {}", s).c_str());
+			}
+		};
+
 
 		bool RegisterScaleform(Scaleform::GFx::Movie* a_view, Scaleform::GFx::Value* a_value)
 		{
@@ -450,6 +478,7 @@ namespace Cascadia
 					Shared::RegisterFunction<RepairFunction>(&bgsCodeObj, a_view->asMovieRoot, "CASRepairItem");
 					Shared::RegisterFunction<RepairWorkbench>(&bgsCodeObj, a_view->asMovieRoot, "RepairWorkbench");
 
+					Shared::RegisterFunction<Debug_ActionScript>(&bgsCodeObj, a_view->asMovieRoot, "DebugPrint");
 					Shared::RegisterFunction<ScrapAllJunk>(&bgsCodeObj, a_view->asMovieRoot, "ScrapAllJunk");
 					Shared::RegisterFunction<IsInAllJunk>(&bgsCodeObj, a_view->asMovieRoot, "IsInAllJunk");
 					Shared::RegisterFunction<HasAnyJunk>(&bgsCodeObj, a_view->asMovieRoot, "HasAnyJunk");
@@ -461,7 +490,7 @@ namespace Cascadia
 					Scaleform::GFx::Value bgsCodeObj;
 					a_view->asMovieRoot->GetVariable(&bgsCodeObj, "root.Menu_mc.BGSCodeObj");
 
-					//Shared::RegisterFunction<Debug_ActionScript>(&bgsCodeObj, a_view->asMovieRoot, "DebugPrintExamine");
+					Shared::RegisterFunction<Debug_ActionScript>(&bgsCodeObj, a_view->asMovieRoot, "DebugPrintExamine");
 					Shared::RegisterFunction<OnEscapePress>(&bgsCodeObj, a_view->asMovieRoot, "OnEscapePress");
 					Shared::RegisterFunction<Workbench_HasAnyJunkExamine>(&bgsCodeObj, a_view->asMovieRoot, "HasAnyJunkExamine");
 					Shared::RegisterFunction<OnEscapePress>(&bgsCodeObj, a_view->asMovieRoot, "CancelConfirmMenu");

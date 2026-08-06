@@ -30,7 +30,7 @@ namespace InventoryUtils
 		// RE::PlayerCharacter* player = RE::PlayerCharacter::GetSingleton();
 		// auto a = player->inventoryList->data.at(index).GetDisplayFullName()
 
-		return pipboyObject->m_value;
+		return pipboyObject->value;
 	}
 
 	std::uint32_t GetStackIDByIndex(std::uint32_t index)
@@ -42,7 +42,7 @@ namespace InventoryUtils
 		for (int i = 0; i < StackIDs->elements.size(); i++)
 		{
 			PipboyPrimitiveValue<std::uint32_t>* pipboyObject = static_cast<PipboyPrimitiveValue<std::uint32_t>*>(StackIDs->elements.at(i));
-			Result = pipboyObject->m_value;
+			Result = pipboyObject->value;
 		}
 
 		return Result;
@@ -58,7 +58,7 @@ namespace InventoryUtils
 	TESForm* GetInventoryFormByIndex(std::uint32_t index)
 	{
 		PipboyPrimitiveValue<std::uint32_t>* pipboyObject = static_cast<PipboyPrimitiveValue<std::uint32_t>*>(PipboyInventoryObjects.at(index)->memberMap.find(BSFixedString("HandleID"))->second);
-		std::uint32_t HandleID = pipboyObject->m_value;
+		std::uint32_t HandleID = pipboyObject->value;
 
 		// RE::PlayerCharacter* player = RE::PlayerCharacter::GetSingleton();
 
@@ -81,7 +81,7 @@ namespace InventoryUtils
 			return nullptr;
 
 		PipboyPrimitiveValue<std::uint32_t>* pipboyObject = static_cast<PipboyPrimitiveValue<std::uint32_t>*>(PipboyInventoryObjects.at(index)->memberMap.find(BSFixedString("HandleID"))->second);
-		std::uint32_t HandleID = pipboyObject->m_value;
+		std::uint32_t HandleID = pipboyObject->value;
 		return GetInventoryItemByHandleID(HandleID);
 		// return &player->inventoryList->data.at(index);
 	}
