@@ -32,7 +32,7 @@ namespace Cascadia
 			ToggleArmorDegradation::Install();
 			ToggleMarkers::Install();
 			ToggleWeaponDegradation::Install();
-			ModCASValueCommand::Install();
+			// ModCASValueCommand::Install();
 		}
 	}
 }
