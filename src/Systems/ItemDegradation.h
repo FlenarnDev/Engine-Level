@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Shared/SharedDeclarations.h"
 #include "Shared/SharedFunctions.h"
 
 namespace Cascadia

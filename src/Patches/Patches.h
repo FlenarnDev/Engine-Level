@@ -4,6 +4,7 @@
 #include "Patches/Sprint.h"
 #include "Patches/TESObjectREFR.h"
 #include "Patches/MoonRotation.h"
+#include "Patches/CameraFrustum.h"
 
 namespace Cascadia
 {
@@ -11,6 +12,7 @@ namespace Cascadia
 	{
 		void Install()
 		{
+			CameraFrustum::Install();
 			LoadEditorIDs::Install();
 			TESObjectREFR_ConsoleName::Install();
 			SprintPatch::Install();

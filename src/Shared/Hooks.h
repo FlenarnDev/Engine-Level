@@ -3,6 +3,7 @@
 #include "Systems/Dialogue.h"
 #include "Shared/SharedDeclarations.h"
 #include "Shared/SharedFunctions.h"
+#include "Shared/InventoryHelpers.h"
 #include "Systems/AmmoSwitch.h"
 #include "Systems/Skills.h"
 #include "Systems/LockLevels.h"
@@ -21,67 +22,7 @@ namespace Cascadia
 	{
 		
 		void Install();
-		/*
-		void RegisterCalcTargetedLimbDamage();
-		void RegisterAddItemHook();
-		void RegisterSetHealthPercHook();
-		void RegisterGetInventoryValueHook();
-		void RegisterShowBuildFailureMessage();
-		void RegisterGetBuildConfirmQuestion();
-		void RegisterQCurrentModChoiceData();
-		void RegisterExamineMenuBuildConfirmed();
-		void RegisterTESObjectWEAPFire();
-		void RegisterCombatFormulasCalcWeaponDamage();
-		void RegisterGetEquippedArmorDamageResistance();
-		void RegisterIUUIIUtilsAddItemCardInfoEntry();
-		void RegisterPipboyInventoryDataBaseAddItemsCardInfoEntry();
-		void RegisterIUUIIUtilsPopulateItemCardInfo_Helper();
-		void RegisterPipboyInventoryUtilsFillResistTypeInfo();
-		void RegisterActorUnequipObject();
-		void RegisterLoadingMenuPopulateLoadScreens();
-		void RegisterGamePlayFormulasCanPickLockGateCheck();
-		void RegisterGamePlayFormulasCanHackGateCheck();
-		void RegisternsHUDTypesNotificationData_ctor();
-		void RegisterActorSPECIALModifiedCallback();
-		void RegisterREFR_LOCKNumericValueToEnum();
-		void RegisterREFR_LOCKIsInaccessible();
-		void RegisterGamePlayFormulasGetLockXPReward();
-		void RegisterActorProcessGetActorLightLevel();
-		void RegisterActorCalculateDetectionFormula();
-		void RegisterAIFormulasComputePickpocketSuccess();
-
 		
-		void RegisterHooks()
-		{
-			RegisterActorUnequipObject();
-			RegisterCalcTargetedLimbDamage();
-			RegisterAddItemHook();
-			RegisterSetHealthPercHook();
-			RegisterGetInventoryValueHook();
-			RegisterShowBuildFailureMessage();
-			RegisterGetBuildConfirmQuestion();
-			RegisterQCurrentModChoiceData();
-			RegisterExamineMenuBuildConfirmed();
-			RegisterTESObjectWEAPFire();
-			RegisterCombatFormulasCalcWeaponDamage();
-			RegisterGetEquippedArmorDamageResistance();
-			RegisterIUUIIUtilsAddItemCardInfoEntry();
-			RegisterPipboyInventoryDataBaseAddItemsCardInfoEntry();
-			RegisterIUUIIUtilsPopulateItemCardInfo_Helper();
-			RegisterPipboyInventoryUtilsFillResistTypeInfo();
-			RegisterLoadingMenuPopulateLoadScreens();
-			RegisterGamePlayFormulasCanPickLockGateCheck();
-			RegisterGamePlayFormulasCanHackGateCheck();
-			RegisternsHUDTypesNotificationData_ctor();
-			RegisterActorSPECIALModifiedCallback();
-			RegisterREFR_LOCKNumericValueToEnum();
-			RegisterREFR_LOCKIsInaccessible();
-			RegisterGamePlayFormulasGetLockXPReward();
-			RegisterActorProcessGetActorLightLevel();
-			RegisterActorCalculateDetectionFormula();
-			RegisterAIFormulasComputePickpocketSuccess();
-		}
-		*/
 		void RegisterAllHooks();
 
 		template<typename T>
@@ -92,7 +33,7 @@ namespace Cascadia
 				OriginalFunction = reinterpret_cast<uintptr_t>(detour.GetTrampoline());
 			}
 			else {
-				REX::CRITICAL(std::format("Failed to hook '{}'. Exiting...", functionName).c_str());
+				REX::CRITICAL("Failed to hook '{}'. Exiting...", functionName);
 			}
 		}
 

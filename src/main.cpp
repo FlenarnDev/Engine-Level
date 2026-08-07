@@ -1,4 +1,5 @@
 #include "Events/BSAnimationGraphEvent.h"
+#include "Events/CameraFarDistanceOverride.h"
 #include "Events/LevelIncreaseEvent.h"
 #include "Events/MenuOpenCloseEvent.h"
 #include "Events/TESCellFullyLoadedEvent.h"
@@ -51,6 +52,7 @@ namespace
 			Cascadia::RegisterTESLoadGameEventSink();
 			Cascadia::Skills::GetLevelUpFormsFromGame();
 			Cascadia::LockLevels::InitializeLockLevelNamesArray();
+			Cascadia::RegisterForCameraFarDistanceOverride();
 
 			REX::INFO("{:s} - kGameDataReady", "Cascadia Gameplay Systems");
 			break;

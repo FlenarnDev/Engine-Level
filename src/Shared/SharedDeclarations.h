@@ -2,6 +2,17 @@
 
 using namespace RE;
 
+// Retail
+#define RETAIL_ESM01 "Fallout4.esm"
+#define RETAIL_ESM02 "DLCRobot.esm"
+#define RETAIL_ESM03 "DLCworkshop01.esm"
+#define RETAIL_ESM04 "DLCCoast.esm"
+#define RETAIL_ESM05 "DLCworkshop02.esm"
+#define RETAIL_ESM06 "DLCworkshop03.esm"
+#define RETAIL_ESM07 "DLCNukaWorld.esm"
+#define RETAIL_ESM08 "DLCUltraHighResolution.esm"
+
+// Internal
 #define MOD_ESM "FalloutCascadia.esm"
 #define CURRENT_ESP "CAS_TBM_01.esp"
 
@@ -20,8 +31,8 @@ namespace Cascadia
 
 		// Multi Location Pipboy Travel
 		extern bool bIsMultiTravelling;
-		extern RE::ObjectRefHandle CurrentMultiLoc_Target;
-		extern RE::TESObjectREFR* FinalMultiDestination;
+		extern ObjectRefHandle CurrentMultiLoc_Target;
+		extern TESObjectREFR* FinalMultiDestination;
 		extern std::uint32_t chosenI;
 		extern std::uint32_t markerID;
 	}
@@ -60,30 +71,26 @@ namespace Cascadia
 	}
 
 	namespace Recipes {
-		extern RE::BGSListForm* WeaponRecipesRepairList;
-		extern RE::BGSListForm* ArmorRecipesRepairList;
+		extern BGSListForm* WeaponRecipesRepairList;
+		extern BGSListForm* ArmorRecipesRepairList;
 
-		extern RE::BGSListForm* CustomRecipesListWeapon;
-		extern RE::BGSListForm* CustomRecipesListArmor;
+		extern BGSListForm* CustomRecipesListWeapon;
+		extern BGSListForm* CustomRecipesListArmor;
 
-		extern RE::BGSConstructibleObject* DefaultOneHandedRecipe;
-		extern RE::BGSConstructibleObject* DefaultMeleeRecipe;
-		extern RE::BGSConstructibleObject* DefaultTwoHandedRecipe;
-		extern RE::BGSConstructibleObject* DefaultArmorRecipe;
+		extern BGSConstructibleObject* DefaultOneHandedRecipe;
+		extern BGSConstructibleObject* DefaultMeleeRecipe;
+		extern BGSConstructibleObject* DefaultTwoHandedRecipe;
+		extern BGSConstructibleObject* DefaultArmorRecipe;
 
-		extern std::unordered_map<const RE::TESObjectWEAP*, const RE::BGSConstructibleObject*> weaponToCOBJ_Map;
-		extern std::unordered_map<const RE::TESObjectARMO*, const RE::BGSConstructibleObject*> armorToCOBJ_Map;
+		extern std::unordered_map<const TESObjectWEAP*, const BGSConstructibleObject*> weaponToCOBJ_Map;
+		extern std::unordered_map<const TESObjectARMO*, const BGSConstructibleObject*> armorToCOBJ_Map;
 
-		extern std::unordered_map<const RE::TESObjectWEAP*, const RE::BGSConstructibleObject*> custom_weaponToCOBJ_Map;
-		extern std::unordered_map<const RE::TESObjectARMO*, const RE::BGSConstructibleObject*> custom_armorToCOBJ_Map;
+		extern std::unordered_map<const TESObjectWEAP*, const BGSConstructibleObject*> custom_weaponToCOBJ_Map;
+		extern std::unordered_map<const TESObjectARMO*, const BGSConstructibleObject*> custom_armorToCOBJ_Map;
 
-		const RE::BGSConstructibleObject* GetCOBJ_FromWeapon(RE::TESObjectWEAP* weaponObj, RE::ExtraDataList* weaponInstanceData);
-		const RE::BGSConstructibleObject* GetCOBJ_FromArmor(const RE::TESObjectARMO* armorObj);
+		const BGSConstructibleObject* GetCOBJ_FromWeapon(TESObjectWEAP* weaponObj, ExtraDataList* weaponInstanceData);
+		const BGSConstructibleObject* GetCOBJ_FromArmor(const TESObjectARMO* armorObj);
 
-		void InitializeRecipes(RE::TESDataHandler* dataHandler);
+		void InitializeRecipes(TESDataHandler* dataHandler);
 	}
-
-	
-
-	
 }
