@@ -2,6 +2,8 @@
 
 namespace Cascadia
 {
+	std::map<TESAmmo*, float> ammoDegradationMap;
+
 	void DefineItemDegradationFormsFromGame()
 	{
 		REX::INFO("Item Degradation: Linking degradation forms.");

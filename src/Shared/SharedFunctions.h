@@ -15,12 +15,11 @@ namespace Cascadia
 		template <typename T>
 		void RegisterFunction(Scaleform::GFx::Value* a_dest, Scaleform::Ptr<Scaleform::GFx::ASMovieRootBase> a_movieRoot, const char* a_func_name)
 		{
-			Scaleform::GFx::Value fnValue;
-			Scaleform::GFx::FunctionHandler* func = nullptr;
-			func = new T;
+			Scaleform::GFx::FunctionHandler* func = new T;
+			Scaleform::GFx::Value funcValue;
 
-			a_movieRoot->CreateFunction(&fnValue, func);
-			a_dest->SetMember(a_func_name, fnValue);
+			a_movieRoot->CreateFunction(&funcValue, func);
+			a_dest->SetMember(a_func_name, funcValue);
 		}
 
 		template<class Ty>
@@ -46,5 +45,13 @@ namespace Cascadia
 		bool IsXPMetervisible();
 
 		BGSKeyword* GetAmmoKeywordStandard(TESAmmo* ammo);
+
+		bool IsJunkItem(RE::TESBoundObject* obj);
+
+		RE::BGSComponent* GetBaseComponentFromForm(RE::TESForm* a_form);
+
+		void ApplyFormulaForRepairRequirements(const RE::BSTArray<RE::ExamineMenu::ModChoiceData>& modArray, const RE::ExtraDataList* extraData, RE::BSTArray<RE::BSTTuple<RE::TESForm*, RE::BGSTypedFormValuePair::SharedVal>>& recipeReqItems, RE::BSTArray<RE::BSTTuple<RE::TESForm*, RE::BGSTypedFormValuePair::SharedVal>>& reqItems, const float currentCondition, const float CurrentRepairSkill);
+
+		bool IsMeleeWeapon(RE::WEAPON_TYPE weaponType);
 	}
 }

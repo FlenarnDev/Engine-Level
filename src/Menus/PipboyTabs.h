@@ -253,6 +253,151 @@ namespace Cascadia
 			}
 		};
 
+		class CancelTravel : public Scaleform::GFx::FunctionHandler
+		{
+		public:
+			virtual void Call(const Params& a_params)
+			{
+				Shared::CurrentMultiLoc_Target = RE::ObjectRefHandle();
+				Shared::bIsMultiTravelling = false;
+			}
+		};
+
+		class MarkerMultipleLocations : public Scaleform::GFx::FunctionHandler
+		{
+		public:
+			virtual void Call(const Params& a_params)
+			{
+				const auto index = a_params.args[0].GetUInt();
+				Shared::markerID = index;
+
+				Scaleform::GFx::Value arrValues;
+				a_params.movie->asMovieRoot->CreateArray(&arrValues);
+
+				// @TODO: RESOLVE
+				RE::ObjectRefHandle res;
+				auto& mapData = RE::PipboyDataManager::GetSingleton()->mapData;
+				auto ress = mapData.travelLocationRefrHandles.find(index);//.GetTravelLocationRefr(&res, index);
+				if (ress != mapData.travelLocationRefrHandles.end()) {
+					//REX::DEBUG("RES ID FOUND IN HASHMAP IS: {}", ress->first);
+					res = ress->second;
+				}
+
+
+
+				if (res && res.get() && res.get().get()) {
+					if (res->IsMarker()) {
+
+						auto a = res->extraList->GetByType<RE::ExtraLinkedRefChildren>();
+						if (!a || a->linkedChildren.empty() || a->linkedChildren.size() <= 1) {
+							*a_params.retVal = arrValues;
+							return;
+						}
+
+						const auto locName = res->GetMapMarkerData()->GetFullName();
+
+						bool extAlready = false;
+
+						for (std::uint32_t i = 0; i < a->linkedChildren.size(); i++)
+						{
+							const auto& linkedREF = a->linkedChildren.at(i);
+							if (!linkedREF.REFR->IsMarker()) {
+								REX::CRITICAL("LinkRef index {} is not a MapMarkerData for {}", i, locName);
+							}
+
+							const bool ext = !linkedREF.REFR->GetParentCell() || linkedREF.REFR->GetParentCell()->IsExterior();
+
+							const Scaleform::GFx::Value pushVal = ext && !extAlready ? "Exterior" : locName;
+							if (ext && !extAlready)
+								extAlready = ext;
+
+							arrValues.PushBack(pushVal);
+						}
+
+						Shared::CurrentMultiLoc_Target = res;
+						Shared::bIsMultiTravelling = true;
+						*a_params.retVal = arrValues;
+
+
+						//REX::DEBUG("MARKER FOUND BRO - {}", res->extraList->GetByType<RE::EXTRA_DATA_TYPE::kLinkedRef>());
+					}
+				}
+			}
+		};
+
+		class FastTravelToMultiLocation_ith_Loc : public Scaleform::GFx::FunctionHandler
+		{
+		public:
+			virtual void Call(const Params& a_params)
+			{
+				const auto ith_choice = a_params.args[0].GetUInt();  // From the list which one was selected. First is Exterior, Second is Interior
+				Shared::chosenI = ith_choice;
+
+				// @TODO: RESOLVE
+				if (!Shared::bIsMultiTravelling)
+					return;
+
+				RE::ObjectRefHandle res;
+				auto& mapData = RE::PipboyDataManager::GetSingleton()->mapData;
+				auto ress = mapData.travelLocationRefrHandles.find(Shared::markerID);//.GetTravelLocationRefr(&res, index);
+				if (ress != mapData.travelLocationRefrHandles.end()) {
+					//REX::DEBUG("RES ID FOUND IN HASHMAP IS: {}", ress->first);
+					res = ress->second;
+				}
+
+				if (res && res.get() && res.get().get()) {
+					if (res->IsMarker()) {
+
+						auto a = res->extraList->GetByType<RE::ExtraLinkedRefChildren>();
+						if (!a || a->linkedChildren.empty() || a->linkedChildren.size() <= 1) {
+							return;
+						}
+
+						//auto vm = RE::GameVM::GetSingleton()->GetVM();
+						auto refr = a->linkedChildren.at(ith_choice).REFR;
+
+						if (!refr || !refr.get() || !refr.get().get()) {
+							Shared::bIsMultiTravelling = false;
+							return;
+						}
+
+						auto finalLocccc = refr.get().get();
+
+						Shared::FinalMultiDestination = finalLocccc;//RE::PlayerCharacter::GetSingleton()->GetCurrentLocation()->worldLocMarker.get().get();
+					}
+					else {
+						//REX::DEBUG("WTF MARKER BRO - {}", res->GetDisplayFullName());
+					}
+				}
+			}
+		};
+
+		class Debug_ActionScript : public Scaleform::GFx::FunctionHandler
+		{
+		public:
+			virtual void Call(const Params& a_params) {
+				std::string s = std::format("Type is not registered for debug: {}", (std::int32_t)a_params.args[0].GetType());
+				switch (a_params.args[0].GetType()) {
+				case Scaleform::GFx::Value::ValueType::kUInt:
+					s = std::to_string(a_params.args[0].GetUInt());
+					break;
+				case Scaleform::GFx::Value::ValueType::kInt:
+					s = std::to_string(a_params.args[0].GetInt());
+					break;
+				case Scaleform::GFx::Value::ValueType::kBoolean:
+					s = std::to_string(a_params.args[0].GetBoolean());
+					break;
+				case Scaleform::GFx::Value::ValueType::kString:
+					s = a_params.args[0].GetString();
+					break;
+				default:
+					break;
+				}
+
+				REX::DEBUG(std::format("Debug_ActionScript: {}", s).c_str());
+			}
+		};
+
 		bool RegisterScaleform(Scaleform::GFx::Movie* a_view, Scaleform::GFx::Value* a_value)
 		{
 			Scaleform::GFx::Value currentSWFPath;
@@ -277,6 +422,12 @@ namespace Cascadia
 					root.SetMember("pbt", pipboyTabs);
 
 					Shared::RegisterFunction<Ready>(&pipboyTabs, a_view->asMovieRoot, "ready");
+					
+					Shared::RegisterFunction<MarkerMultipleLocations>(&pipboyTabs, a_view->asMovieRoot, "MarkerMultipleLocations");
+					Shared::RegisterFunction<FastTravelToMultiLocation_ith_Loc>(&pipboyTabs, a_view->asMovieRoot, "FastTravelToMultiLocation_ith_Loc");
+					Shared::RegisterFunction<CancelTravel>(&pipboyTabs, a_view->asMovieRoot, "CancelTravel");
+					Shared::RegisterFunction<Debug_ActionScript>(&pipboyTabs, a_view->asMovieRoot, "DebugPrint");
+
 
 					loader.Invoke("load", nullptr, &urlRequest, 1);
 					a_view->asMovieRoot->Invoke("root.Menu_mc.addChild", nullptr, &loader, 1);

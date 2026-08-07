@@ -9,6 +9,7 @@
 #include "ObScript/ToggleArmorDegradation.h"
 #include "ObScript/ToggleMarkers.h"
 #include "ObScript/ToggleWeaponDegradation.h"
+#include "ObScript/ModCASValue.h"
 
 // Repurposed retail commands:
 // "IgnoreRenderPass" = "GetBaseObject"
@@ -31,6 +32,7 @@ namespace Cascadia
 			ToggleArmorDegradation::Install();
 			ToggleMarkers::Install();
 			ToggleWeaponDegradation::Install();
+			// ModCASValueCommand::Install();
 		}
 	}
 }

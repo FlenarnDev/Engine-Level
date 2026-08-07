@@ -3,6 +3,7 @@
 #include "Serialization/Serialization.h"
 #include "Shared/PerkHelpers.h"
 #include "Shared/SharedFunctions.h"
+#include "../Shared/SharedDeclarations.h"
 #include "Systems/Skills.h"
 
 namespace Cascadia
@@ -415,7 +416,7 @@ namespace Cascadia
 			// Extra 3 points if the player has "Educated" perk
 			// Using a global in 'FalloutCascaida.esm' we can adjust the base value.
 
-			TESGlobal* baseSkillPointsGlobal = TESDataHandler::GetSingleton()->LookupForm<TESGlobal>(0x1F9DFD, "FalloutCascadia.esm");
+			TESGlobal* baseSkillPointsGlobal = TESDataHandler::GetSingleton()->LookupForm<TESGlobal>(0x1F9DFD, MOD_ESM);
 			float skillPointsValue = 0;
 
 			if (baseSkillPointsGlobal)
@@ -433,7 +434,7 @@ namespace Cascadia
 
 			skillPointsValue = (skillPointsValue + playerIntelligence);
 
-			BGSPerk* educatedPerk = TESDataHandler::GetSingleton()->LookupForm<BGSPerk>(0x0F399E, "FalloutCascadia.esm");
+			BGSPerk* educatedPerk = TESDataHandler::GetSingleton()->LookupForm<BGSPerk>(0x0F399E, MOD_ESM);
 
 			if (educatedPerk)
 			{
