@@ -14,7 +14,7 @@ using namespace RE;
 
 // Internal
 #define MOD_ESM "FalloutCascadia.esm"
-#define CURRENT_ESP "CAS_TBM_01.esp"
+#define CURRENT_ESP ""
 
 namespace Cascadia
 {
@@ -41,7 +41,7 @@ namespace Cascadia
 		namespace Workbench_Additions {
 			extern bool bIsScrappingAllJunk;
 			extern TESGlobal* Scrap_SkillMult;
-			extern TESGlobal* Repair_workbenchSkillEffectReduction;
+			extern TESGlobal* Repair_WorkbenchSkillEffectReduction;
 		}
 
 		namespace Bartering_Additions {

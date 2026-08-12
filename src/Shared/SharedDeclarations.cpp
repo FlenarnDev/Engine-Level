@@ -7,7 +7,7 @@ namespace Cascadia
 		namespace Workbench_Additions {
 			bool bIsScrappingAllJunk;
 			TESGlobal* Scrap_SkillMult;
-			TESGlobal* Repair_workbenchSkillEffectReduction;
+			TESGlobal* Repair_WorkbenchSkillEffectReduction;
 		}
 
 		namespace Bartering_Additions {
@@ -54,36 +54,35 @@ namespace Cascadia
 
 		void InitializeGameAdditionalVars(RE::TESDataHandler* dataHandler) {
 			using namespace Additions;
-			Workbench_Additions::Scrap_SkillMult = dataHandler->LookupForm<TESGlobal>(0x0009A0, CURRENT_ESP);
-			Workbench_Additions::Repair_workbenchSkillEffectReduction = dataHandler->LookupForm<TESGlobal>(0x000C2F, CURRENT_ESP);
+			Workbench_Additions::Scrap_SkillMult = dataHandler->LookupForm<TESGlobal>(0x32AB29, MOD_ESM);
+			Workbench_Additions::Repair_WorkbenchSkillEffectReduction = dataHandler->LookupForm<TESGlobal>(0x32AB3A, MOD_ESM);
 
-			Bartering_Additions::Barter_SkillMult = dataHandler->LookupForm<TESGlobal>(0x0009A2, CURRENT_ESP);
-			Bartering_Additions::Barter_SkillSellAddition = dataHandler->LookupForm<TESGlobal>(0x0009A3, CURRENT_ESP);
-			Bartering_Additions::Barter_SkillBuyAddition = dataHandler->LookupForm<TESGlobal>(0x0009A4, CURRENT_ESP);
+			Bartering_Additions::Barter_SkillMult = dataHandler->LookupForm<TESGlobal>(0x32AB2B, MOD_ESM);
+			Bartering_Additions::Barter_SkillSellAddition = dataHandler->LookupForm<TESGlobal>(0x32AB2C, MOD_ESM);
+			Bartering_Additions::Barter_SkillBuyAddition = dataHandler->LookupForm<TESGlobal>(0x32AB2D, MOD_ESM);
 
-			ItemDegradation::Armor_CND_ReductionPerPercent = dataHandler->LookupForm<TESGlobal>(0x0009A5, CURRENT_ESP);
-			ItemDegradation::Weapon_BoltMult = dataHandler->LookupForm<TESGlobal>(0x0009A6, CURRENT_ESP);
-			ItemDegradation::Weapon_AutomaticMult = dataHandler->LookupForm<TESGlobal>(0x0009A7, CURRENT_ESP);
-			ItemDegradation::Weapon_CND_ReductionPerPercent = dataHandler->LookupForm<TESGlobal>(0x0009A8, CURRENT_ESP);
+			ItemDegradation::Armor_CND_ReductionPerPercent = dataHandler->LookupForm<TESGlobal>(0x32AB2E, MOD_ESM);
+			ItemDegradation::Weapon_BoltMult = dataHandler->LookupForm<TESGlobal>(0x32AB2F, MOD_ESM);
+			ItemDegradation::Weapon_AutomaticMult = dataHandler->LookupForm<TESGlobal>(0x32AB30, MOD_ESM);
+			ItemDegradation::Weapon_CND_ReductionPerPercent = dataHandler->LookupForm<TESGlobal>(0x32AB31, MOD_ESM);
 
-			AI_Detection::Radio_MaxDistanceEffect = dataHandler->LookupForm<TESGlobal>(0x0009A9, CURRENT_ESP);
-			AI_Detection::Radio_DistanceScaling = dataHandler->LookupForm<TESGlobal>(0x0009AA, CURRENT_ESP);
-			AI_Detection::Radio_AdditionBase = dataHandler->LookupForm<TESGlobal>(0x0009AB, CURRENT_ESP);
-			AI_Detection::Light_Addition = dataHandler->LookupForm<TESGlobal>(0x0009AC, CURRENT_ESP);
+			AI_Detection::Radio_MaxDistanceEffect = dataHandler->LookupForm<TESGlobal>(0x32AB32, MOD_ESM);
+			AI_Detection::Radio_DistanceScaling = dataHandler->LookupForm<TESGlobal>(0x32AB33, MOD_ESM);
+			AI_Detection::Radio_AdditionBase = dataHandler->LookupForm<TESGlobal>(0x32AB34, MOD_ESM);
+			AI_Detection::Light_Addition = dataHandler->LookupForm<TESGlobal>(0x32AB35, MOD_ESM);
 
-			Mobility::JumpCost_BaseCost = dataHandler->LookupForm<TESGlobal>(0x0009AD, CURRENT_ESP);
-			Mobility::JumpCost_BrokenLegsAdditionalMult = dataHandler->LookupForm<TESGlobal>(0x0009AE, CURRENT_ESP);
+			Mobility::JumpCost_BaseCost = dataHandler->LookupForm<TESGlobal>(0x32AB36, MOD_ESM);
+			Mobility::JumpCost_BrokenLegsAdditionalMult = dataHandler->LookupForm<TESGlobal>(0x32AB37, MOD_ESM);
 		}
 
 		void InitializeSharedGameVariables()
 		{
 			TESDataHandler* dataHandler = TESDataHandler::GetSingleton();
 			noDegradation = dataHandler->LookupForm<BGSKeyword>(0x2BD72E, MOD_ESM);
-			notScrappableKeyword = dataHandler->LookupForm<BGSKeyword>(0x0009A1, CURRENT_ESP);
+			notScrappableKeyword = dataHandler->LookupForm<BGSKeyword>(0x32AB2A, MOD_ESM);
 
 			InitializeGameAdditionalVars(dataHandler);
 			Recipes::InitializeRecipes(dataHandler);
-
 		}
 
 		void InitializeSharedVariables()
@@ -133,16 +132,16 @@ namespace Cascadia
 		}
 
 		void InitializeRecipes(RE::TESDataHandler* dataHandler) {
-			WeaponRecipesRepairList = dataHandler->LookupForm<BGSListForm>(0x000D11, CURRENT_ESP);
-			ArmorRecipesRepairList = dataHandler->LookupForm<BGSListForm>(0x000D12, CURRENT_ESP);
+			WeaponRecipesRepairList = dataHandler->LookupForm<BGSListForm>(0x32AB4C, MOD_ESM);
+			ArmorRecipesRepairList = dataHandler->LookupForm<BGSListForm>(0x32AB4D, MOD_ESM);
 
-			CustomRecipesListArmor = dataHandler->LookupForm<BGSListForm>(0x000D13, CURRENT_ESP);
-			CustomRecipesListWeapon = dataHandler->LookupForm<BGSListForm>(0x000D14, CURRENT_ESP);
+			CustomRecipesListArmor = dataHandler->LookupForm<BGSListForm>(0x32AB4E, MOD_ESM);
+			CustomRecipesListWeapon = dataHandler->LookupForm<BGSListForm>(0x32AB4F, MOD_ESM);
 
-			DefaultOneHandedRecipe = dataHandler->LookupForm<BGSConstructibleObject>(0x000D0E, CURRENT_ESP);
-			DefaultTwoHandedRecipe = dataHandler->LookupForm<BGSConstructibleObject>(0x000D0F, CURRENT_ESP);
-			DefaultMeleeRecipe = dataHandler->LookupForm<BGSConstructibleObject>(0x000D0D, CURRENT_ESP);
-			DefaultArmorRecipe = dataHandler->LookupForm<BGSConstructibleObject>(0x000D10, CURRENT_ESP);
+			DefaultOneHandedRecipe = dataHandler->LookupForm<BGSConstructibleObject>(0x32AB49, MOD_ESM);
+			DefaultTwoHandedRecipe = dataHandler->LookupForm<BGSConstructibleObject>(0x32AB4A, MOD_ESM);
+			DefaultMeleeRecipe = dataHandler->LookupForm<BGSConstructibleObject>(0x32AB48, MOD_ESM);
+			DefaultArmorRecipe = dataHandler->LookupForm<BGSConstructibleObject>(0x32AB4B, MOD_ESM);
 
 
 

@@ -180,7 +180,7 @@ namespace Cascadia
 		void ApplyFormulaForRepairRequirements(const RE::BSTArray<RE::ExamineMenu::ModChoiceData>& modArray, const RE::ExtraDataList* extraData, RE::BSTArray<RE::BSTTuple<RE::TESForm*, RE::BGSTypedFormValuePair::SharedVal>>& recipeReqItems,
 			RE::BSTArray<RE::BSTTuple<RE::TESForm*, RE::BGSTypedFormValuePair::SharedVal>>& reqItems, const float currentCondition, const float CurrentRepairSkill)
 		{
-			const std::uint32_t repairSkillReduction = CurrentRepairSkill / Cascadia::Additions::Workbench_Additions::Repair_workbenchSkillEffectReduction->GetValue();
+			const std::uint32_t repairSkillReduction = CurrentRepairSkill / Cascadia::Additions::Workbench_Additions::Repair_WorkbenchSkillEffectReduction->GetValue();
 			std::uint32_t i = 0;
 
 			// auto vm = RE::GameVM::GetSingleton()->GetVM();
