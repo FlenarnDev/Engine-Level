@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Shared/SharedFunctions.h"
+#include "Shared/SharedDeclarations.h"
 #include "Systems/Skills.h"
 
 // Massive thanks to Neanka - the OG interface god.
@@ -28,6 +28,95 @@ namespace Cascadia
 		std::vector<avifStruct> avifPages;
 
 		Scaleform::GFx::Value loader;
+
+
+		class Scaleform_GetAreas : public Scaleform::GFx::FunctionHandler
+		{
+		public:
+			virtual void Call(const Params& a_params)
+			{
+				//PipboyDataManager::GetSingleton()->questData.
+				Scaleform::GFx::Value arrVal;
+				a_params.movie->asMovieRoot->CreateArray(&arrVal);
+				for (const auto& kv : Shared::PipboyMap::MapProximityAreas) {
+					if (!kv.first || kv.second.empty()) continue;
+
+					for (const auto& area : kv.second) {
+						if (!Shared::IsQuestActive(area.second._quest) || !Shared::IsObjectiveDisplayed(area.second._objective))
+						{
+							// _MESSAGE("%s quest inactive", kv.second._quest->fullName.name.c_str());
+							continue;
+						}
+						
+
+						
+						REX::DEBUG("Objective num targets: {}, targets size: {}", area.second._objective->numTargets, area.second._objective->targets[0]->target.size());
+						
+						for (std::uint32_t targetIndex = 0; targetIndex < area.second._objective->numTargets; targetIndex++) {
+							const auto questTargetFinal = area.second._objective->targets[targetIndex];
+
+							
+
+							
+							for (const auto targetReferenceFinal : questTargetFinal->target) {
+								const auto poss = targetReferenceFinal->reference->GetPosition();
+
+								Scaleform::GFx::Value entry;
+								a_params.movie->asMovieRoot->CreateObject(&entry);
+
+								entry.SetMember("x", area.second._x + poss.x);
+								entry.SetMember("y", area.second._y + poss.y);
+								entry.SetMember("radius", area.second._radius);
+								Scaleform::GFx::Value texx = area.second._objective->displayText.c_str();
+								entry.SetMember("obj_text", texx);
+								arrVal.PushBack(entry);
+
+								REX::DEBUG("Area from CPP: x: {}, y: {}, radius: {}", area.second._x + poss.x, area.second._y + poss.y, area.second._radius);
+							}
+							
+						}
+						
+						
+					}
+					
+				}
+				Scaleform::GFx::Value rett;
+				a_params.movie->asMovieRoot->CreateObject(&rett);
+				rett.SetMember("retArr", arrVal);
+				*a_params.retVal = rett;
+			}
+		};
+
+		class Scaleform_IsProximityMarker : public Scaleform::GFx::FunctionHandler
+		{
+		public:
+			virtual void Call(const Params& a_params)
+			{
+
+				const auto index = a_params.args[0].GetUInt();
+				Shared::markerID = index;
+
+				// @TODO: RESOLVE
+				RE::ObjectRefHandle res;
+				auto& mapData = RE::PipboyDataManager::GetSingleton()->mapData;
+				auto ress = mapData.travelLocationRefrHandles.find(index);//.GetTravelLocationRefr(&res, index);
+				if (ress != mapData.travelLocationRefrHandles.end()) {
+					//REX::DEBUG("RES ID FOUND IN HASHMAP IS: {}", ress->first);
+					res = ress->second;
+				}
+
+
+
+				if (res && res.get() && res.get().get()) {
+					if (Shared::IsRadiusMarkerStatic(res.get().get()) || res->HasLocationRefType(Shared::CustomProximityMapMarkerRefType)) {
+						*a_params.retVal = true;
+						return;
+					}
+				}
+
+				*a_params.retVal = false;
+			}
+		};
 
 		void PopulateSkillEntry(Scaleform::GFx::Value* a_destination, Scaleform::Ptr<Scaleform::GFx::ASMovieRootBase> a_movieRoot, ActorValueInfo* a_skill, std::vector<std::string> a_stringValue)
 		{
@@ -149,6 +238,8 @@ namespace Cascadia
 
 		void UpdateMenu_Internal(Scaleform::Ptr<Scaleform::GFx::ASMovieRootBase> a_movieRoot)
 		{
+			//Shared::PipboyMap::InitializeActiveObjectives();
+
 			if (Skills::CascadiaSkillsLevelUp.size() > 0)
 			{
 				Scaleform::GFx::Value argumentsArray[7];
@@ -414,6 +505,11 @@ namespace Cascadia
 					a_view->asMovieRoot->CreateObject(&loader, "flash.display.Loader");
 					a_view->asMovieRoot->CreateObject(&urlRequest, "flash.net.URLRequest", &SWFDeclaration, 1);
 
+					Scaleform::GFx::Value urlRequest2;
+					Scaleform::GFx::Value url2 = "UIMapSearchArea.swf";
+					//a_view->asMovieRoot->GetVariable(&root, "root");
+					a_view->asMovieRoot->CreateObject(&urlRequest2, "flash.net.URLRequest", &url2, 1);
+
 					loader.SetMember("name", "PipboyTabs_loader");
 					root.SetMember("PipboyTabs_loader", &loader);
 
@@ -428,9 +524,25 @@ namespace Cascadia
 					Shared::RegisterFunction<CancelTravel>(&pipboyTabs, a_view->asMovieRoot, "CancelTravel");
 					Shared::RegisterFunction<Debug_ActionScript>(&pipboyTabs, a_view->asMovieRoot, "DebugPrint");
 
+					Shared::RegisterFunction<Scaleform_GetAreas>(&pipboyTabs, a_view->asMovieRoot, "GetAreas");
+					Shared::RegisterFunction<Scaleform_IsProximityMarker>(&pipboyTabs, a_view->asMovieRoot, "IsProximityMarker");
+
 
 					loader.Invoke("load", nullptr, &urlRequest, 1);
+
+					// root.SetMember("UIMapSearchArea_loader", &loader);
+					loader.Invoke("load", nullptr, &urlRequest2, 1);
+
+
+
 					a_view->asMovieRoot->Invoke("root.Menu_mc.addChild", nullptr, &loader, 1);
+
+
+
+					
+					
+					//a_view->asMovieRoot->Invoke("root.addChild", nullptr, &loader, 1);
+					
 				}
 				return true;
 			}

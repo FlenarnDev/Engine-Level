@@ -14,7 +14,7 @@ using namespace RE;
 
 // Internal
 #define MOD_ESM "FalloutCascadia.esm"
-#define CURRENT_ESP ""
+#define CURRENT_ESP "CAS_TBM_03.esp"
 
 namespace Cascadia
 {
@@ -35,6 +35,39 @@ namespace Cascadia
 		extern TESObjectREFR* FinalMultiDestination;
 		extern std::uint32_t chosenI;
 		extern std::uint32_t markerID;
+
+		extern BGSKeyword* ProximityAreaKeyword;
+		extern TESForm* CustomProximityMapMarkerForm;
+		extern BGSLocationRefType* CustomProximityMapMarkerRefType;
+
+		namespace PipboyMap {
+			class Area
+			{
+			public:
+				Area() : _x(0), _y(0), _radius(0), _live_tracking(false) { _quest = nullptr; _objective = nullptr; }
+				Area(float x, float y, float radius, const TESQuest* quest, const BGSQuestObjective* objective) : _x(x), _y(y), _radius(radius), _live_tracking(false) { _quest = quest; _objective = objective;}
+				Area(float x, float y, float radius, const TESQuest* quest, const BGSQuestObjective* objective, bool live_tracking) : _x(x), _y(y), _radius(radius), _live_tracking(live_tracking) { _quest = quest; _objective = objective; }
+
+				float _x;
+				float _y;
+				float _radius;
+				const TESQuest* _quest;
+				const BGSQuestObjective* _objective;
+				bool _live_tracking;
+			};
+
+			extern std::map<const TESQuest*, std::map<std::uint32_t, Area>> MapProximityAreas;
+
+			bool pap_add(std::monostate, std::uint32_t id, float x, float y, float radius, bool live_tracking, TESForm* quest);
+			bool pap_remove(std::monostate, TESForm* quest);
+
+			void AddProximityKeywordIfNonExistentToObjectiveTargets(const BGSQuestObjective* objective);
+
+			void InitializeActiveObjectives();
+
+			bool RegisterFuncs(BSScript::IVirtualMachine* vm);
+		}
+		
 	}
 
 	namespace Additions {

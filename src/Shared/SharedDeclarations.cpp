@@ -1,5 +1,6 @@
-#include "Shared/SharedDeclarations.h"
+#include "SharedDeclarations.h"
 #include "InventoryHelpers.h"
+#include "SharedFunctions.h"
 
 namespace Cascadia
 {
@@ -52,6 +53,123 @@ namespace Cascadia
 		std::uint32_t chosenI;
 		std::uint32_t markerID;
 
+		BGSKeyword* ProximityAreaKeyword;
+		TESForm* CustomProximityMapMarkerForm;
+		BGSLocationRefType* CustomProximityMapMarkerRefType;
+
+		namespace PipboyMap {
+			std::map<const TESQuest*, std::map<std::uint32_t, Area>> MapProximityAreas;
+
+			bool pap_add(std::monostate, std::uint32_t id, float x, float y, float radius, bool live_tracking, TESForm* quest)
+			{
+				const auto questCast = static_cast<TESQuest*>(quest);
+				auto it = MapProximityAreas.find(questCast);
+				if (it == MapProximityAreas.end())
+				{
+					for (auto objj : questCast->objectives) {
+						if (objj->index == id && objj->numTargets > 0 && objj->targets[0] != nullptr && !objj->targets[0]->target.empty()) {
+							const auto reff = objj->targets[0]->target[0]->reference;
+							if (Shared::IsRadiusMarkerStatic(reff.get().get())) {
+								const float markerRadius = reff->extraList->GetByType<ExtraRadius>()->radius;
+								REX::DEBUG("Added pap for a quest CUSTOM MARKER '{}', obj: '{}' with marker radius: {}", questCast->GetFullName(), objj->displayText.c_str(), markerRadius);
+								MapProximityAreas[questCast][id] = Area(0.0f, 0.0f, markerRadius, questCast, objj);
+							}
+							else {
+								MapProximityAreas[questCast][id] = Area(x, y, radius, questCast, objj);
+								REX::DEBUG("Added pap for a quest NOT CUSTOM MARKER '{}', obj: '{}'", questCast->GetFullName(), objj->displayText.c_str());
+							}
+							
+							break;
+						}
+					}
+				}
+				else {
+					for (auto objj : questCast->objectives) {
+						if (objj->index == id && objj->numTargets > 0 && objj->targets[0] != nullptr && !objj->targets[0]->target.empty()) {
+							const auto reff = objj->targets[0]->target[0]->reference;
+							if (Shared::IsRadiusMarkerStatic(reff.get().get())) {
+								// @TODO GET RADIUS FROM THE MARKER FLEN!
+								const float markerRadius = reff->extraList->GetByType<ExtraRadius>()->radius;
+								REX::DEBUG("Added pap for a quest CUSTOM MARKER '{}', obj: '{}' with marker radius: {}", questCast->GetFullName(), objj->displayText.c_str(), markerRadius);
+								MapProximityAreas[questCast][id] = Area(0.0f, 0.0f, markerRadius, questCast, objj);
+							}
+							else {
+								MapProximityAreas[questCast][id] = Area(x, y, radius, questCast, objj);
+								REX::DEBUG("Added pap for a quest NOT CUSTOM MARKER '{}', obj: '{}'", questCast->GetFullName(), objj->displayText.c_str());
+							}
+						}
+						
+
+						break;
+					}
+				}
+				return true;
+			}
+
+			bool pap_remove(std::monostate, TESForm* quest)
+			{
+				const auto questCast = static_cast<TESQuest*>(quest);
+				auto it = MapProximityAreas.find(questCast);
+				if (it != MapProximityAreas.end())
+				{
+					MapProximityAreas[questCast].clear();
+					MapProximityAreas.erase(it);
+					REX::DEBUG("Cleaned up pap for quest {}", questCast->GetFullName());
+				}
+				return true;
+			}
+
+			void AddProximityKeywordIfNonExistentToObjectiveTargets(const BGSQuestObjective* objective)
+			{
+				if (!ProximityAreaKeyword) return;
+
+				for(std::uint32_t targetIndex = 0; targetIndex < objective->numTargets; targetIndex++) {
+					const auto questTargetFinal = objective->targets[targetIndex];
+
+					for (const auto targetReferenceFinal : questTargetFinal->target) {
+
+						if (targetReferenceFinal->reference && !targetReferenceFinal->reference->HasKeyword(ProximityAreaKeyword)) {
+							targetReferenceFinal->reference->AddKeyword(ProximityAreaKeyword);
+						}
+					}
+
+				}
+			}
+
+			void InitializeActiveObjectives()
+			{
+				REX::DEBUG("Quest Objectives checking....");
+				const auto playerRef = PlayerCharacter::GetSingleton();
+				for (auto qTarget = playerRef->objectives.begin(); qTarget != playerRef->objectives.end(); ++qTarget) {
+					const TESQuest* quest = qTarget->objective->ownerQuest;
+					if (quest == nullptr)
+						continue;
+
+					//if ((quest->formFlags >> 11 & 1) != 1)
+						//continue;
+
+					std::string buff = std::string("Objective ");
+					if (Shared::IsObjectiveDisplayed(qTarget->objective) && Shared::IsQuestActive(quest)) {
+						buff += qTarget->objective->displayText.data() + std::string(": Displayed");
+					}
+					else {
+						buff += qTarget->objective->displayText.data() + std::string(": NOT Displayed");
+					}
+
+
+
+					REX::DEBUG(buff.c_str());
+				}
+			}
+
+			bool RegisterFuncs(BSScript::IVirtualMachine * vm)
+			{
+				vm->BindNativeMethod("CAS:CAS_Global", "AddMapArea", pap_add);
+				vm->BindNativeMethod("CAS:CAS_Global", "RemoveMapAreas", pap_remove);
+				return true;
+			}
+		}
+
 		void InitializeGameAdditionalVars(RE::TESDataHandler* dataHandler) {
 			using namespace Additions;
 			Workbench_Additions::Scrap_SkillMult = dataHandler->LookupForm<TESGlobal>(0x32AB29, MOD_ESM);
@@ -80,6 +198,10 @@ namespace Cascadia
 			TESDataHandler* dataHandler = TESDataHandler::GetSingleton();
 			noDegradation = dataHandler->LookupForm<BGSKeyword>(0x2BD72E, MOD_ESM);
 			notScrappableKeyword = dataHandler->LookupForm<BGSKeyword>(0x32AB2A, MOD_ESM);
+
+			ProximityAreaKeyword = dataHandler->LookupForm<BGSKeyword>(0x000C14, CURRENT_ESP);
+			CustomProximityMapMarkerForm = dataHandler->LookupForm(0x001029, CURRENT_ESP);
+			CustomProximityMapMarkerRefType = dataHandler->LookupForm<BGSLocationRefType>(0x00150D, CURRENT_ESP);
 
 			InitializeGameAdditionalVars(dataHandler);
 			Recipes::InitializeRecipes(dataHandler);
