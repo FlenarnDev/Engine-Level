@@ -8,15 +8,14 @@
 #include "Events/TESInitScriptEvent.h"
 #include "Events/TESLoadGameEvent.h"
 #include "Menus/ExamineConfirmMenu.h"
-#include "Menus/PipboyTabs.h"
 #include "Patches/Patches.h"
 #include "Scripts/ObScript.h"
 #include "Serialization/Serialization.h"
-#include "Shared/SharedDeclarations.h"
 #include "Systems/Skills.h"
 #include "Systems/LockLevels.h"
 #include "Shared/Hooks.h"
 #include "Systems/ItemDegradation.h"
+#include "Menus/PipboyTabs.h"
 
 namespace
 {
@@ -123,6 +122,12 @@ F4SE_PLUGIN_LOAD(const F4SE::LoadInterface* a_f4se)
 		serialization->SetRevertCallback(Cascadia::Serialization::RevertCallback);
 		serialization->SetSaveCallback(Cascadia::Serialization::SaveCallback);
 		serialization->SetLoadCallback(Cascadia::Serialization::LoadCallback);
+	}
+
+
+	if (!F4SE::GetPapyrusInterface()->Register(Cascadia::Shared::RegisterPapyrusFuncs)) {
+		REX::CRITICAL("Failed to register Papyrus funtions...");
+		return false;
 	}
 
 	const F4SE::MessagingInterface* messaging = F4SE::GetMessagingInterface();

@@ -84,6 +84,28 @@ namespace Cascadia
 			}
 		}
 
+		DetourXS hook_PipboyBuildQuestTargetMarker;
+		typedef std::uint64_t(PipboyBuildQuestTargetMarkerSig)(void*, RE::TESQuestTarget::REF_DATA*, std::uint64_t);
+		REL::Relocation<PipboyBuildQuestTargetMarkerSig> PipboyBuildQuestTargetMarker_Original;
+		std::uint64_t HookPipboyBuildQuestTargetMarker(void* a1, RE::TESQuestTarget::REF_DATA* a_refData, std::uint64_t a3)
+		{
+			if (a_refData)
+			{
+				if (auto refr = a_refData->reference.get())
+				{
+					if (auto* base = refr->GetObjectReference())
+					{
+						if (Shared::IsRadiusMarkerStatic(refr.get()))
+						{
+							return 1;
+						}
+					}
+				}
+			}
+
+			return PipboyBuildQuestTargetMarker_Original(a1, a_refData, a3);
+		}
+
 		void HookWorkbenchMenuBaseShowBuildFailureMessage_PowerArmorModMenu()
 		{
 			GameSettingCollection* gameSettingCollection = GameSettingCollection::GetSingleton();
@@ -2262,6 +2284,7 @@ namespace Cascadia
 			RegisterDetourFunction(hook_BuildWeaponScrappingArray, RE::ID::ExamineMenu::BuildWeaponScrappingArray, &HookBuildWeaponScrappingArray, BuildWeaponScrappingArrayOriginal, "BuildWeaponScrappingArray");
 			RegisterDetourFunction(hook_PlayerCharacterHandlePositionPlayerRequest, RE::ID::PlayerCharacter::HandlePositionPlayerRequest, &HookPlayerCharacterHandlePositionPlayerRequest, PlayerCharacterHandlePositionPlayerRequest_Original, "PlayerCharacterHandlePositionPlayerRequest");
 
+			RegisterDetourFunction(hook_PipboyBuildQuestTargetMarker, REL::ID(2225603), &HookPipboyBuildQuestTargetMarker, PipboyBuildQuestTargetMarker_Original, "PipboyBuildQuestTargetMarker");
 
 			InstallRemoveItemHook();
 		}

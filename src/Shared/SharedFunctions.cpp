@@ -292,5 +292,35 @@ namespace Cascadia
 
 			return result;
 		}
+		bool IsObjectiveDisplayed(const BGSQuestObjective* Objective)
+		{
+			if (Objective)
+			{
+				char cState = Objective->state;
+				if (((cState - 1) & 0xF9) == 0 && cState != 7)
+					return 1;
+			}
+
+			return false;
+		}
+		bool IsQuestActive(const TESQuest* Quest)
+		{
+			if (Quest) {
+				return (Quest->data.flags >> 11) & 1;
+			}
+
+			return false;
+		}
+		bool RegisterPapyrusFuncs(BSScript::IVirtualMachine* vm)
+		{
+			if (!Shared::PipboyMap::RegisterFuncs(vm))
+				return false;
+
+			return true;
+		}
+		bool IsRadiusMarkerStatic(const TESObjectREFR* object)
+		{
+			return Shared::CustomProximityMapMarkerForm->GetFormID() == object->GetObjectReference()->GetFormID() && object->extraList != nullptr && object->extraList->HasType<ExtraRadius>();
+		}
 	}
 }

@@ -53,5 +53,13 @@ namespace Cascadia
 		void ApplyFormulaForRepairRequirements(const RE::BSTArray<RE::ExamineMenu::ModChoiceData>& modArray, const RE::ExtraDataList* extraData, RE::BSTArray<RE::BSTTuple<RE::TESForm*, RE::BGSTypedFormValuePair::SharedVal>>& recipeReqItems, RE::BSTArray<RE::BSTTuple<RE::TESForm*, RE::BGSTypedFormValuePair::SharedVal>>& reqItems, const float currentCondition, const float CurrentRepairSkill);
 
 		bool IsMeleeWeapon(RE::WEAPON_TYPE weaponType);
+
+		bool IsObjectiveDisplayed(const BGSQuestObjective* Objective);
+
+		bool IsQuestActive(const TESQuest* Quest);
+		
+		bool RegisterPapyrusFuncs(BSScript::IVirtualMachine* vm);
+
+		bool IsRadiusMarkerStatic(const TESObjectREFR* object);
 	}
 }

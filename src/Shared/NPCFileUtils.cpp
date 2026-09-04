@@ -158,7 +158,7 @@ namespace Cascadia
 					}
 				}
 
-				currentTintEntry.value = entry->tingingValue;
+				currentTintEntry.value = entry->tintingValue;
 
 				result.push_back(currentTintEntry);
 			}
