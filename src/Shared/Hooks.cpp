@@ -102,6 +102,16 @@ namespace Cascadia
 			return PipboyBuildQuestTargetMarker_Original(a1, a_refData, a3);
 		}
 
+		DetourXS hook_PipboyMapDataUpdateQuestMarkers;
+		typedef void(PipboyMapDataUpdateQuestMarkersSig)(PipboyMapData*, PipboyArray*, BSTHashMap<ObjectRefHandle, PipboyObject*>*, MapMarker::MARKER_SCOPE, float);
+		REL::Relocation<PipboyMapDataUpdateQuestMarkersSig> PipboyMapDataUpdateQuestMarkers_Original;
+		void HookPipboyMapDataUpdateQuestMarkers(PipboyMapData* a_this, PipboyArray* a_questMarkers, BSTHashMap<ObjectRefHandle, PipboyObject*>* a_questMarkerMap, MapMarker::MARKER_SCOPE a_scope, float a_heightReference)
+		{
+			// TODO: clear hashmap here
+
+			PipboyMapDataUpdateQuestMarkers_Original(a_this, a_questMarkers, a_questMarkerMap, a_scope, a_heightReference);
+		}
+
 		void HookWorkbenchMenuBaseShowBuildFailureMessage_PowerArmorModMenu()
 		{
 			GameSettingCollection* gameSettingCollection = GameSettingCollection::GetSingleton();
@@ -2221,6 +2231,7 @@ namespace Cascadia
 			RegisterDetourFunction(hook_BuildWeaponScrappingArray, RE::ID::ExamineMenu::BuildWeaponScrappingArray, &HookBuildWeaponScrappingArray, BuildWeaponScrappingArrayOriginal, "BuildWeaponScrappingArray");
 			RegisterDetourFunction(hook_PlayerCharacterHandlePositionPlayerRequest, RE::ID::PlayerCharacter::HandlePositionPlayerRequest, &HookPlayerCharacterHandlePositionPlayerRequest, PlayerCharacterHandlePositionPlayerRequest_Original, "PlayerCharacterHandlePositionPlayerRequest");
 			RegisterDetourFunction(hook_PipboyBuildQuestTargetMarker, REL::ID(2225603), &HookPipboyBuildQuestTargetMarker, PipboyBuildQuestTargetMarker_Original, "PipboyBuildQuestTargetMarker");
+			RegisterDetourFunction(hook_PipboyMapDataUpdateQuestMarkers, ID::PipboyMapData::UpdateQuestMarkers, &HookPipboyMapDataUpdateQuestMarkers, PipboyMapDataUpdateQuestMarkers_Original, "PipboyMapDataUpdateQuestMarkers");
 
 			InstallRemoveItemHook();
 		}
