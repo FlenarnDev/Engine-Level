@@ -89,14 +89,10 @@ namespace Cascadia
 		REL::Relocation<PipboyBuildQuestTargetMarkerSig> PipboyBuildQuestTargetMarker_Original;
 		std::uint64_t HookPipboyBuildQuestTargetMarker(void* a1, RE::TESQuestTarget::REF_DATA* a_refData, std::uint64_t a3)
 		{
-			if (a_refData)
-			{
-				if (auto refr = a_refData->reference.get())
-				{
-					if (auto* base = refr->GetObjectReference())
-					{
-						if (Shared::IsRadiusMarkerStatic(refr.get()))
-						{
+			if (a_refData) {
+				if (auto refr = a_refData->reference.get()) {
+					if (auto* base = refr->GetObjectReference()) {
+						if (Shared::IsRadiusMarkerStatic(refr.get())) {
 							return 1;
 						}
 					}
@@ -1723,18 +1719,14 @@ namespace Cascadia
 		void HookActorSPECIALModifiedCallback(Actor* a_this, const ActorValueInfo* a_info, float a_originalValue, float a_delta)
 		{
 			PlayerCharacter* playerCharacter = PlayerCharacter::GetSingleton();
-
 			ActorSPECIALModifiedCallback_Original(a_this, a_info, a_originalValue, a_delta);
 
 			REX::DEBUG("Special Modified Callback - AV: {}", a_info->GetFormEditorID());
 
-
-			if (a_this == playerCharacter)
-			{
+			if (a_this == playerCharacter) {
 				bool boost = true;
 
-				if (a_delta < 0.0f)
-				{
+				if (a_delta < 0.0f) {
 					boost = false;
 				}
 
@@ -1744,8 +1736,7 @@ namespace Cascadia
 				REX::DEBUG("'{}' base value: {}", a_info->GetFormEditorID(), baseValue);
 				float modValue = playerCharacter->GetActorValue(*a_info);
 				REX::DEBUG("'{}' mod value: {}", a_info->GetFormEditorID(), modValue);
-				if (baseValue == modValue)
-				{
+				if (baseValue == modValue) {
 					temporary = false;
 				}
 				REX::DEBUG("Temporary modification: {}", temporary);
@@ -1753,15 +1744,13 @@ namespace Cascadia
 				ActorValue* actorValueSingleton = ActorValue::GetSingleton();
 				bool isLuck = a_info == actorValueSingleton->luck;
 
-				if (isLuck)
-				{
-
+				if (isLuck) {
+					// TODO
 				}
-				else
-				{
+				else {
 					auto skillsIt = Skills::specialToSkillsMap.find(a_info);
 					if (skillsIt != Skills::specialToSkillsMap.end()) {
-						for (auto* skill : skillsIt->second) {
+						for (ActorValueInfo* skill : skillsIt->second) {
 							REX::DEBUG("Skill found for {}: {}", a_info->GetFormEditorID(), skill->GetFormEditorID());
 
 							// Correct
@@ -1789,18 +1778,16 @@ namespace Cascadia
 							
 							
 							bool skillModifiedByReduction = false;
-							if (currentBaseSkillValue > currentModSkillValue)
-							{
+							if (currentBaseSkillValue > currentModSkillValue) {
 								skillModifiedByReduction = true;
 							}
-							if (skillModifiedByReduction)
-							{
+
+							if (skillModifiedByReduction) {
 								REX::DEBUG("Skill is reduced by mod by: {} points.", (currentBaseSkillValue - currentModSkillValue));
 
 								// We make the assumption that a S.P.E.C.I.A.L can only ever be reduced temporarily, 
 								// this is the only limiting factor we have at play here.
-								if ((currentBaseSkillValue - currentModSkillValue) >= delta && !temporary)
-								{
+								if ((currentBaseSkillValue - currentModSkillValue) >= delta && !temporary) {
 									REX::DEBUG("Current reduction is bigger than, or equals to the newly calculated delta of: {} points.", delta);
 									playerCharacter->ModActorValue(ACTOR_VALUE_MODIFIER::kTemporary, *skill, delta);
 								}
@@ -1808,13 +1795,11 @@ namespace Cascadia
 
 							}
 
-							if (temporary)
-							{
+							if (temporary) {
 								playerCharacter->SetActorValue(*skill, originalValueInt + currentSkillLevelWithoutInitialValue);
 								playerCharacter->ModActorValue(ACTOR_VALUE_MODIFIER::kTemporary, *skill, delta);
 							}
-							else
-							{
+							else {
 								playerCharacter->SetActorValue(*skill, newValueInt + currentSkillLevelWithoutInitialValue);
 							}
 						}
@@ -1850,25 +1835,25 @@ namespace Cascadia
 		{
 			GameSettingCollection* settings = GameSettingCollection::GetSingleton();
 			switch (a_lockLevel) {
-			case LockLevels::LOCK_LEVEL_EXTENDED::kVeryEasy:
-				return 5.0f;
-			case LockLevels::LOCK_LEVEL_EXTENDED::kEasy:
-				return settings->GetSetting("fLockpickXPRewardEasy")->GetFloat();
-			case LockLevels::LOCK_LEVEL_EXTENDED::kAverage:
-				return settings->GetSetting("fLockpickXPRewardAverage")->GetFloat();
-			case LockLevels::LOCK_LEVEL_EXTENDED::kHard:
-				return settings->GetSetting("fLockpickXPRewardHard")->GetFloat();
-			case LockLevels::LOCK_LEVEL_EXTENDED::kVeryHard:
-				return settings->GetSetting("fLockpickXPRewardVeryHard")->GetFloat();
-			default:
-				return 0.0f;
+				case LockLevels::LOCK_LEVEL_EXTENDED::kVeryEasy:
+					return 5.0f;
+				case LockLevels::LOCK_LEVEL_EXTENDED::kEasy:
+					return settings->GetSetting("fLockpickXPRewardEasy")->GetFloat();
+				case LockLevels::LOCK_LEVEL_EXTENDED::kAverage:
+					return settings->GetSetting("fLockpickXPRewardAverage")->GetFloat();
+				case LockLevels::LOCK_LEVEL_EXTENDED::kHard:
+					return settings->GetSetting("fLockpickXPRewardHard")->GetFloat();
+				case LockLevels::LOCK_LEVEL_EXTENDED::kVeryHard:
+					return settings->GetSetting("fLockpickXPRewardVeryHard")->GetFloat();
+				default:
+					return 0.0f;
 			}
 		}
 
 		DetourXS hook_REFR_LOCKNumericValueToEnum;
 		typedef LockLevels::LOCK_LEVEL_EXTENDED(REFR_LOCKNumericValueToEnumSig)(std::uint32_t);
 		REL::Relocation<REFR_LOCKNumericValueToEnumSig> REFR_LOCKNumericValueToEnum_Original;
-		LockLevels::LOCK_LEVEL_EXTENDED HookREFR_LOCKNumericValueToEnum(std::int32_t a_val)
+		LockLevels::LOCK_LEVEL_EXTENDED HookREFR_LOCKNumericValueToEnum(std::int32_t a_val) 
 		{
 			if (a_val <= 1) {
 				return LockLevels::LOCK_LEVEL_EXTENDED::kVeryEasy;
@@ -1921,16 +1906,14 @@ namespace Cascadia
 		{
 			float lightLevel = 0.0f;
 
-			if (a_this && a_this->high)
-			{
+			if (a_this && a_this->high) {
 				lightLevel = a_this->high->lightLevel;
 			}
 
 			// If process is player and pipboy light is on, add 200 to the light level.
 			PlayerCharacter* playerCharacter = PlayerCharacter::GetSingleton();
 			if (playerCharacter && playerCharacter->currentProcess == a_this) {
-				if (playerCharacter->IsPipboyLightOn())
-				{
+				if (playerCharacter->IsPipboyLightOn()) {
 					return lightLevel += Cascadia::Additions::AI_Detection::Light_Addition->GetValue();
 				}
 			}
@@ -1945,16 +1928,14 @@ namespace Cascadia
 		void HookActorCalculateDetectionFormula(Actor* a_this, Actor* a_target, DetectionData* a_detectionData)
 		{
 			using namespace Cascadia::Additions::AI_Detection;
-			if (!ActorCalculateDetectionFormula_Original || !a_this || !a_target || !a_detectionData)
-			{
+			if (!ActorCalculateDetectionFormula_Original || !a_this || !a_target || !a_detectionData) {
 				return;
 			}
 
 			ActorCalculateDetectionFormula_Original(a_this, a_target, a_detectionData);
 
 			PlayerCharacter* playerCharacter = PlayerCharacter::GetSingleton();
-			if (!playerCharacter || a_target != playerCharacter)
-			{
+			if (!playerCharacter || a_target != playerCharacter) {
 				return;
 			}
 
@@ -1964,14 +1945,12 @@ namespace Cascadia
 			const float distance = std::sqrt(dx * dx + dy * dy + dz * dz);
 
 			const float RadioMaxDistanceEffectOnDetection = Radio_MaxDistanceEffect->GetValue();
-			if (RadioManager::QPlayerRadioEnabled() && distance < RadioMaxDistanceEffectOnDetection)
-			{
+			if (RadioManager::QPlayerRadioEnabled() && distance < RadioMaxDistanceEffectOnDetection) {
 				const float normalizedDistance = std::fminf(1.0f, distance / RadioMaxDistanceEffectOnDetection);
 				const float bonus = Radio_DistanceScaling->GetValue() * (1.0f - normalizedDistance) + Radio_AdditionBase->GetValue();
 				const float soundBonus = std::clamp(bonus, 0.0f, 30000.0f);
 
-				if (a_detectionData->soundDetectionLevel < soundBonus)
-				{
+				if (a_detectionData->soundDetectionLevel < soundBonus) {
 					a_detectionData->soundDetectionLevel = soundBonus;
 					REX::DEBUG("Radio is on, applying sound bonus of {} to detection level. Distance: {}", soundBonus, distance);
 				}
@@ -2027,8 +2006,7 @@ namespace Cascadia
 				BGSEntryPoint::HandleEntryPoint(BGSEntryPoint::ENTRY_POINT::kModPickpocketChance, a_thief, &targetInstance, &itemInstance, &chance);
 			}
 
-			if (a_placingItem)
-			{
+			if (a_placingItem) {
 				chance *= placeMult;
 			}
 
@@ -2051,10 +2029,9 @@ namespace Cascadia
 				BuildWeaponScrappingArrayOriginal(a_this);
 
 				std::uint32_t selectedIndex = a_this->GetSelectedIndex();
-				if (!a_this->invInterface.entriesInvalid && (selectedIndex & 0x80000000) == 0 && selectedIndex < a_this->invInterface.stackedEntries.size())
-				{
-					RE::InventoryUserUIInterfaceEntry* inventoryUUIEntry = (a_this->invInterface.stackedEntries.data() + selectedIndex);
-					const RE::BGSInventoryItem* inventoryItem = RE::BGSInventoryInterface::GetSingleton()->RequestInventoryItem(inventoryUUIEntry->invHandle.id);
+				if (!a_this->invInterface.entriesInvalid && (selectedIndex & 0x80000000) == 0 && selectedIndex < a_this->invInterface.stackedEntries.size()) {
+					InventoryUserUIInterfaceEntry* inventoryUUIEntry = (a_this->invInterface.stackedEntries.data() + selectedIndex);
+					const BGSInventoryItem* inventoryItem = BGSInventoryInterface::GetSingleton()->RequestInventoryItem(inventoryUUIEntry->invHandle.id);
 					if (inventoryItem) {
 
 						if (inventoryItem->stackData->extra->GetHealthPerc() >= 0) {
@@ -2065,7 +2042,6 @@ namespace Cascadia
 								if (baseCompObj && baseCompObj->scrapItem) {
 									a_this->scrappingArray[i].first = baseCompObj->scrapItem;
 								}
-
 							}
 						}
 					}
@@ -2077,156 +2053,118 @@ namespace Cascadia
 			a_this->scrappingArray.clear();
 
 			// Scrap all junk logic.
-			auto player = RE::PlayerCharacter::GetSingleton();
+			PlayerCharacter* player = PlayerCharacter::GetSingleton();
 			const double salvageSkillMod = (Cascadia::Skills::GetPlayerAVValue(Cascadia::Skills::CascadiaActorValues.Repair) / 100.0f) * Scrap_SkillMult->GetValue();
 			player->inventoryList->rwLock.lock_read();
-			for (std::uint32_t i = 0; i < player->inventoryList->data.size(); i++)
-			{
-				RE::BGSInventoryItem inventoryItem = player->inventoryList->data.at(i);
+			for (std::uint32_t i = 0; i < player->inventoryList->data.size(); i++) {
+				BGSInventoryItem inventoryItem = player->inventoryList->data.at(i);
 
-				if (!inventoryItem.object || !Shared::IsJunkItem(inventoryItem.object) || inventoryItem.IsQuestObject(0))
+				if (!inventoryItem.object || !Shared::IsJunkItem(inventoryItem.object) || inventoryItem.IsQuestObject(0)) {
 					continue;
+				}
 
 				auto baseComp = Shared::GetBaseComponentFromForm(inventoryItem.object);
-				if (!baseComp || !baseComp->scrapItem || baseComp->scrapItem->GetFormID() == inventoryItem.object->GetFormID())
+				if (!baseComp || !baseComp->scrapItem || baseComp->scrapItem->GetFormID() == inventoryItem.object->GetFormID()) {
 					continue;
+				}
 
-
-				RE::TESObjectMISC* miscObject = static_cast<RE::TESObjectMISC*>(inventoryItem.object);
-				if (!miscObject)
+				TESObjectMISC* miscObject = static_cast<TESObjectMISC*>(inventoryItem.object);
+				if (!miscObject) {
 					continue;
+				}
 
-				if (!miscObject->componentData || miscObject->componentData->empty())
+				if (!miscObject->componentData || miscObject->componentData->empty()){
 					continue;
+				}
 
 				for (auto it = miscObject->componentData->begin(); it != miscObject->componentData->end(); ++it) {
-					//auto compObj = static_cast<RE::BGSComponent*>(it->first);
-					//if (!it->first->IsBoundObject() && (compObj->scrapItem != nullptr && compObj->scrapItem->GetFormID() == miscObject->GetFormID()))
-						//continue;
+					TESBoundObject* boundObj = reinterpret_cast<TESBoundObject*>(it->first);
 
-					auto boundObj = reinterpret_cast<RE::TESBoundObject*>(it->first);
-
-					auto baseCompObj = Shared::GetBaseComponentFromForm(it->first);
+					BGSComponent* baseCompObj = Shared::GetBaseComponentFromForm(it->first);
 					if (baseCompObj && baseCompObj->scrapItem) {
 						boundObj = baseCompObj->scrapItem;
-						//a_this->scrappingArray[i].first = baseCompObj;
 					}
 
-					//
-					// REX::DEBUG("BuildWeaponScrappingArray - scrapItem found with count: {}", it->second.i);
-
-					const auto invCount = inventoryItem.GetCount();
-					const auto oldCount = it->second.i;
+					const std::uint32_t invCount = inventoryItem.GetCount();
+					const std::uint32_t oldCount = it->second.i;
 
 					int count = std::max(oldCount * salvageSkillMod, 1.0) * invCount;
 
 					if (count != 0) {
-						a_this->scrappingArray.push_back(RE::BSTTuple<RE::TESBoundObject*, std::uint32_t>(boundObj, count));
+						a_this->scrappingArray.push_back(BSTTuple<TESBoundObject*, std::uint32_t>(boundObj, count));
 					}
 
 					REX::DEBUG("BuildWeaponScrappingArray - scrapItem found with count: {}. New Count: {}", oldCount * invCount, count);
-
-
 				}
 			}
 			player->inventoryList->rwLock.unlock_read();
-
 		}
 
-		using RemoveItem_t = RE::ObjectRefHandle(*)(RE::TESObjectREFR*, RE::TESObjectREFR::RemoveItemData&);
+		using RemoveItem_t = ObjectRefHandle(*)(TESObjectREFR*, TESObjectREFR::RemoveItemData&);
 		inline REL::Relocation<RemoveItem_t> _OriginalRemoveItem;
 
-		RE::ObjectRefHandle Hooked_RemoveItem(RE::TESObjectREFR* a_this, RE::TESObjectREFR::RemoveItemData& a_data)
+		ObjectRefHandle Hooked_RemoveItem(TESObjectREFR* a_this, TESObjectREFR::RemoveItemData& a_data)
 		{
 			using namespace Cascadia::Additions::Workbench_Additions;
 
 			if (bIsScrappingAllJunk) {
-				if (!RE::UI::GetSingleton()->GetMenuOpen<RE::ExamineMenu>()) {
+				if (!UI::GetSingleton()->GetMenuOpen<RE::ExamineMenu>()) {
 					bIsScrappingAllJunk = false;
 					return _OriginalRemoveItem(a_this, a_data);
 				}
 
 				if (!Shared::IsJunkItem(a_data.object)) {
 					bIsScrappingAllJunk = false;
-					auto player = RE::PlayerCharacter::GetSingleton();
+					PlayerCharacter* player = PlayerCharacter::GetSingleton();
 					player->inventoryList->rwLock.lock_read();
 					for (std::uint32_t i = 0; i < player->inventoryList->data.size(); i++)
 					{
 						RE::BGSInventoryItem inventoryItem = player->inventoryList->data.at(i);
-						if (!inventoryItem.object || !Shared::IsJunkItem(inventoryItem.object) || inventoryItem.IsQuestObject(0))
+						if (!inventoryItem.object || !Shared::IsJunkItem(inventoryItem.object) || inventoryItem.IsQuestObject(0)) {
 							continue;
+						}
 
-
-						//RE::TESObjectMISC* miscObj = static_cast<RE::TESObjectMISC*>(inventoryItem.object);
-
-						//if (!miscObj->componentData)
-							//continue;
-
-						//const auto first = miscObj->componentData->at(0).first;
-
-						//RE::BGSComponent* compObj = static_cast<RE::BGSComponent*>(first);
-
-						//if ((compObj && compObj->scrapItem != nullptr && compObj->scrapItem->GetFormID() == miscObj->GetFormID()))
-							//continue;
-
-						//auto miscCompObj = static_cast<RE::TESObjectMISC*>(first);
-
-						//if (miscCompObj && miscCompObj->componentData && !miscCompObj->componentData->empty() && miscCompObj->componentData->at(0).first && miscCompObj->componentData->at(0).first->GetFormID() == miscObj->GetFormID())
-							//continue;
-
-
-						auto baseComp = Shared::GetBaseComponentFromForm(inventoryItem.object);
-						if (!baseComp || !baseComp->scrapItem || baseComp->scrapItem->GetFormID() == inventoryItem.object->GetFormID())
+						BGSComponent* baseComp = Shared::GetBaseComponentFromForm(inventoryItem.object);
+						if (!baseComp || !baseComp->scrapItem || baseComp->scrapItem->GetFormID() == inventoryItem.object->GetFormID()) {
 							continue;
+						}
 
-						//if (inventoryItem.GetCount() == 0) {
-
-						//}
-
-
-
-						auto removeData = RE::TESObjectREFR::RemoveItemData(inventoryItem.object, inventoryItem.GetCount());
+						TESObjectREFR::RemoveItemData removeData = TESObjectREFR::RemoveItemData(inventoryItem.object, inventoryItem.GetCount());
 						player->inventoryList->rwLock.unlock_read();
 						player->RemoveItem(removeData);
 						player->inventoryList->rwLock.lock_read();
 					}
 					player->inventoryList->rwLock.unlock_read();
-					RE::UIUtils::PlayMenuSound("OBJLunchboxKidsRobotBuild");
-					RE::SendHUDMessage::ShowHUDMessage("All junk items were scrapped!", nullptr, false, true);
-					RE::UI::GetSingleton()->GetMenu<RE::ExamineMenu>()->uiMovie->asMovieRoot->Invoke("root.BaseInstance.UpdateButtons", nullptr, nullptr, 0);
+					UIUtils::PlayMenuSound("OBJLunchboxKidsRobotBuild");
+					SendHUDMessage::ShowHUDMessage("All junk items were scrapped!", nullptr, false, true);
+					UI::GetSingleton()->GetMenu<RE::ExamineMenu>()->uiMovie->asMovieRoot->Invoke("root.BaseInstance.UpdateButtons", nullptr, nullptr, 0);
 
-					RE::TESObjectREFR::RemoveItemData a = RE::TESObjectREFR::RemoveItemData(a_this, 0);
+					TESObjectREFR::RemoveItemData a = RE::TESObjectREFR::RemoveItemData(a_this, 0);
 					return _OriginalRemoveItem(a_this, a);
 				}
 				else {
 					return _OriginalRemoveItem(a_this, a_data);
 				}
 			}
-
-
 			return _OriginalRemoveItem(a_this, a_data);
 		}
 
 		DetourXS hook_PlayerCharacterHandlePositionPlayerRequest;
-		typedef void(PlayerCharacterHandlePositionPlayerRequestSig)(RE::PlayerCharacter*);
+		typedef void(PlayerCharacterHandlePositionPlayerRequestSig)(PlayerCharacter*);
 		REL::Relocation<PlayerCharacterHandlePositionPlayerRequestSig> PlayerCharacterHandlePositionPlayerRequest_Original;
 
-		void HookPlayerCharacterHandlePositionPlayerRequest(RE::PlayerCharacter* a_this)
+		void HookPlayerCharacterHandlePositionPlayerRequest(PlayerCharacter* a_this)
 		{
-			RE::TESObjectREFR* marker = nullptr;
-			RE::TESObjectREFR* chosenChild = nullptr;
+			TESObjectREFR* marker = nullptr;
+			TESObjectREFR* chosenChild = nullptr;
 
-			if (Shared::bIsMultiTravelling && a_this->queuedTargetLoc.isValid && a_this->queuedTargetLoc.fastTravelMarker.get_handle() != 0)
-			{
+			if (Shared::bIsMultiTravelling && a_this->queuedTargetLoc.isValid && a_this->queuedTargetLoc.fastTravelMarker.get_handle() != 0) {
 				marker = a_this->queuedTargetLoc.fastTravelMarker.get().get();
-				if (marker)
-				{
-					auto* children = marker->extraList->GetByType<RE::ExtraLinkedRefChildren>();
-					if (children && !children->linkedChildren.empty())
-					{
+				if (marker) {
+					auto* children = marker->extraList->GetByType<ExtraLinkedRefChildren>();
+					if (children && !children->linkedChildren.empty()) {
 						chosenChild = children->linkedChildren.at(Shared::chosenI).REFR.get().get();
-						if (chosenChild)
-						{
+						if (chosenChild) {
 							chosenChild->SetLinkedRef(nullptr, nullptr);
 							marker->SetLinkedRef(chosenChild, nullptr);
 						}
@@ -2238,8 +2176,7 @@ namespace Cascadia
 
 			PlayerCharacterHandlePositionPlayerRequest_Original(a_this);
 
-			if (chosenChild)
-			{
+			if (chosenChild) {
 				marker->SetLinkedRef(nullptr, nullptr);
 				chosenChild->SetLinkedRef(marker, nullptr);
 			}
@@ -2249,7 +2186,7 @@ namespace Cascadia
 
 		static void InstallRemoveItemHook()
 		{
-			REL::Relocation<std::uintptr_t> vtbl{ RE::PlayerCharacter::VTABLE[0] };
+			REL::Relocation<std::uintptr_t> vtbl{ PlayerCharacter::VTABLE[0] };
 			_OriginalRemoveItem = vtbl.write_vfunc(0x6D, &Hooked_RemoveItem);
 		}
 
@@ -2283,7 +2220,6 @@ namespace Cascadia
 			RegisterDetourFunction(hook_ActorSPECIALModifiedCallback, ID::Actor::SPECIALModifiedCallback, &HookActorSPECIALModifiedCallback, ActorSPECIALModifiedCallback_Original, "ActorSPECIALModifiedCallback"sv);
 			RegisterDetourFunction(hook_BuildWeaponScrappingArray, RE::ID::ExamineMenu::BuildWeaponScrappingArray, &HookBuildWeaponScrappingArray, BuildWeaponScrappingArrayOriginal, "BuildWeaponScrappingArray");
 			RegisterDetourFunction(hook_PlayerCharacterHandlePositionPlayerRequest, RE::ID::PlayerCharacter::HandlePositionPlayerRequest, &HookPlayerCharacterHandlePositionPlayerRequest, PlayerCharacterHandlePositionPlayerRequest_Original, "PlayerCharacterHandlePositionPlayerRequest");
-
 			RegisterDetourFunction(hook_PipboyBuildQuestTargetMarker, REL::ID(2225603), &HookPipboyBuildQuestTargetMarker, PipboyBuildQuestTargetMarker_Original, "PipboyBuildQuestTargetMarker");
 
 			InstallRemoveItemHook();

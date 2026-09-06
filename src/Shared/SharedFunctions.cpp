@@ -49,21 +49,15 @@ namespace Cascadia
 		{
 			auto reverseInv = a_list->data;
 			std::reverse(reverseInv.begin(), reverseInv.end());
-
 			std::uint32_t amount = 0;
 
-			for (BGSInventoryItem& item : reverseInv)
-			{
-				if (item.object->formType == ENUM_FORM_ID::kMISC)
-				{
+			for (BGSInventoryItem& item : reverseInv) {
+				if (item.object->formType == ENUM_FORM_ID::kMISC) {
 					TESObjectMISC* miscItem = (TESObjectMISC*)(item.object);
 					
-					if (miscItem->componentData)
-					{
-						for (auto& componentData : *miscItem->componentData)
-						{
-							if (componentData.first == a_form)
-							{
+					if (miscItem->componentData) {
+						for (auto& componentData : *miscItem->componentData) {
+							if (componentData.first == a_form) {
 								std::uint32_t count = [item]
 									{
 										std::uint32_t _count = 0;
@@ -104,15 +98,12 @@ namespace Cascadia
 			std::uint32_t keywordCount = ammo->GetNumKeywords();
 			const char* standardListPrefix = "CAS_AmmoSwitch_Standard_";
 
-			for (std::uint32_t i = 0; i <= keywordCount; i++)
-			{
+			for (std::uint32_t i = 0; i <= keywordCount; i++) {
 				std::optional<BGSKeyword*> keyword = ammo->GetKeywordAt(i);
-				if (keyword.has_value())
-				{
+				if (keyword.has_value()) {
 					const char* keywordEDID = keyword.value()->GetFormEditorID();
 
-					if (strncmp(keywordEDID, standardListPrefix, strlen(standardListPrefix)) == 0)
-					{
+					if (strncmp(keywordEDID, standardListPrefix, strlen(standardListPrefix)) == 0) {
 
 						return keyword.value();
 					}
@@ -130,50 +121,36 @@ namespace Cascadia
 			// signal for real junk is a non-empty crafting-component list
 			// (TESObjectMISC::componentData); the non-junk MISC above have none.
 			// (Books are kBOOK and were never matched here.)
-			if (!obj || obj->formType.get() != RE::ENUM_FORM_ID::kMISC) {
+			if (!obj || obj->formType.get() != ENUM_FORM_ID::kMISC) {
 				return false;
 			}
-			auto* misc = static_cast<RE::TESObjectMISC*>(obj);
+			auto* misc = static_cast<TESObjectMISC*>(obj);
 			if ((misc->formID & 0x00FFFFFFu) == 0x0000000Fu || (misc->formID & 0x00FFFFFFu) == 0x0000000Au || misc->HasKeyword(Shared::notScrappableKeyword)) return false;  // caps or bobby pins, never
 
 			if (misc->componentData && !misc->componentData->empty()) {
-				//if (misc->componentData->at(0).first->GetFormType() != RE::ENUM_FORM_ID::kMISC) {
-				//	return false;
-				//}
-
-				// auto compObj = static_cast<RE::TESObjectMISC*>(misc->componentData->at(0).first);
-
-				//if (compObj == nullptr && compObj->IsBoundObject())
-					//return false;
-
-				//return compObj && compObj->componentData->at(0);
 				return true;
-
-				//return compObj;
 			}
 
 			return false;
 		}
 
-		RE::BGSComponent* GetBaseComponentFromForm(RE::TESForm* a_form)
+		BGSComponent* GetBaseComponentFromForm(TESForm* a_form)
 		{
 			if (!a_form) return nullptr;
 
-			auto miscObj = static_cast<RE::TESObjectMISC*>(a_form);
+			TESObjectMISC* miscObj = static_cast<TESObjectMISC*>(a_form);
 
-			if (!miscObj || a_form->GetFormType() != RE::ENUM_FORM_ID::kMISC) {
-				auto compObj = static_cast<RE::BGSComponent*>(a_form);
+			if (!miscObj || a_form->GetFormType() != ENUM_FORM_ID::kMISC) {
+				auto compObj = static_cast<BGSComponent*>(a_form);
 				return compObj ? compObj : nullptr;
 			}
 
-			if (!miscObj->componentData || miscObj->componentData->empty() || !miscObj->componentData->at(0).first)
+			if (!miscObj->componentData || miscObj->componentData->empty() || !miscObj->componentData->at(0).first) {
 				return nullptr;
+			}
 
 			const auto first = miscObj->componentData->at(0).first;
-
-			RE::BGSComponent* compObj = static_cast<RE::BGSComponent*>(first);
-			//if (!compObj || !compObj->scrapItem)
-				//return nullptr;
+			BGSComponent* compObj = static_cast<RE::BGSComponent*>(first);
 
 			return compObj;
 		}
@@ -269,40 +246,41 @@ namespace Cascadia
 				i++;
 			}
 		}
+
 		bool IsMeleeWeapon(RE::WEAPON_TYPE weaponType)
 		{
 			bool result = false;
 
-			switch (weaponType)
-			{
-			case RE::WEAPON_TYPE::kHandToHand:
-			case RE::WEAPON_TYPE::kOneHandAxe:
-			case RE::WEAPON_TYPE::kOneHandDagger:
-			case RE::WEAPON_TYPE::kOneHandMace:
-			case RE::WEAPON_TYPE::kOneHandSword:
-			case RE::WEAPON_TYPE::kStaff:
-			case RE::WEAPON_TYPE::kTwoHandAxe:
-			case RE::WEAPON_TYPE::kTwoHandSword:
-				result = true;
-				break;
-			default:
-				result = false;
-				break;
+			switch (weaponType) {
+				case WEAPON_TYPE::kHandToHand:
+				case WEAPON_TYPE::kOneHandAxe:
+				case WEAPON_TYPE::kOneHandDagger:
+				case WEAPON_TYPE::kOneHandMace:
+				case WEAPON_TYPE::kOneHandSword:
+				case WEAPON_TYPE::kStaff:
+				case WEAPON_TYPE::kTwoHandAxe:
+				case WEAPON_TYPE::kTwoHandSword:
+					result = true;
+					break;
+				default:
+					result = false;
+					break;
 			}
 
 			return result;
 		}
 		bool IsObjectiveDisplayed(const BGSQuestObjective* Objective)
 		{
-			if (Objective)
-			{
+			if (Objective) {
 				char cState = Objective->state;
-				if (((cState - 1) & 0xF9) == 0 && cState != 7)
+				if (((cState - 1) & 0xF9) == 0 && cState != 7) {
 					return 1;
+				}
 			}
 
 			return false;
 		}
+
 		bool IsQuestActive(const TESQuest* Quest)
 		{
 			if (Quest) {

@@ -53,7 +53,6 @@ namespace Cascadia
 		std::uint32_t chosenI;
 		std::uint32_t markerID;
 
-		BGSKeyword* ProximityAreaKeyword;
 		TESForm* CustomProximityMapMarkerForm;
 		BGSLocationRefType* CustomProximityMapMarkerRefType;
 
@@ -64,8 +63,7 @@ namespace Cascadia
 			{
 				const auto questCast = static_cast<TESQuest*>(quest);
 				auto it = MapProximityAreas.find(questCast);
-				if (it == MapProximityAreas.end())
-				{
+				if (it == MapProximityAreas.end()) {
 					for (auto objj : questCast->objectives) {
 						if (objj->index == id && objj->numTargets > 0 && objj->targets[0] != nullptr && !objj->targets[0]->target.empty()) {
 							const auto reff = objj->targets[0]->target[0]->reference;
@@ -82,8 +80,7 @@ namespace Cascadia
 							break;
 						}
 					}
-				}
-				else {
+				} else {
 					for (auto objj : questCast->objectives) {
 						if (objj->index == id && objj->numTargets > 0 && objj->targets[0] != nullptr && !objj->targets[0]->target.empty()) {
 							const auto reff = objj->targets[0]->target[0]->reference;
@@ -98,7 +95,6 @@ namespace Cascadia
 								REX::DEBUG("Added pap for a quest NOT CUSTOM MARKER '{}', obj: '{}'", questCast->GetFullName(), objj->displayText.c_str());
 							}
 						}
-						
 
 						break;
 					}
@@ -119,34 +115,15 @@ namespace Cascadia
 				return true;
 			}
 
-			void AddProximityKeywordIfNonExistentToObjectiveTargets(const BGSQuestObjective* objective)
-			{
-				if (!ProximityAreaKeyword) return;
-
-				for(std::uint32_t targetIndex = 0; targetIndex < objective->numTargets; targetIndex++) {
-					const auto questTargetFinal = objective->targets[targetIndex];
-
-					for (const auto targetReferenceFinal : questTargetFinal->target) {
-
-						if (targetReferenceFinal->reference && !targetReferenceFinal->reference->HasKeyword(ProximityAreaKeyword)) {
-							targetReferenceFinal->reference->AddKeyword(ProximityAreaKeyword);
-						}
-					}
-
-				}
-			}
-
 			void InitializeActiveObjectives()
 			{
 				REX::DEBUG("Quest Objectives checking....");
 				const auto playerRef = PlayerCharacter::GetSingleton();
 				for (auto qTarget = playerRef->objectives.begin(); qTarget != playerRef->objectives.end(); ++qTarget) {
 					const TESQuest* quest = qTarget->objective->ownerQuest;
-					if (quest == nullptr)
+					if (quest == nullptr) {
 						continue;
-
-					//if ((quest->formFlags >> 11 & 1) != 1)
-						//continue;
+					}
 
 					std::string buff = std::string("Objective ");
 					if (Shared::IsObjectiveDisplayed(qTarget->objective) && Shared::IsQuestActive(quest)) {
@@ -155,8 +132,6 @@ namespace Cascadia
 					else {
 						buff += qTarget->objective->displayText.data() + std::string(": NOT Displayed");
 					}
-
-
 
 					REX::DEBUG(buff.c_str());
 				}
@@ -199,7 +174,6 @@ namespace Cascadia
 			noDegradation = dataHandler->LookupForm<BGSKeyword>(0x2BD72E, MOD_ESM);
 			notScrappableKeyword = dataHandler->LookupForm<BGSKeyword>(0x32AB2A, MOD_ESM);
 
-			ProximityAreaKeyword = dataHandler->LookupForm<BGSKeyword>(0x000C14, CURRENT_ESP);
 			CustomProximityMapMarkerForm = dataHandler->LookupForm(0x001029, CURRENT_ESP);
 			CustomProximityMapMarkerRefType = dataHandler->LookupForm<BGSLocationRefType>(0x00150D, CURRENT_ESP);
 
@@ -265,10 +239,8 @@ namespace Cascadia
 			DefaultMeleeRecipe = dataHandler->LookupForm<BGSConstructibleObject>(0x32AB48, MOD_ESM);
 			DefaultArmorRecipe = dataHandler->LookupForm<BGSConstructibleObject>(0x32AB4B, MOD_ESM);
 
-
-
 			for (std::uint32_t i = 0; i < CustomRecipesListWeapon->arrayOfForms.size(); i++) {
-				const RE::BGSConstructibleObject* customRecipeWeapon = static_cast<RE::BGSConstructibleObject*>(CustomRecipesListWeapon->arrayOfForms.at(i));
+				const BGSConstructibleObject* customRecipeWeapon = static_cast<BGSConstructibleObject*>(CustomRecipesListWeapon->arrayOfForms.at(i));
 				if (!customRecipeWeapon) {
 					REX::WARN("Index {} in the 'F76_CustomWeaponModders' list in CK is not a recipe (Constructible Object). Ignoring...", i);
 					continue;
@@ -283,12 +255,12 @@ namespace Cascadia
 			}
 
 			for (std::uint32_t i = 0; i < CustomRecipesListArmor->arrayOfForms.size(); i++) {
-				const RE::BGSConstructibleObject* customRecipeArmor = static_cast<RE::BGSConstructibleObject*>(CustomRecipesListArmor->arrayOfForms.at(i));
+				const BGSConstructibleObject* customRecipeArmor = static_cast<BGSConstructibleObject*>(CustomRecipesListArmor->arrayOfForms.at(i));
 				if (!customRecipeArmor) {
 					REX::WARN("Index {} in the 'F76_CustomArmorModders' list in CK is not a recipe (Constructible Object). Ignoring...", i);
 					continue;
 				}
-				auto armorObj = static_cast<RE::TESObjectARMO*>(customRecipeArmor->GetCreatedItem());
+				auto armorObj = static_cast<TESObjectARMO*>(customRecipeArmor->GetCreatedItem());
 				if (!armorObj) {
 					REX::WARN("Index {} in the 'F76_CustomArmorModders' list in CK is a recipe but it's CreatedItem is not an armor or is not set!. Ignoring...", i);
 					continue;
@@ -297,18 +269,16 @@ namespace Cascadia
 				custom_armorToCOBJ_Map[armorObj] = customRecipeArmor;
 			}
 
-
-
 			for (std::uint32_t i = 0; i < WeaponRecipesRepairList->arrayOfForms.size(); i++) {
-				const RE::BGSConstructibleObject* constructible = static_cast<RE::BGSConstructibleObject*>(WeaponRecipesRepairList->arrayOfForms.at(i));
-				auto weap = static_cast<RE::TESObjectWEAP*>(constructible->GetCreatedItem());
+				const BGSConstructibleObject* constructible = static_cast<BGSConstructibleObject*>(WeaponRecipesRepairList->arrayOfForms.at(i));
+				auto weap = static_cast<TESObjectWEAP*>(constructible->GetCreatedItem());
 
 				weaponToCOBJ_Map.emplace(weap, constructible);
 			}
 
 			for (const auto objInList : ArmorRecipesRepairList->arrayOfForms) {
-				const RE::BGSConstructibleObject* constructible = static_cast<RE::BGSConstructibleObject*>(objInList);
-				armorToCOBJ_Map.emplace(static_cast<RE::TESObjectARMO*>(constructible->GetCreatedItem()), constructible);
+				const BGSConstructibleObject* constructible = static_cast<BGSConstructibleObject*>(objInList);
+				armorToCOBJ_Map.emplace(static_cast<TESObjectARMO*>(constructible->GetCreatedItem()), constructible);
 			}
 		}
 	}

@@ -36,7 +36,6 @@ namespace Cascadia
 		extern std::uint32_t chosenI;
 		extern std::uint32_t markerID;
 
-		extern BGSKeyword* ProximityAreaKeyword;
 		extern TESForm* CustomProximityMapMarkerForm;
 		extern BGSLocationRefType* CustomProximityMapMarkerRefType;
 
@@ -60,8 +59,6 @@ namespace Cascadia
 
 			bool pap_add(std::monostate, std::uint32_t id, float x, float y, float radius, bool live_tracking, TESForm* quest);
 			bool pap_remove(std::monostate, TESForm* quest);
-
-			void AddProximityKeywordIfNonExistentToObjectiveTargets(const BGSQuestObjective* objective);
 
 			void InitializeActiveObjectives();
 

@@ -35,7 +35,6 @@ namespace Cascadia
 		public:
 			virtual void Call(const Params& a_params)
 			{
-				//PipboyDataManager::GetSingleton()->questData.
 				Scaleform::GFx::Value arrVal;
 				a_params.movie->asMovieRoot->CreateArray(&arrVal);
 				for (const auto& kv : Shared::PipboyMap::MapProximityAreas) {
@@ -44,20 +43,13 @@ namespace Cascadia
 					for (const auto& area : kv.second) {
 						if (!Shared::IsQuestActive(area.second._quest) || !Shared::IsObjectiveDisplayed(area.second._objective))
 						{
-							// _MESSAGE("%s quest inactive", kv.second._quest->fullName.name.c_str());
 							continue;
 						}
-						
 
-						
 						REX::DEBUG("Objective num targets: {}, targets size: {}", area.second._objective->numTargets, area.second._objective->targets[0]->target.size());
 						
 						for (std::uint32_t targetIndex = 0; targetIndex < area.second._objective->numTargets; targetIndex++) {
 							const auto questTargetFinal = area.second._objective->targets[targetIndex];
-
-							
-
-							
 							for (const auto targetReferenceFinal : questTargetFinal->target) {
 								const auto poss = targetReferenceFinal->reference->GetPosition();
 
@@ -73,12 +65,8 @@ namespace Cascadia
 
 								REX::DEBUG("Area from CPP: x: {}, y: {}, radius: {}", area.second._x + poss.x, area.second._y + poss.y, area.second._radius);
 							}
-							
 						}
-						
-						
 					}
-					
 				}
 				Scaleform::GFx::Value rett;
 				a_params.movie->asMovieRoot->CreateObject(&rett);
@@ -104,8 +92,6 @@ namespace Cascadia
 					//REX::DEBUG("RES ID FOUND IN HASHMAP IS: {}", ress->first);
 					res = ress->second;
 				}
-
-
 
 				if (res && res.get() && res.get().get()) {
 					if (Shared::IsRadiusMarkerStatic(res.get().get()) || res->HasLocationRefType(Shared::CustomProximityMapMarkerRefType)) {
