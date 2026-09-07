@@ -174,8 +174,8 @@ namespace Cascadia
 			noDegradation = dataHandler->LookupForm<BGSKeyword>(0x2BD72E, MOD_ESM);
 			notScrappableKeyword = dataHandler->LookupForm<BGSKeyword>(0x32AB2A, MOD_ESM);
 
-			CustomProximityMapMarkerForm = dataHandler->LookupForm(0x001029, CURRENT_ESP);
-			CustomProximityMapMarkerRefType = dataHandler->LookupForm<BGSLocationRefType>(0x00150D, CURRENT_ESP);
+			CustomProximityMapMarkerForm = dataHandler->LookupForm(0X32C723, MOD_ESM);
+			CustomProximityMapMarkerRefType = dataHandler->LookupForm<BGSLocationRefType>(0X32C724, MOD_ESM);
 
 			InitializeGameAdditionalVars(dataHandler);
 			Recipes::InitializeRecipes(dataHandler);
