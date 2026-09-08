@@ -9,7 +9,7 @@
 #include "Systems/LockLevels.h"
 
 #define DETECTION_TYPE DETECTION_TYPE_WINDOWS
-#include "detourXS/detourxs.h"
+#include <SlimDetours.h>
 #undef DETECTION_TYPE
 
 #undef min
@@ -26,29 +26,16 @@ namespace Cascadia
 		void RegisterAllHooks();
 
 		template<typename T>
-		static void RegisterDetourFunction(DetourXS& detour, const REL::ID functionID, const LPVOID& detourFunctionAddress, REL::Relocation<T>& OriginalFunction, std::string_view functionName) {
+		static bool RegisterDetourFunction(const REL::ID functionID, const LPVOID& detourFunctionAddress, REL::Relocation<T>& OriginalFunction, std::string_view functionName) {
 			REL::Relocation<T> functionLocation{ functionID };
-			if (detour.Create(reinterpret_cast<void*>(functionLocation.address()), detourFunctionAddress)) {
+			OriginalFunction = functionLocation.address();
+			HRESULT hr = SlimDetoursAttach(reinterpret_cast<PVOID*>(&OriginalFunction), detourFunctionAddress);
+			if (SUCCEEDED(hr)) {
 				REX::INFO("Installed '{}' hook", functionName);
-				OriginalFunction = reinterpret_cast<uintptr_t>(detour.GetTrampoline());
+				return true;
 			}
-			else {
-				REX::CRITICAL("Failed to hook '{}'. Exiting...", functionName);
-			}
+			REX::CRITICAL("Failed to hook '{}' (hr={:#010x})", functionName, static_cast<unsigned long>(hr));
+			return false;
 		}
-
-		/*
-		template<typename T>
-		static void RegisterDetourFunction(DetourXS& detour, const REL::ID functionID, const LPVOID& detourFunctionAddress, std::string_view functionName) {
-			REL::Relocation<T> functionLocation{ functionID };
-			if (detour.Create(reinterpret_cast<void*>(functionLocation.address()), detourFunctionAddress)) {
-				REX::INFO("Installed '{}' hook", functionName);
-				//OriginalFunction = reinterpret_cast<uintptr_t>(detour.GetTrampoline());
-			}
-			else {
-				REX::CRITICAL(std::format("Failed to hook '{}'. Exiting...", functionName).c_str());
-			}
-		}
-		*/
 	}
 }

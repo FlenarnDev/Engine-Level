@@ -4,8 +4,6 @@
 .vs/
 .vscode/
 .xmake/
-src/detourXS/
-detourXS/
 
 # folders
 build*/

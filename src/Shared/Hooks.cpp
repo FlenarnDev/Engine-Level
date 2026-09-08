@@ -84,7 +84,6 @@ namespace Cascadia
 			}
 		}
 
-		DetourXS hook_PipboyBuildQuestTargetMarker;
 		typedef std::uint64_t(PipboyBuildQuestTargetMarkerSig)(void*, RE::TESQuestTarget::REF_DATA*, std::uint64_t);
 		REL::Relocation<PipboyBuildQuestTargetMarkerSig> PipboyBuildQuestTargetMarker_Original;
 		std::uint64_t HookPipboyBuildQuestTargetMarker(void* a1, RE::TESQuestTarget::REF_DATA* a_refData, std::uint64_t a3)
@@ -102,7 +101,6 @@ namespace Cascadia
 			return PipboyBuildQuestTargetMarker_Original(a1, a_refData, a3);
 		}
 
-		DetourXS hook_PipboyMapDataUpdateQuestMarkers;
 		typedef void(PipboyMapDataUpdateQuestMarkersSig)(PipboyMapData*, PipboyArray*, BSTHashMap<ObjectRefHandle, PipboyObject*>*, MapMarker::MARKER_SCOPE, float);
 		REL::Relocation<PipboyMapDataUpdateQuestMarkersSig> PipboyMapDataUpdateQuestMarkers_Original;
 		void HookPipboyMapDataUpdateQuestMarkers(PipboyMapData* a_this, PipboyArray* a_questMarkers, BSTHashMap<ObjectRefHandle, PipboyObject*>* a_questMarkerMap, MapMarker::MARKER_SCOPE a_scope, float a_heightReference)
@@ -642,7 +640,6 @@ namespace Cascadia
 			REL::WriteSafeFill(GatherDetectionFormulaData.address() + 5, REL::NOP, 6);
 		}
 
-		DetourXS hook_ShowBuildFailureMessage;
 		typedef void(ShowBuildFailureMessageSig)(WorkbenchMenuBase*);
 		REL::Relocation<ShowBuildFailureMessageSig> WorkbenchMenuBaseShowBuildFailureMessage_Original;
 		void HookWorkbenchMenuBaseShowBuildFailureMessage(WorkbenchMenuBase* a_this)
@@ -718,7 +715,6 @@ namespace Cascadia
 			}
 		}
 
-		DetourXS hook_GetBuildConfirmQuestion;
 		typedef void(GetBuildConfirmQuestionSig)(RE::ExamineMenu*, char*, std::uint32_t);
 		REL::Relocation<GetBuildConfirmQuestionSig> ExamineMenuGetBuildConfirmQuestion_Original;
 		void HookExamineMenuGetBuildConfirmQuestion(RE::ExamineMenu* a_this, char* a_buffer, std::uint32_t a_bufferLength)
@@ -727,9 +723,9 @@ namespace Cascadia
 			const char* fullName;
 			const char* type;
 
-			if (Cascadia::Additions::Workbench_Additions::bIsScrappingAllJunk) {
-				// @TODO: Translations
-				snprintf(a_buffer, a_bufferLength, "Scrap all junk items?");
+			if (Cascadia::Additions::Workbench_Additions::bIsScrappingAllJunk) 
+			{
+				snprintf(a_buffer, a_bufferLength, "$CAS_ScrapAllJunk");
 				return;
 			}
 
@@ -757,7 +753,6 @@ namespace Cascadia
 			}
 		}
 
-		DetourXS hook_SetHealthPerc;
 		typedef void(SetHealthPercSig)(ExtraDataList*, float);
 		REL::Relocation<SetHealthPercSig> SetHealthPercOriginal;
 
@@ -774,7 +769,6 @@ namespace Cascadia
 			}
 		}
 
-		DetourXS hook_QCurrentModChoiceData;
 		typedef const WorkbenchMenuBase::ModChoiceData* (QCurrentModChoiceDataSig)(WorkbenchMenuBase*);
 		REL::Relocation<QCurrentModChoiceDataSig> WorkbenchMenuBaseQCurrentModChoiceData_Original;
 		const WorkbenchMenuBase::ModChoiceData* HookWorkbenchMenuBaseQCurrentModChoiceData(WorkbenchMenuBase* a_this)
@@ -789,7 +783,6 @@ namespace Cascadia
 				}
 				else
 				{
-					// return 0;
 					std::uint32_t modChoiceIndex = a_this->modChoiceIndex;
 					if (a_this->modChoiceArray.empty() || modChoiceIndex >= a_this->modChoiceArray.size())
 					{
@@ -801,7 +794,8 @@ namespace Cascadia
 						{
 							InventoryUserUIInterfaceEntry* inventoryUUIEntry = (examineMenu->invInterface.stackedEntries.data() + selectedIndex);
 							const BGSInventoryItem* inventoryItem = BGSInventoryInterface::GetSingleton()->RequestInventoryItem(inventoryUUIEntry->invHandle.id);
-							if (!inventoryItem) {
+							if (!inventoryItem) 
+							{
 								return 0;
 							}
 
@@ -815,48 +809,55 @@ namespace Cascadia
 							currentModChoiceData->requiredPerks = BSTArray<BSTTuple<BGSPerk*, std::uint32_t>>();
 
 							const BGSConstructibleObject* COBJGrabbed = nullptr;
-							if (inventoryItem->object->GetFormType() == ENUM_FORM_ID::kWEAP) {
+							if (inventoryItem->object->GetFormType() == ENUM_FORM_ID::kWEAP) 
+							{
 								COBJGrabbed = Recipes::GetCOBJ_FromWeapon(static_cast<TESObjectWEAP*>(inventoryItem->object), inventoryItem->stackData->extra.get());
 							} 
-							else if (inventoryItem->object->GetFormType() == ENUM_FORM_ID::kARMO) {
+							else if (inventoryItem->object->GetFormType() == ENUM_FORM_ID::kARMO) 
+							{
 								COBJGrabbed = Recipes::GetCOBJ_FromArmor(static_cast<TESObjectARMO*>(inventoryItem->object));
 							}
 
-							if (inventoryItem->object->GetFormType() == RE::ENUM_FORM_ID::kWEAP) {
+							if (inventoryItem->object->GetFormType() == ENUM_FORM_ID::kWEAP) 
+							{
 								PlayerCharacter* player = PlayerCharacter::GetSingleton();
 								TESObjectWEAP* weapOb = static_cast<TESObjectWEAP*>(inventoryItem->object);
 								WEAPON_TYPE weaponType = InventoryUtils::GetWeaponInstanceData(inventoryItem->stackData->extra.get())->type.get();
 								REX::DEBUG("Weapon type is: TwoHanded: {}, Melee: {}, Ranged: {}", weapOb->IsTwoHandedWeapon() ? 1 : 0, Shared::IsMeleeWeapon(weaponType) ? 1 : 0, weapOb->IsRangedWeapon() ? 1 : 0);
 							}
-							//currentModChoiceData->recipe = COBJGrabbed;
 
-
-							if (!COBJGrabbed && inventoryItem->object->GetFormType() == ENUM_FORM_ID::kWEAP) {
+							if (!COBJGrabbed && inventoryItem->object->GetFormType() == ENUM_FORM_ID::kWEAP)
+							{
 
 								TESObjectWEAP* weapOb = static_cast<TESObjectWEAP*>(inventoryItem->object);
 								PlayerCharacter* player = PlayerCharacter::GetSingleton();
 								WEAPON_TYPE weaponType = InventoryUtils::GetWeaponInstanceData(inventoryItem->stackData->extra.get())->type.get();
 
-								if (Shared::IsMeleeWeapon(weaponType)) {
-									// Shared::VanillaMeleeWeaponsList->arrayOfForms
+								if (Shared::IsMeleeWeapon(weaponType)) 
+								{
 									COBJGrabbed = Recipes::DefaultMeleeRecipe;
 								}
-								else if (weapOb->IsTwoHandedWeapon()) {
+								else if (weapOb->IsTwoHandedWeapon()) 
+								{
 									COBJGrabbed = Recipes::DefaultTwoHandedRecipe;
 								}
-								else {
+								else 
+								{
 									COBJGrabbed = Recipes::DefaultOneHandedRecipe;
 								}
 							}
-							if (!COBJGrabbed && inventoryItem->object->GetFormType() == ENUM_FORM_ID::kARMO) {
+							if (!COBJGrabbed && inventoryItem->object->GetFormType() == ENUM_FORM_ID::kARMO)
+							{
 								COBJGrabbed = Recipes::DefaultArmorRecipe;
 							}
-							if (!COBJGrabbed)
+							if (!COBJGrabbed) {
 								return 0;
+							}
 
 							currentModChoiceData->recipe = COBJGrabbed;
 
-							if (!currentModChoiceData->recipe || !currentModChoiceData->recipe->requiredItems) {
+							if (!currentModChoiceData->recipe || !currentModChoiceData->recipe->requiredItems)
+							{
 
 								return 0;
 							}
@@ -867,7 +868,8 @@ namespace Cascadia
 								currentModChoiceData->requiredPerks.clear();
 							}
 
-							if (currentModChoiceData->recipe && currentModChoiceData->recipe->conditions) {
+							if (currentModChoiceData->recipe && currentModChoiceData->recipe->conditions) 
+							{
 								currentModChoiceData->recipe->conditions.ClearAllConditionItems();
 							}
 								
@@ -901,124 +903,138 @@ namespace Cascadia
 
 						if (!examineMenu->invInterface.entriesInvalid && (selectedIndex & 0x80000000) == 0 && selectedIndex < examineMenu->invInterface.stackedEntries.size())
 						{
+							InventoryUserUIInterfaceEntry* inventoryUUIEntry = (examineMenu->invInterface.stackedEntries.data() + selectedIndex);
+							const BGSInventoryItem* inventoryItem = BGSInventoryInterface::GetSingleton()->RequestInventoryItem(inventoryUUIEntry->invHandle.id);
 
-							RE::InventoryUserUIInterfaceEntry* inventoryUUIEntry = (examineMenu->invInterface.stackedEntries.data() + selectedIndex);
-							const RE::BGSInventoryItem* inventoryItem = BGSInventoryInterface::GetSingleton()->RequestInventoryItem(inventoryUUIEntry->invHandle.id);
-
-							const RE::BGSConstructibleObject* COBJGrabbed = nullptr;
-							if (inventoryItem->object->GetFormType() == ENUM_FORM_ID::kWEAP) {
+							const BGSConstructibleObject* COBJGrabbed = nullptr;
+							if (inventoryItem->object->GetFormType() == ENUM_FORM_ID::kWEAP) 
+							{
 								COBJGrabbed = Recipes::GetCOBJ_FromWeapon(static_cast<TESObjectWEAP*>(inventoryItem->object), inventoryItem->stackData->extra.get());
 							}
-							else if (inventoryItem->object->GetFormType() == ENUM_FORM_ID::kARMO) {
+							else if (inventoryItem->object->GetFormType() == ENUM_FORM_ID::kARMO)
+							{
 								COBJGrabbed = Recipes::GetCOBJ_FromArmor(static_cast<TESObjectARMO*>(inventoryItem->object));
 							}
 
-							if (inventoryItem->object->GetFormType() == ENUM_FORM_ID::kWEAP) {
+							if (inventoryItem->object->GetFormType() == ENUM_FORM_ID::kWEAP)
+							{
 								PlayerCharacter* player = PlayerCharacter::GetSingleton();
 								TESObjectWEAP* weapOb = static_cast<TESObjectWEAP*>(inventoryItem->object);
 								WEAPON_TYPE weaponType = InventoryUtils::GetWeaponInstanceData(inventoryItem->stackData->extra.get())->type.get();
 								REX::DEBUG("Weapon type is: TwoHanded: {}, Melee: {}, Ranged: {}", weapOb->IsTwoHandedWeapon() ? 1 : 0, Shared::IsMeleeWeapon(weaponType) ? 1 : 0, weapOb->IsRangedWeapon() ? 1 : 0);
 							}
 
-							if (!COBJGrabbed) {
+							if (!COBJGrabbed)
+							{
 								REX::WARN("No COBJ found from object, defaulting to first mod.");
 								std::uint32_t modChoiceIndex = a_this->modChoiceIndex;
 								if (a_this->modChoiceArray.empty() || modChoiceIndex >= a_this->modChoiceArray.size())
 								{
-									if (inventoryItem->object->GetFormType() == ENUM_FORM_ID::kWEAP) {
+									if (inventoryItem->object->GetFormType() == ENUM_FORM_ID::kWEAP)
+									{
 
 										TESObjectWEAP* weapOb = static_cast<TESObjectWEAP*>(inventoryItem->object);
 										PlayerCharacter* player = PlayerCharacter::GetSingleton();
 										WEAPON_TYPE weaponType = InventoryUtils::GetWeaponInstanceData(inventoryItem->stackData->extra.get())->type.get();
 
-										if (Shared::IsMeleeWeapon(weaponType)) {
-											// Shared::VanillaMeleeWeaponsList->arrayOfForms
+										if (Shared::IsMeleeWeapon(weaponType))
+										{
 											COBJGrabbed = Recipes::DefaultMeleeRecipe;
 										}
-										else if (weapOb->IsTwoHandedWeapon()) {
+										else if (weapOb->IsTwoHandedWeapon())
+										{
 											COBJGrabbed = Recipes::DefaultTwoHandedRecipe;
 										}
-										else {
+										else
+										{
 											COBJGrabbed = Recipes::DefaultOneHandedRecipe;
 										}
 									}
-									else if (inventoryItem->object->GetFormType() == ENUM_FORM_ID::kARMO) {
+									else if (inventoryItem->object->GetFormType() == ENUM_FORM_ID::kARMO)
+									{
 										COBJGrabbed = Recipes::DefaultArmorRecipe;
 									}
 								}
-								else {
-									if (inventoryItem->object->GetFormType() == ENUM_FORM_ID::kWEAP) {
-
+								else 
+								{
+									if (inventoryItem->object->GetFormType() == ENUM_FORM_ID::kWEAP)
+									{
 										TESObjectWEAP* weapOb = static_cast<TESObjectWEAP*>(inventoryItem->object);
 										PlayerCharacter* player = PlayerCharacter::GetSingleton();
 										WEAPON_TYPE weaponType = InventoryUtils::GetWeaponInstanceData(inventoryItem->stackData->extra.get())->type.get();
 
-										if (Shared::IsMeleeWeapon(weaponType)) {
-											// Shared::VanillaMeleeWeaponsList->arrayOfForms
+										if (Shared::IsMeleeWeapon(weaponType)) 
+										{
 											COBJGrabbed = Recipes::DefaultMeleeRecipe;
 										}
-										else if (weapOb->IsTwoHandedWeapon()) {
+										else if (weapOb->IsTwoHandedWeapon()) 
+										{
 											COBJGrabbed = Recipes::DefaultTwoHandedRecipe;
 										}
-										else {
+										else 
+										{
 											COBJGrabbed = Recipes::DefaultOneHandedRecipe;
 										}
 									}
-									else if (inventoryItem->object->GetFormType() == ENUM_FORM_ID::kARMO) {
+									else if (inventoryItem->object->GetFormType() == ENUM_FORM_ID::kARMO) 
+									{
 										COBJGrabbed = Recipes::DefaultArmorRecipe;
 									}
-									if (!COBJGrabbed) {
-										RE::WorkbenchMenuBase::ModChoiceData* currentModChoiceDatasss = (a_this->modChoiceArray.data() + modChoiceIndex);
+									if (!COBJGrabbed) 
+									{
+										WorkbenchMenuBase::ModChoiceData* currentModChoiceDatasss = (a_this->modChoiceArray.data() + modChoiceIndex);
 										// Remove any possible required perks, as we don't take that into account when repairing.
 										if (!currentModChoiceDatasss->requiredPerks.empty())
 										{
 											currentModChoiceDatasss->requiredPerks.clear();
 										}
 										if (currentModChoiceDatasss->recipe && currentModChoiceDatasss->recipe->conditions)
+										{
 											currentModChoiceDatasss->recipe->conditions.ClearAllConditionItems();
-
+										}
+											
 										COBJGrabbed = currentModChoiceDatasss->recipe;
 									}
-
 								}
-
-
-								// Remove any possible conditions on the recipe, as we don't take that into account when repairing.
-								//
-								//return 0;
 							}
 
-							if (!COBJGrabbed) {
-								//return 0;
+							if (!COBJGrabbed) 
+							{
 								TESObjectWEAP* weapOb = static_cast<TESObjectWEAP*>(inventoryItem->object);
-								if (weapOb) {
+								if (weapOb) 
+								{
 									PlayerCharacter* player = PlayerCharacter::GetSingleton();
 									WEAPON_TYPE weaponType = InventoryUtils::GetWeaponInstanceData(inventoryItem->stackData->extra.get())->type.get();
 
-									if (Shared::IsMeleeWeapon(weaponType)) {
-										// Shared::VanillaMeleeWeaponsList->arrayOfForms
+									if (Shared::IsMeleeWeapon(weaponType)) 
+									{
 										COBJGrabbed = Recipes::DefaultMeleeRecipe;
 									}
-									else if (weapOb->IsTwoHandedWeapon()) {
+									else if (weapOb->IsTwoHandedWeapon()) 
+									{
 										COBJGrabbed = Recipes::DefaultTwoHandedRecipe;
 									}
-									else {
+									else 
+									{
 										COBJGrabbed = Recipes::DefaultOneHandedRecipe;
 									}
 								}
-								if (!COBJGrabbed) {
+								if (!COBJGrabbed) 
+								{
 									COBJGrabbed = Recipes::DefaultMeleeRecipe;
 								}
 									
 							}
 
-							if (!COBJGrabbed) {
+							if (!COBJGrabbed) 
+							{
 								COBJGrabbed = Recipes::DefaultMeleeRecipe;
 							}
 
 							currentModChoiceData->recipe = COBJGrabbed;
 
-							if (!currentModChoiceData || !currentModChoiceData->recipe || !currentModChoiceData->recipe->requiredItems) {
+							if (!currentModChoiceData || !currentModChoiceData->recipe || !currentModChoiceData->recipe->requiredItems) 
+							{
 								return 0;
 							}
 
@@ -1027,7 +1043,9 @@ namespace Cascadia
 							{
 								currentModChoiceData->requiredPerks.clear();
 							}
-							if (currentModChoiceData->recipe->conditions) {
+
+							if (currentModChoiceData->recipe->conditions) 
+							{
 								currentModChoiceData->recipe->conditions.ClearAllConditionItems();
 							}
 
@@ -1035,35 +1053,32 @@ namespace Cascadia
 							const float repairSkill = Skills::GetPlayerAVValue(Skills::CascadiaActorValues.Repair);
 
 							Shared::ApplyFormulaForRepairRequirements(examineMenu->modChoiceArray, inventoryItem->stackData->extra.get(), *currentModChoiceData->recipe->requiredItems, *currentModChoiceData->requiredItems, currentCondition, repairSkill);
-
 						}
-
 
 						return (currentModChoiceData);
 					}
 				}
 			}
-			else { // Retail logic comes into play here.
-
+			else // Retail logic comes into play here.
+			{ 
 				std::uint32_t modChoiceIndex = a_this->modChoiceIndex;
-				if (a_this->modChoiceArray.empty() || modChoiceIndex >= a_this->modChoiceArray.size())
+				if (a_this->modChoiceArray.empty() || modChoiceIndex >= a_this->modChoiceArray.size()) 
 				{
 					return 0;
-				}
-				else
+				} 
+				else 
 				{
 					return (a_this->modChoiceArray.data() + modChoiceIndex);
 				}
 			}
 		}
 
-		DetourXS hook_GetInventoryValue;
 		typedef std::int64_t(GetInventoryValueSig)(TESBoundObject*, const ExtraDataList*);
 		REL::Relocation<GetInventoryValueSig> GetInventoryValueOriginal;
 
 		std::int64_t HookBGSInventoryItemUtilsGetInventoryValue(TESBoundObject* a_baseObj, const ExtraDataList* a_extra)
 		{
-			if (!a_extra->HasType(EXTRA_DATA_TYPE::kHealth))
+			if (!a_extra->HasType(EXTRA_DATA_TYPE::kHealth)) 
 			{
 				return GetInventoryValueOriginal(a_baseObj, a_extra);
 			}
@@ -1073,18 +1088,16 @@ namespace Cascadia
 			std::int64_t newValue;
 
 			// Clamp to 5% value at minimum.
-			if (non_const_a_extra->GetHealthPerc() < 0.05f)
-			{
+			if (non_const_a_extra->GetHealthPerc() < 0.05f) {
 				newValue = std::int64_t(GetInventoryValueOriginal(a_baseObj, a_extra) * 0.05f * std::sqrt(0.05f));
 			}
-			else
+			else 
 			{
 				newValue = std::int64_t(GetInventoryValueOriginal(a_baseObj, a_extra) * non_const_a_extra->GetHealthPerc() * std::sqrt(non_const_a_extra->GetHealthPerc()));
 			}
 			return newValue;
 		}
 
-		DetourXS hook_AddItem;
 		typedef void(AddItemSig)(BGSInventoryList*, TESBoundObject*, const BGSInventoryItem::Stack*, std::uint32_t*, std::uint32_t*);
 		REL::Relocation<AddItemSig> AddItemOriginal;
 
@@ -1093,32 +1106,31 @@ namespace Cascadia
 		// they're picked up and serialized.
 		void HookBGSInventoryListAddItem(BGSInventoryList* a_this, TESBoundObject* a_boundObject, const BGSInventoryItem::Stack* a_stack, std::uint32_t* a_oldCount, std::uint32_t* a_newCount)
 		{
-
 			ENUM_FORM_ID formType = a_boundObject->GetFormType();
-			if (a_boundObject)
+			if (a_boundObject) 
 			{
-				if (formType == ENUM_FORM_ID::kWEAP || formType == ENUM_FORM_ID::kARMO)
+				if (formType == ENUM_FORM_ID::kWEAP || formType == ENUM_FORM_ID::kARMO) 
 				{
 					std::uint32_t iterCount = 0;
-					for (const BGSInventoryItem::Stack* traverse = a_stack; traverse; traverse->nextStack)
+					for (const BGSInventoryItem::Stack* traverse = a_stack; traverse; traverse->nextStack) 
 					{
-						if (!traverse || !traverse->extra)
+						if (!traverse || !traverse->extra) 
 						{
 							break;
 						}
 
 						bool willHaveHealth = false;
-						if (formType == ENUM_FORM_ID::kWEAP)
+						if (formType == ENUM_FORM_ID::kWEAP) 
 						{
 							TESObjectWEAP* tempREFR = static_cast<TESObjectWEAP*>(a_boundObject);
-							if (tempREFR->weaponData.type == WEAPON_TYPE::kGrenade || tempREFR->weaponData.type == WEAPON_TYPE::kMine)
+							if (tempREFR->weaponData.type == WEAPON_TYPE::kGrenade || tempREFR->weaponData.type == WEAPON_TYPE::kMine) 
 							{
 								REX::DEBUG("BGSInventoryList::AddItem: REFR grenade/mine weapon type.");
 								break;
 							}
 
 							// Set to '1.0' when initializing if the 'noDegradation' keyword is on the object.
-							if (tempREFR->HasKeyword(Shared::noDegradation))
+							if (tempREFR->HasKeyword(Shared::noDegradation)) 
 							{
 								REX::DEBUG("'CAS_NoDegradation' keyword found on weapon: {}.", tempREFR->GetFormEditorID());
 								break;
@@ -1126,12 +1138,12 @@ namespace Cascadia
 
 							willHaveHealth = true;
 						}
-						else if (formType == ENUM_FORM_ID::kARMO)
+						else if (formType == ENUM_FORM_ID::kARMO) 
 						{
 							TESObjectARMO* tempREFR = static_cast<TESObjectARMO*>(a_boundObject);
 							// Set to '1.0' when initializing if the 'noDegradation' keyword is on the object.
 
-							if (tempREFR->armorData.rating == 0 && !tempREFR->armorData.damageTypes)
+							if (tempREFR->armorData.rating == 0 && !tempREFR->armorData.damageTypes) 
 							{
 								break;
 							}
@@ -1145,11 +1157,13 @@ namespace Cascadia
 							willHaveHealth = true;
 						}
 
-						if (a_boundObject->GetFormType() == RE::ENUM_FORM_ID::kCMPO || a_boundObject->GetFormType() == RE::ENUM_FORM_ID::kMISC) {
+						if (a_boundObject->GetFormType() == RE::ENUM_FORM_ID::kCMPO || a_boundObject->GetFormType() == RE::ENUM_FORM_ID::kMISC) 
+						{
 							auto player = RE::PlayerCharacter::GetSingleton();
 
 							auto baseComp = Shared::GetBaseComponentFromForm(a_boundObject);
-							if (baseComp && baseComp->scrapItem) {
+							if (baseComp && baseComp->scrapItem) 
+							{
 								std::uint32_t oldCountNew = 0;
 								auto removeData = RE::TESObjectREFR::RemoveItemData(a_boundObject, *a_newCount);
 								player->RemoveItem(removeData);
@@ -1177,7 +1191,6 @@ namespace Cascadia
 			AddItemOriginal(a_this, a_boundObject, a_stack, a_oldCount, a_newCount);
 		}
 
-		DetourXS hook_ExamineMenuBuildConfirmed;
 		typedef void(ExamineMenuBuildConfirmedSig)(RE::ExamineMenu*, bool);
 		REL::Relocation<ExamineMenuBuildConfirmedSig> ExamineMenuBuildConfirmedOriginal;
 
@@ -1231,7 +1244,6 @@ namespace Cascadia
 			}
 		}
 
-		DetourXS hook_TESObjectWEAPFire;
 		typedef void(TESObjectWEAPFireSig)(const BGSObjectInstanceT<TESObjectWEAP>*, TESObjectREFR*, BGSEquipIndex, TESAmmo*, AlchemyItem*);
 		REL::Relocation<TESObjectWEAPFireSig> TESObjectWEAPFireOriginal;
 
@@ -1350,7 +1362,6 @@ namespace Cascadia
 			return;
 		}
 
-		DetourXS hook_CombatFormulasCalcWeaponDamage;
 		typedef float(CombatFormulasCalcWeaponDamageSig)(const TESForm*, const TESObjectWEAP::InstanceData*, const TESAmmo*, float, float);
 		REL::Relocation<CombatFormulasCalcWeaponDamageSig> CombatFormulasCalcWeaponDamageOriginal;
 
@@ -1364,7 +1375,6 @@ namespace Cascadia
 			return retailDamage;
 		}
 
-		DetourXS hook_GetEquippedArmorDamageResistance;
 		typedef float(GetEquippedArmorDamageResistanceSig)(Actor*, const ActorValueInfo*);
 		REL::Relocation<GetEquippedArmorDamageResistanceSig> GetEquippedArmorDamageResistanceOriginal;
 
@@ -1415,7 +1425,6 @@ namespace Cascadia
 			}
 		}
 
-		DetourXS hook_IUUIIUtilsAddItemCardInfoEntry;
 		typedef void(IUUIIUtilsAddItemCardInfoEntrySig)(Scaleform::GFx::Value&, Scaleform::GFx::Value&, const BSFixedStringCS&, Scaleform::GFx::Value&, float, float, float);
 		REL::Relocation<IUUIIUtilsAddItemCardInfoEntrySig> IUUIIUtilsAddItemCardInfoEntryOriginal;
 
@@ -1433,7 +1442,6 @@ namespace Cascadia
 			}
 		}
 
-		DetourXS hook_PipboyInventoryDataBaseAddItemCardInfoEntry;
 		typedef PipboyObject* (PipboyInventoryDataBaseAddItemCardInfoEntrySig)(PipboyInventoryData*, const BSFixedStringCS*, PipboyArray*);
 		REL::Relocation<PipboyInventoryDataBaseAddItemCardInfoEntrySig> PipboyInventoryDataBaseAddItemCardInfoEntryOriginal;
 
@@ -1456,7 +1464,6 @@ namespace Cascadia
 			return result;
 		}
 
-		DetourXS hook_IUUIIUtilsPopulateItemCardInfo_Helper;
 		typedef void(IUUIIUtilsPopulateItemCardInfo_HelperSig)(Scaleform::GFx::Value*, const BGSInventoryItem*, std::uint32_t, BSScrapArray<BSTTuple<BGSInventoryItem const*, std::uint32_t>>, bool);
 		REL::Relocation<IUUIIUtilsPopulateItemCardInfo_HelperSig> IUUIIUtilsPopulateItemCardInfo_HelperOriginal;
 
@@ -1496,7 +1503,6 @@ namespace Cascadia
 			return;
 		}
 
-		DetourXS hook_PipboyInventoryUtilsFillResistTypeInfo;
 		typedef void(PipboyInventoryUtilsFillResistTypeInfoSig)(const BGSInventoryItem*, const BGSInventoryItem::Stack*, BSScrapArray<BSTTuple<std::uint32_t, float>>*, float);
 		REL::Relocation<PipboyInventoryUtilsFillResistTypeInfoSig> PipboyInventoryUtilsFillResistTypeInfo_Original;
 
@@ -1509,6 +1515,7 @@ namespace Cascadia
 			{
 				return;
 			}
+
 			float condition = a_stack->extra->GetHealthPerc();
 			for (std::uint32_t type = 0; type < 6; type++)
 			{
@@ -1520,7 +1527,6 @@ namespace Cascadia
 			}
 		}
 
-		DetourXS hook_ActorUnequipObject;
 		typedef void(ActorUnequipObjectSig)(Actor*, TESBoundObject*, ObjectEquipParams*);
 		REL::Relocation<ActorUnequipObjectSig> ActorUnequipObject_Original;
 
@@ -1540,7 +1546,6 @@ namespace Cascadia
 			}
 		}
 
-		DetourXS hook_CombatFormulasCalcTargetedLimbDamage;
 		typedef float(CombatFormulasCalcTargetedLimbDamageSig)(Actor*, const BGSBodyPart*, float, BSTArray<BSTTuple<TESForm*, BGSTypedFormValuePair::SharedVal>, BSTArrayHeapAllocator>*);
 		REL::Relocation<CombatFormulasCalcTargetedLimbDamageSig> CombatFormulasCalcTargetedLimbDamage_Original;
 
@@ -1551,7 +1556,6 @@ namespace Cascadia
 			PlayerCharacter* playerCharacter = PlayerCharacter::GetSingleton();
 			if (a_target == playerCharacter) // TODO: Might rework this so enemy armor takes damage as well.
 			{
-
 				// Early return.
 				if (playerCharacter->IsGodMode() || Shared::noArmorDegradation)
 				{
@@ -1576,8 +1580,6 @@ namespace Cascadia
 							TESObjectARMO* armor = static_cast<TESObjectARMO*>(item.object);
 							if (item.object && armor->formType == ENUM_FORM_ID::kARMO && armor->Protects(conditionAV, false))
 							{
-
-								
 								ExtraDataList* extraDataList = item.stackData->extra.get();
 								if (extraDataList->HasType(EXTRA_DATA_TYPE::kHealth))
 								{
@@ -1619,7 +1621,6 @@ namespace Cascadia
 			return retailValue;
 		}
 
-		DetourXS hook_LoadingMenuPopulateLoadScreens;
 		typedef void(LoadingMenuPopulateLoadScreensSig)(LoadingMenu*);
 		REL::Relocation<LoadingMenuPopulateLoadScreensSig> LoadingMenuPopulateLoadScreens_Original;
 
@@ -1634,7 +1635,6 @@ namespace Cascadia
 			}
 		}
 
-		DetourXS hook_GamePlayFormulasCanPickLockGateCheck;
 		typedef bool(GamePlayFormulasCanPickLockGateCheckSig)(LockLevels::LOCK_LEVEL_EXTENDED);
 		REL::Relocation<GamePlayFormulasCanPickLockGateCheckSig> GamePlayFormulasCanPickLockGateCheck_Original;
 		bool HookGamePlayFormulasCanPickLockGateCheck(LockLevels::LOCK_LEVEL_EXTENDED a_lockLevel)
@@ -1678,7 +1678,6 @@ namespace Cascadia
 			return returnValue;
 		}
 
-		DetourXS hook_GamePlayFormulasCanHackGateCheck;
 		typedef bool(GamePlayFormulasCanHackGateCheckSig)(LockLevels::LOCK_LEVEL_EXTENDED);
 		REL::Relocation<GamePlayFormulasCanHackGateCheckSig> GamePlayFormulasCanHackGateCheck_Original;
 		bool HookGamePlayFormulasCanHackGateCheck(LockLevels::LOCK_LEVEL_EXTENDED a_lockLevel)
@@ -1722,7 +1721,6 @@ namespace Cascadia
 			return returnValue;
 		}
 
-		DetourXS hook_ActorSPECIALModifiedCallback;
 		typedef void(ActorSPECIALModifiedCallbackSig)(Actor*, const ActorValueInfo*, float, float);
 		REL::Relocation<ActorSPECIALModifiedCallbackSig> ActorSPECIALModifiedCallback_Original;
 
@@ -1818,7 +1816,6 @@ namespace Cascadia
 			}
 		}
 
-		DetourXS hook_nsHUDTypesNotificationData_ctor;
 		typedef void(nsHUDTypesNotificationData_ctorSig)(nsHUDTypes::NotificationInfo*, const HUDNotificationEvent*);
 		REL::Relocation<nsHUDTypesNotificationData_ctorSig> nsHUDTypesNotificationData_ctor_Original;
 
@@ -1830,7 +1827,6 @@ namespace Cascadia
 			a_this->soundName = BSFixedStringCS("MUSDiscoveryBrotherhood");
 		}
 
-		DetourXS hook_REFR_LOCKIsInaccessible;
 		typedef bool(REFR_LOCKIsInaccessibleSig)(std::uint32_t);
 		REL::Relocation<REFR_LOCKIsInaccessibleSig> REFR_LOCKIsInaccessible_Original;
 		bool HookREFR_LOCKIsInaccessible(std::uint32_t a_lockLevel)
@@ -1838,7 +1834,6 @@ namespace Cascadia
 			return ((a_lockLevel - 6) & 0xFFFFFFFC) == 0 && a_lockLevel != 7;
 		}
 
-		DetourXS hook_GamePlayFormulasGetLockXPReward;
 		typedef float (GamePlayFormulasGetLockXPRewardSig)(LockLevels::LOCK_LEVEL_EXTENDED);
 		REL::Relocation<GamePlayFormulasGetLockXPRewardSig> GamePlayFormulasGetLockXPReward_Original;
 		float HookGamePlayFormulasGetLockXPReward(LockLevels::LOCK_LEVEL_EXTENDED a_lockLevel)
@@ -1860,7 +1855,6 @@ namespace Cascadia
 			}
 		}
 
-		DetourXS hook_REFR_LOCKNumericValueToEnum;
 		typedef LockLevels::LOCK_LEVEL_EXTENDED(REFR_LOCKNumericValueToEnumSig)(std::uint32_t);
 		REL::Relocation<REFR_LOCKNumericValueToEnumSig> REFR_LOCKNumericValueToEnum_Original;
 		LockLevels::LOCK_LEVEL_EXTENDED HookREFR_LOCKNumericValueToEnum(std::int32_t a_val) 
@@ -1909,21 +1903,23 @@ namespace Cascadia
 			return LockLevels::LOCK_LEVEL_EXTENDED::kRequiresKey;
 		}
 
-		DetourXS hook_AIProcessGetActorLightLevel;
 		typedef float(AIProcessGetActorLightLevelSig)(AIProcess*);
 		REL::Relocation<AIProcessGetActorLightLevelSig> AIProcessGetActorLightLevel_Original;
 		float HookAIProcessGetActorLightLevel(AIProcess* a_this)
 		{
 			float lightLevel = 0.0f;
 
-			if (a_this && a_this->high) {
+			if (a_this && a_this->high) 
+			{
 				lightLevel = a_this->high->lightLevel;
 			}
 
 			// If process is player and pipboy light is on, add 200 to the light level.
 			PlayerCharacter* playerCharacter = PlayerCharacter::GetSingleton();
-			if (playerCharacter && playerCharacter->currentProcess == a_this) {
-				if (playerCharacter->IsPipboyLightOn()) {
+			if (playerCharacter && playerCharacter->currentProcess == a_this) 
+			{
+				if (playerCharacter->IsPipboyLightOn()) 
+				{
 					return lightLevel += Cascadia::Additions::AI_Detection::Light_Addition->GetValue();
 				}
 			}
@@ -1931,21 +1927,22 @@ namespace Cascadia
 			return lightLevel;
 		}
 
-		DetourXS hook_ActorCalculateDetectionFormula;
 		typedef void(ActorCalculateDetectionFormulaSig)(Actor*, Actor*, DetectionData*);
 		REL::Relocation<ActorCalculateDetectionFormulaSig> ActorCalculateDetectionFormula_Original;
 
 		void HookActorCalculateDetectionFormula(Actor* a_this, Actor* a_target, DetectionData* a_detectionData)
 		{
 			using namespace Cascadia::Additions::AI_Detection;
-			if (!ActorCalculateDetectionFormula_Original || !a_this || !a_target || !a_detectionData) {
+			if (!ActorCalculateDetectionFormula_Original || !a_this || !a_target || !a_detectionData) 
+			{
 				return;
 			}
 
 			ActorCalculateDetectionFormula_Original(a_this, a_target, a_detectionData);
 
 			PlayerCharacter* playerCharacter = PlayerCharacter::GetSingleton();
-			if (!playerCharacter || a_target != playerCharacter) {
+			if (!playerCharacter || a_target != playerCharacter) 
+			{
 				return;
 			}
 
@@ -1955,21 +1952,22 @@ namespace Cascadia
 			const float distance = std::sqrt(dx * dx + dy * dy + dz * dz);
 
 			const float RadioMaxDistanceEffectOnDetection = Radio_MaxDistanceEffect->GetValue();
-			if (RadioManager::QPlayerRadioEnabled() && distance < RadioMaxDistanceEffectOnDetection) {
+			if (RadioManager::QPlayerRadioEnabled() && distance < RadioMaxDistanceEffectOnDetection) 
+			{
 				const float normalizedDistance = std::fminf(1.0f, distance / RadioMaxDistanceEffectOnDetection);
 				const float bonus = Radio_DistanceScaling->GetValue() * (1.0f - normalizedDistance) + Radio_AdditionBase->GetValue();
 				const float soundBonus = std::clamp(bonus, 0.0f, 30000.0f);
 
-				if (a_detectionData->soundDetectionLevel < soundBonus) {
+				if (a_detectionData->soundDetectionLevel < soundBonus) 
+				{
 					a_detectionData->soundDetectionLevel = soundBonus;
 					REX::DEBUG("Radio is on, applying sound bonus of {} to detection level. Distance: {}", soundBonus, distance);
 				}
 			}
 		}
 
-		DetourXS hook_AIFormulasComputePickpocketSuccess;
 		typedef std::uint32_t(AIFormulasComputePickpocketSuccessSig)(float, float, std::int32_t, float, Actor*, Actor*, TESForm*, bool);
-		REL::Relocation<AIFormulasComputePickpocketSuccessSig> AIFormulasComputePickpocketSuccess_Original;  // @TODO: Flenarn did not have this.
+		REL::Relocation<AIFormulasComputePickpocketSuccessSig> AIFormulasComputePickpocketSuccess_Original;
 		std::uint32_t HookAIFormulasComputePickpocketSuccess(
 			float a_thiefSkill,
 			float a_targetSkill,
@@ -2016,7 +2014,8 @@ namespace Cascadia
 				BGSEntryPoint::HandleEntryPoint(BGSEntryPoint::ENTRY_POINT::kModPickpocketChance, a_thief, &targetInstance, &itemInstance, &chance);
 			}
 
-			if (a_placingItem) {
+			if (a_placingItem) 
+			{
 				chance *= placeMult;
 			}
 
@@ -2028,28 +2027,32 @@ namespace Cascadia
 			return static_cast<std::uint32_t>(chance);
 		}
 
-		DetourXS hook_BuildWeaponScrappingArray;
 		typedef void(BuildWeaponScrappingArraySig)(RE::ExamineMenu*);
 		REL::Relocation<BuildWeaponScrappingArraySig> BuildWeaponScrappingArrayOriginal;
 		void HookBuildWeaponScrappingArray(RE::ExamineMenu* a_this)
 		{
 			using namespace Cascadia::Additions::Workbench_Additions;
-			if (!bIsScrappingAllJunk) {
+			if (!bIsScrappingAllJunk) 
+			{
 				// Vanilla scrapping based on CND.
 				BuildWeaponScrappingArrayOriginal(a_this);
 
 				std::uint32_t selectedIndex = a_this->GetSelectedIndex();
-				if (!a_this->invInterface.entriesInvalid && (selectedIndex & 0x80000000) == 0 && selectedIndex < a_this->invInterface.stackedEntries.size()) {
+				if (!a_this->invInterface.entriesInvalid && (selectedIndex & 0x80000000) == 0 && selectedIndex < a_this->invInterface.stackedEntries.size()) 
+				{
 					InventoryUserUIInterfaceEntry* inventoryUUIEntry = (a_this->invInterface.stackedEntries.data() + selectedIndex);
 					const BGSInventoryItem* inventoryItem = BGSInventoryInterface::GetSingleton()->RequestInventoryItem(inventoryUUIEntry->invHandle.id);
-					if (inventoryItem) {
-
-						if (inventoryItem->stackData->extra->GetHealthPerc() >= 0) {
+					if (inventoryItem) 
+					{
+						if (inventoryItem->stackData->extra->GetHealthPerc() >= 0) 
+						{
 							const float oneMinusCND = inventoryItem->stackData->extra->GetHealthPerc();
-							for (std::uint32_t i = 0; i < a_this->scrappingArray.size(); i++) {
+							for (std::uint32_t i = 0; i < a_this->scrappingArray.size(); i++) 
+							{
 								a_this->scrappingArray[i].second = a_this->scrappingArray[i].second * oneMinusCND;
 								auto baseCompObj = Shared::GetBaseComponentFromForm(a_this->scrappingArray[i].first);
-								if (baseCompObj && baseCompObj->scrapItem) {
+								if (baseCompObj && baseCompObj->scrapItem) 
+								{
 									a_this->scrappingArray[i].first = baseCompObj->scrapItem;
 								}
 							}
@@ -2066,32 +2069,40 @@ namespace Cascadia
 			PlayerCharacter* player = PlayerCharacter::GetSingleton();
 			const double salvageSkillMod = (Cascadia::Skills::GetPlayerAVValue(Cascadia::Skills::CascadiaActorValues.Repair) / 100.0f) * Scrap_SkillMult->GetValue();
 			player->inventoryList->rwLock.lock_read();
-			for (std::uint32_t i = 0; i < player->inventoryList->data.size(); i++) {
+			for (std::uint32_t i = 0; i < player->inventoryList->data.size(); i++) 
+			{
 				BGSInventoryItem inventoryItem = player->inventoryList->data.at(i);
 
-				if (!inventoryItem.object || !Shared::IsJunkItem(inventoryItem.object) || inventoryItem.IsQuestObject(0)) {
+				if (!inventoryItem.object || !Shared::IsJunkItem(inventoryItem.object) || inventoryItem.IsQuestObject(0)) 
+				{
 					continue;
 				}
 
 				auto baseComp = Shared::GetBaseComponentFromForm(inventoryItem.object);
-				if (!baseComp || !baseComp->scrapItem || baseComp->scrapItem->GetFormID() == inventoryItem.object->GetFormID()) {
+
+				if (!baseComp || !baseComp->scrapItem || baseComp->scrapItem->GetFormID() == inventoryItem.object->GetFormID()) 
+				{
 					continue;
 				}
 
 				TESObjectMISC* miscObject = static_cast<TESObjectMISC*>(inventoryItem.object);
-				if (!miscObject) {
+				if (!miscObject) 
+				{
 					continue;
 				}
 
-				if (!miscObject->componentData || miscObject->componentData->empty()){
+				if (!miscObject->componentData || miscObject->componentData->empty())
+				{
 					continue;
 				}
 
-				for (auto it = miscObject->componentData->begin(); it != miscObject->componentData->end(); ++it) {
+				for (auto it = miscObject->componentData->begin(); it != miscObject->componentData->end(); ++it)
+				{
 					TESBoundObject* boundObj = reinterpret_cast<TESBoundObject*>(it->first);
 
 					BGSComponent* baseCompObj = Shared::GetBaseComponentFromForm(it->first);
-					if (baseCompObj && baseCompObj->scrapItem) {
+					if (baseCompObj && baseCompObj->scrapItem)
+					{
 						boundObj = baseCompObj->scrapItem;
 					}
 
@@ -2100,7 +2111,8 @@ namespace Cascadia
 
 					int count = std::max(oldCount * salvageSkillMod, 1.0) * invCount;
 
-					if (count != 0) {
+					if (count != 0)
+					{
 						a_this->scrappingArray.push_back(BSTTuple<TESBoundObject*, std::uint32_t>(boundObj, count));
 					}
 
@@ -2118,24 +2130,28 @@ namespace Cascadia
 			using namespace Cascadia::Additions::Workbench_Additions;
 
 			if (bIsScrappingAllJunk) {
-				if (!UI::GetSingleton()->GetMenuOpen<RE::ExamineMenu>()) {
+				if (!UI::GetSingleton()->GetMenuOpen<RE::ExamineMenu>())
+				{
 					bIsScrappingAllJunk = false;
 					return _OriginalRemoveItem(a_this, a_data);
 				}
 
-				if (!Shared::IsJunkItem(a_data.object)) {
+				if (!Shared::IsJunkItem(a_data.object))
+				{
 					bIsScrappingAllJunk = false;
 					PlayerCharacter* player = PlayerCharacter::GetSingleton();
 					player->inventoryList->rwLock.lock_read();
 					for (std::uint32_t i = 0; i < player->inventoryList->data.size(); i++)
 					{
 						RE::BGSInventoryItem inventoryItem = player->inventoryList->data.at(i);
-						if (!inventoryItem.object || !Shared::IsJunkItem(inventoryItem.object) || inventoryItem.IsQuestObject(0)) {
+						if (!inventoryItem.object || !Shared::IsJunkItem(inventoryItem.object) || inventoryItem.IsQuestObject(0))
+						{
 							continue;
 						}
 
 						BGSComponent* baseComp = Shared::GetBaseComponentFromForm(inventoryItem.object);
-						if (!baseComp || !baseComp->scrapItem || baseComp->scrapItem->GetFormID() == inventoryItem.object->GetFormID()) {
+						if (!baseComp || !baseComp->scrapItem || baseComp->scrapItem->GetFormID() == inventoryItem.object->GetFormID())
+						{
 							continue;
 						}
 
@@ -2152,14 +2168,14 @@ namespace Cascadia
 					TESObjectREFR::RemoveItemData a = RE::TESObjectREFR::RemoveItemData(a_this, 0);
 					return _OriginalRemoveItem(a_this, a);
 				}
-				else {
+				else
+				{
 					return _OriginalRemoveItem(a_this, a_data);
 				}
 			}
 			return _OriginalRemoveItem(a_this, a_data);
 		}
 
-		DetourXS hook_PlayerCharacterHandlePositionPlayerRequest;
 		typedef void(PlayerCharacterHandlePositionPlayerRequestSig)(PlayerCharacter*);
 		REL::Relocation<PlayerCharacterHandlePositionPlayerRequestSig> PlayerCharacterHandlePositionPlayerRequest_Original;
 
@@ -2168,13 +2184,17 @@ namespace Cascadia
 			TESObjectREFR* marker = nullptr;
 			TESObjectREFR* chosenChild = nullptr;
 
-			if (Shared::bIsMultiTravelling && a_this->queuedTargetLoc.isValid && a_this->queuedTargetLoc.fastTravelMarker.get_handle() != 0) {
+			if (Shared::bIsMultiTravelling && a_this->queuedTargetLoc.isValid && a_this->queuedTargetLoc.fastTravelMarker.get_handle() != 0)
+			{
 				marker = a_this->queuedTargetLoc.fastTravelMarker.get().get();
-				if (marker) {
+				if (marker)
+				{
 					auto* children = marker->extraList->GetByType<ExtraLinkedRefChildren>();
-					if (children && !children->linkedChildren.empty()) {
+					if (children && !children->linkedChildren.empty())
+					{
 						chosenChild = children->linkedChildren.at(Shared::chosenI).REFR.get().get();
-						if (chosenChild) {
+						if (chosenChild)
+						{
 							chosenChild->SetLinkedRef(nullptr, nullptr);
 							marker->SetLinkedRef(chosenChild, nullptr);
 						}
@@ -2186,7 +2206,8 @@ namespace Cascadia
 
 			PlayerCharacterHandlePositionPlayerRequest_Original(a_this);
 
-			if (chosenChild) {
+			if (chosenChild)
+			{
 				marker->SetLinkedRef(nullptr, nullptr);
 				chosenChild->SetLinkedRef(marker, nullptr);
 			}
@@ -2202,36 +2223,45 @@ namespace Cascadia
 
 		void RegisterAllHooks()
 		{
-			RegisterDetourFunction(hook_GetBuildConfirmQuestion, ID::ExamineMenu::GetBuildConfirmQuestion, &HookExamineMenuGetBuildConfirmQuestion, ExamineMenuGetBuildConfirmQuestion_Original, "ExamineMenuGetBuildConfirmQuestion"sv);
-			RegisterDetourFunction(hook_AIProcessGetActorLightLevel, ID::AIProcess::GetActorLightLevel, &HookAIProcessGetActorLightLevel, AIProcessGetActorLightLevel_Original, "AIProcessGetActorLightLevel"sv);
-			RegisterDetourFunction(hook_GamePlayFormulasGetLockXPReward, ID::GamePlayFormulas::GetLockXPReward, &HookGamePlayFormulasGetLockXPReward, GamePlayFormulasGetLockXPReward_Original, "GamePlayFormulasGetLockXPReward"sv);
-			RegisterDetourFunction(hook_REFR_LOCKIsInaccessible, ID::REFR_LOCK::IsInaccessible, &HookREFR_LOCKIsInaccessible, REFR_LOCKIsInaccessible_Original, "REFR_LOCKIsInaccessible"sv);
-			RegisterDetourFunction(hook_AIFormulasComputePickpocketSuccess, ID::AIFormulas::ComputePickpocketSuccess, &HookAIFormulasComputePickpocketSuccess, AIFormulasComputePickpocketSuccess_Original, "AIFormulasComputePickpocketSuccess"sv);
-			RegisterDetourFunction(hook_REFR_LOCKNumericValueToEnum, ID::REFR_LOCK::NumericValueToEnum, &HookREFR_LOCKNumericValueToEnum, REFR_LOCKNumericValueToEnum_Original, "REFR_LOCKNumericValueToEnum"sv);
-			RegisterDetourFunction(hook_ActorCalculateDetectionFormula, ID::Actor::CalculateDetectionFormula, &HookActorCalculateDetectionFormula, ActorCalculateDetectionFormula_Original, "ActorCalculateDetectionFormula"sv);
-			RegisterDetourFunction(hook_nsHUDTypesNotificationData_ctor, ID::nsHUDTypes::NotificationInfo::ctor, &HooknsHUDTypesNotificationData_ctor, nsHUDTypesNotificationData_ctor_Original, "nsHUDTypesNotificationData_ctor"sv);
-			RegisterDetourFunction(hook_ActorUnequipObject, ID::Actor::UnequipObject, &HookActorUnequipObject, ActorUnequipObject_Original, "ActorUnequipObject"sv);
-			RegisterDetourFunction(hook_ShowBuildFailureMessage, ID::WorkbenchMenuBase::ShowBuildFailureMessage, &HookWorkbenchMenuBaseShowBuildFailureMessage, WorkbenchMenuBaseShowBuildFailureMessage_Original, "WorkbenchMenuBaseShowBuildFailureMessage"sv);
-			RegisterDetourFunction(hook_SetHealthPerc, ID::ExtraDataList::SetHealthPerc, &HookExtraDataListSetHealthPerc, SetHealthPercOriginal, "ExtraDataListSetHealthPerc"sv);
-			RegisterDetourFunction(hook_AddItem, ID::BGSInventoryList::AddItem1, &HookBGSInventoryListAddItem, AddItemOriginal, "BGSInventoryListAddItem"sv);
-			RegisterDetourFunction(hook_GetInventoryValue, ID::BGSInventoryItemUtils::GetInventoryValue, &HookBGSInventoryItemUtilsGetInventoryValue, GetInventoryValueOriginal, "BGSInventoryItemUtilsGetInventoryValue"sv);
-			RegisterDetourFunction(hook_QCurrentModChoiceData, ID::WorkbenchMenuBase::QCurrentModChoiceData, &HookWorkbenchMenuBaseQCurrentModChoiceData, WorkbenchMenuBaseQCurrentModChoiceData_Original, "WorkbenchMenuBaseQCurrentModChoiceData"sv);
-			RegisterDetourFunction(hook_ExamineMenuBuildConfirmed, ID::ExamineMenu::BuildConfirmed, &HookExamineMenuBuildConfirmed, ExamineMenuBuildConfirmedOriginal, "ExamineMenuBuildConfirmed"sv);
-			RegisterDetourFunction(hook_TESObjectWEAPFire, ID::TESObjectWEAP::Fire, &HookTESObjectWEAPFire, TESObjectWEAPFireOriginal, "TESObjectWEAPFire"sv);
-			RegisterDetourFunction(hook_CombatFormulasCalcWeaponDamage, ID::CombatFormulas::CalcWeaponDamage, &HookCombatFormulasCalcWeaponDamage, CombatFormulasCalcWeaponDamageOriginal, "CombatFormulasCalcWeaponDamage"sv);
-			RegisterDetourFunction(hook_GetEquippedArmorDamageResistance, ID::ActorUtils::GetEquippedArmorDamageResistance, &HookGetEquippedDamageResistance, GetEquippedArmorDamageResistanceOriginal, "GetEquippedArmorDamageResistance"sv);
-			RegisterDetourFunction(hook_IUUIIUtilsAddItemCardInfoEntry, ID::InventoryUserUIUtils::AddItemCardInfoEntry, &HookIUUIIUtilsAddItemCardInfoEntry, IUUIIUtilsAddItemCardInfoEntryOriginal, "IUUIIUtilsAddItemCardInfoEntry"sv);
-			RegisterDetourFunction(hook_PipboyInventoryDataBaseAddItemCardInfoEntry, ID::PipboyInventoryData::BaseAddItemCardInfoEntry, &HookPipboyInventoryDataBaseAddItemCardInfoEntry, PipboyInventoryDataBaseAddItemCardInfoEntryOriginal, "PipboyInventoryDataBaseAddItemCardInfoEntry"sv);
-			RegisterDetourFunction(hook_IUUIIUtilsPopulateItemCardInfo_Helper, ID::InventoryUserUIUtils::PopulateItemCardInfo_Helper, &HookIUUIIUtilsPopulateItemCardInfo_Helper, IUUIIUtilsPopulateItemCardInfo_HelperOriginal, "IUUIIUtilsPopulateItemCardInfo_Helper"sv);
-			RegisterDetourFunction(hook_PipboyInventoryUtilsFillResistTypeInfo, ID::PipboyInventoryUtils::FillResistTypeInfo, &HookPipboyInventoryUtilsFillResistTypeInfo, PipboyInventoryUtilsFillResistTypeInfo_Original, "PipboyInventoryUtilsFillResistTypeInfo"sv);
-			RegisterDetourFunction(hook_LoadingMenuPopulateLoadScreens, ID::LoadingMenu::PopulateLoadScreens, &HookLoadingMenuPopulateLoadScreens, LoadingMenuPopulateLoadScreens_Original, "LoadingMenuPopulateLoadScreens"sv);
-			RegisterDetourFunction(hook_GamePlayFormulasCanPickLockGateCheck, ID::GamePlayFormulas::CanPickLockGateCheck, &HookGamePlayFormulasCanPickLockGateCheck, GamePlayFormulasCanPickLockGateCheck_Original, "GamePlayFormulasCanPickLockGateCheck"sv);
-			RegisterDetourFunction(hook_GamePlayFormulasCanHackGateCheck, ID::GamePlayFormulas::CanHackGateCheck, &HookGamePlayFormulasCanHackGateCheck, GamePlayFormulasCanHackGateCheck_Original, "GamePlayFormulasCanHackGateCheck"sv);
-			RegisterDetourFunction(hook_ActorSPECIALModifiedCallback, ID::Actor::SPECIALModifiedCallback, &HookActorSPECIALModifiedCallback, ActorSPECIALModifiedCallback_Original, "ActorSPECIALModifiedCallback"sv);
-			RegisterDetourFunction(hook_BuildWeaponScrappingArray, RE::ID::ExamineMenu::BuildWeaponScrappingArray, &HookBuildWeaponScrappingArray, BuildWeaponScrappingArrayOriginal, "BuildWeaponScrappingArray");
-			RegisterDetourFunction(hook_PlayerCharacterHandlePositionPlayerRequest, RE::ID::PlayerCharacter::HandlePositionPlayerRequest, &HookPlayerCharacterHandlePositionPlayerRequest, PlayerCharacterHandlePositionPlayerRequest_Original, "PlayerCharacterHandlePositionPlayerRequest");
-			RegisterDetourFunction(hook_PipboyBuildQuestTargetMarker, REL::ID(2225603), &HookPipboyBuildQuestTargetMarker, PipboyBuildQuestTargetMarker_Original, "PipboyBuildQuestTargetMarker");
-			RegisterDetourFunction(hook_PipboyMapDataUpdateQuestMarkers, ID::PipboyMapData::UpdateQuestMarkers, &HookPipboyMapDataUpdateQuestMarkers, PipboyMapDataUpdateQuestMarkers_Original, "PipboyMapDataUpdateQuestMarkers");
+			HRESULT hrSlimDetours = SlimDetoursTransactionBegin();
+			if (SUCCEEDED(hrSlimDetours)) {
+				bool slimOk = true;
+				slimOk &= RegisterDetourFunction(ID::ExtraDataList::SetHealthPerc, &HookExtraDataListSetHealthPerc, SetHealthPercOriginal, "ExtraDataListSetHealthPerc"sv);
+				slimOk &= RegisterDetourFunction(ID::WorkbenchMenuBase::ShowBuildFailureMessage, &HookWorkbenchMenuBaseShowBuildFailureMessage, WorkbenchMenuBaseShowBuildFailureMessage_Original, "WorkbenchMenuBaseShowBuildFailureMessage"sv);
+				slimOk &= RegisterDetourFunction(ID::Actor::UnequipObject, &HookActorUnequipObject, ActorUnequipObject_Original, "ActorUnequipObject"sv);
+				slimOk &= RegisterDetourFunction(ID::nsHUDTypes::NotificationInfo::ctor, &HooknsHUDTypesNotificationData_ctor, nsHUDTypesNotificationData_ctor_Original, "nsHUDTypesNotificationData_ctor"sv);
+				slimOk &= RegisterDetourFunction(ID::ExamineMenu::GetBuildConfirmQuestion, &HookExamineMenuGetBuildConfirmQuestion, ExamineMenuGetBuildConfirmQuestion_Original, "ExamineMenuGetBuildConfirmQuestion"sv);
+				slimOk &= RegisterDetourFunction(ID::AIProcess::GetActorLightLevel, &HookAIProcessGetActorLightLevel, AIProcessGetActorLightLevel_Original, "AIProcessGetActorLightLevel"sv);
+				slimOk &= RegisterDetourFunction(ID::GamePlayFormulas::GetLockXPReward, &HookGamePlayFormulasGetLockXPReward, GamePlayFormulasGetLockXPReward_Original, "GamePlayFormulasGetLockXPReward"sv);
+				slimOk &= RegisterDetourFunction(ID::REFR_LOCK::IsInaccessible, &HookREFR_LOCKIsInaccessible, REFR_LOCKIsInaccessible_Original, "REFR_LOCKIsInaccessible"sv);
+				slimOk &= RegisterDetourFunction(ID::AIFormulas::ComputePickpocketSuccess, &HookAIFormulasComputePickpocketSuccess, AIFormulasComputePickpocketSuccess_Original, "AIFormulasComputePickpocketSuccess"sv);
+				slimOk &= RegisterDetourFunction(ID::REFR_LOCK::NumericValueToEnum, &HookREFR_LOCKNumericValueToEnum, REFR_LOCKNumericValueToEnum_Original, "REFR_LOCKNumericValueToEnum"sv);
+				slimOk &= RegisterDetourFunction(ID::Actor::CalculateDetectionFormula, &HookActorCalculateDetectionFormula, ActorCalculateDetectionFormula_Original, "ActorCalculateDetectionFormula"sv);
+				slimOk &= RegisterDetourFunction(ID::BGSInventoryList::AddItem1, &HookBGSInventoryListAddItem, AddItemOriginal, "BGSInventoryListAddItem"sv);
+				slimOk &= RegisterDetourFunction(ID::BGSInventoryItemUtils::GetInventoryValue, &HookBGSInventoryItemUtilsGetInventoryValue, GetInventoryValueOriginal, "BGSInventoryItemUtilsGetInventoryValue"sv);
+				slimOk &= RegisterDetourFunction(ID::WorkbenchMenuBase::QCurrentModChoiceData, &HookWorkbenchMenuBaseQCurrentModChoiceData, WorkbenchMenuBaseQCurrentModChoiceData_Original, "WorkbenchMenuBaseQCurrentModChoiceData"sv);
+				slimOk &= RegisterDetourFunction(ID::ExamineMenu::BuildConfirmed, &HookExamineMenuBuildConfirmed, ExamineMenuBuildConfirmedOriginal, "ExamineMenuBuildConfirmed"sv);
+				slimOk &= RegisterDetourFunction(ID::TESObjectWEAP::Fire, &HookTESObjectWEAPFire, TESObjectWEAPFireOriginal, "TESObjectWEAPFire"sv);
+				slimOk &= RegisterDetourFunction(ID::CombatFormulas::CalcWeaponDamage, &HookCombatFormulasCalcWeaponDamage, CombatFormulasCalcWeaponDamageOriginal, "CombatFormulasCalcWeaponDamage"sv);
+				slimOk &= RegisterDetourFunction(ID::ActorUtils::GetEquippedArmorDamageResistance, &HookGetEquippedDamageResistance, GetEquippedArmorDamageResistanceOriginal, "GetEquippedArmorDamageResistance"sv);
+				slimOk &= RegisterDetourFunction(ID::InventoryUserUIUtils::AddItemCardInfoEntry, &HookIUUIIUtilsAddItemCardInfoEntry, IUUIIUtilsAddItemCardInfoEntryOriginal, "IUUIIUtilsAddItemCardInfoEntry"sv);
+				slimOk &= RegisterDetourFunction(ID::PipboyInventoryData::BaseAddItemCardInfoEntry, &HookPipboyInventoryDataBaseAddItemCardInfoEntry, PipboyInventoryDataBaseAddItemCardInfoEntryOriginal, "PipboyInventoryDataBaseAddItemCardInfoEntry"sv);
+				slimOk &= RegisterDetourFunction(ID::InventoryUserUIUtils::PopulateItemCardInfo_Helper, &HookIUUIIUtilsPopulateItemCardInfo_Helper, IUUIIUtilsPopulateItemCardInfo_HelperOriginal, "IUUIIUtilsPopulateItemCardInfo_Helper"sv);
+				slimOk &= RegisterDetourFunction(ID::PipboyInventoryUtils::FillResistTypeInfo, &HookPipboyInventoryUtilsFillResistTypeInfo, PipboyInventoryUtilsFillResistTypeInfo_Original, "PipboyInventoryUtilsFillResistTypeInfo"sv);
+				slimOk &= RegisterDetourFunction(ID::LoadingMenu::PopulateLoadScreens, &HookLoadingMenuPopulateLoadScreens, LoadingMenuPopulateLoadScreens_Original, "LoadingMenuPopulateLoadScreens"sv);
+				slimOk &= RegisterDetourFunction(ID::GamePlayFormulas::CanPickLockGateCheck, &HookGamePlayFormulasCanPickLockGateCheck, GamePlayFormulasCanPickLockGateCheck_Original, "GamePlayFormulasCanPickLockGateCheck"sv);
+				slimOk &= RegisterDetourFunction(ID::GamePlayFormulas::CanHackGateCheck, &HookGamePlayFormulasCanHackGateCheck, GamePlayFormulasCanHackGateCheck_Original, "GamePlayFormulasCanHackGateCheck"sv);
+				slimOk &= RegisterDetourFunction(ID::Actor::SPECIALModifiedCallback, &HookActorSPECIALModifiedCallback, ActorSPECIALModifiedCallback_Original, "ActorSPECIALModifiedCallback"sv);
+				slimOk &= RegisterDetourFunction(RE::ID::ExamineMenu::BuildWeaponScrappingArray, &HookBuildWeaponScrappingArray, BuildWeaponScrappingArrayOriginal, "BuildWeaponScrappingArray"sv);
+				slimOk &= RegisterDetourFunction(RE::ID::PlayerCharacter::HandlePositionPlayerRequest, &HookPlayerCharacterHandlePositionPlayerRequest, PlayerCharacterHandlePositionPlayerRequest_Original, "PlayerCharacterHandlePositionPlayerRequest"sv);
+				slimOk &= RegisterDetourFunction(REL::ID(2225603), &HookPipboyBuildQuestTargetMarker, PipboyBuildQuestTargetMarker_Original, "PipboyBuildQuestTargetMarker"sv);
+				slimOk &= RegisterDetourFunction(ID::PipboyMapData::UpdateQuestMarkers, &HookPipboyMapDataUpdateQuestMarkers, PipboyMapDataUpdateQuestMarkers_Original, "PipboyMapDataUpdateQuestMarkers"sv);
+
+				hrSlimDetours = slimOk ? SlimDetoursTransactionCommit() : (SlimDetoursTransactionAbort(), E_FAIL);
+			}
+			if (FAILED(hrSlimDetours)) {
+				REX::CRITICAL("SlimDetours hook transaction failed (hr={:#010x})", static_cast<unsigned long>(hrSlimDetours));
+			}
 
 			InstallRemoveItemHook();
 		}
