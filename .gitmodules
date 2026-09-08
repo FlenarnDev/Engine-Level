@@ -4,3 +4,9 @@
 [submodule "src/detourXS"]
 	path = src/detourXS
 	url = https://github.com/DominicTobias/detourxs.git
+[submodule "lib/slimdetours"]
+	path = lib/slimdetours
+	url = https://github.com/KNSoft/KNSoft.SlimDetours.git
+[submodule "lib/knsoft-ndk"]
+	path = lib/knsoft-ndk
+	url = https://github.com/KNSoft/KNSoft.NDK.git

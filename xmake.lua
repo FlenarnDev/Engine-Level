@@ -18,13 +18,28 @@ set_policy("build.optimization.lto", true)
 set_policy("package.requires_lock", true)
 
 -- add rules
-add_rules("mode.debug", "mode.releasedbg")
+add_rules("mode.debug", "mode.releasedbg", "mode.release")
 add_rules("plugin.vsxmake.autoupdate")
 
 -- targets
+target("slimdetours")
+    set_kind("static")
+    set_languages("c17")
+    add_files("lib/slimdetours/Source/KNSoft.SlimDetours/*.c")
+    add_includedirs(
+        "lib/slimdetours/Source/KNSoft.SlimDetours",
+        "lib/knsoft-ndk/Source/Include",
+        "lib/knsoft-ndk/Source/Include/KNSoft/NDK/3rdParty/terminal/dep/Console",
+        -- stub for <ntlpcapi.h>
+        "lib/slimdetours-shim",
+        { public = true }
+    )
+    add_defines("_USE_KNSOFT_NDK", { public = true })
+    add_syslinks("ntdll", { public = true })
+
 target("Cascadia-Engine-Level")
     -- add dependencies to target
-    add_deps("commonlibf4")
+    add_deps("commonlibf4", "slimdetours")
 
     -- add commonlibsse plugin
     add_rules("commonlibf4.plugin", {

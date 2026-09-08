@@ -10,11 +10,25 @@ Engine-Level is a native F4SE plugin project for Fallout 4 for Fallout Cascadia,
 
 ## Building
 
+This repo uses git submodules for its third-party dependencies. Clone with:
+
+```bash
+git clone --recurse-submodules <repo-url>
+```
+
+Or, if you already have a clone without them:
+
+```bash
+git submodule update --init --recursive
+```
+
+Then:
+
 ```bash
 xmake
 ```
 
-A properly configured environment is expected.
+A properly configured environment is expected. 
 
 ## Structure
 ```bash
