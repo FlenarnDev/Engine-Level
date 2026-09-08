@@ -27,7 +27,7 @@ A properly configured environment is expected.
 * Targets Fallout 4 runtime via F4SE
 * Uses CommonLibF4 for engine interaction
 * Intended for low-level engine work
-* Targeting the latest Fallout 4 runtime, currently 1.11.191
+* Targeting the latest Fallout 4 runtime, currently 1.11.240
 
 ## License
 
