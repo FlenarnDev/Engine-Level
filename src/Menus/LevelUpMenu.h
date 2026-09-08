@@ -4,6 +4,7 @@
 #include "Shared/PerkHelpers.h"
 #include "Shared/SharedFunctions.h"
 #include "../Shared/SharedDeclarations.h"
+#include "Systems/LevelUp.h"
 #include "Systems/Skills.h"
 
 namespace Cascadia
@@ -447,56 +448,6 @@ namespace Cascadia
 			return skillPointsValue;
 		}
 
-		bool CanLevelUpMenuBeShown()
-		{
-			PlayerCharacter* playerCharacter = PlayerCharacter::GetSingleton();
-			if (playerCharacter->IsInCombat())
-			{
-				return false;
-			}
-
-			if (Shared::InMenuMode())
-			{
-				return false;
-			}
-
-			if (IsPlayerInDialogue())
-			{
-				return false;
-			}
-
-			if (Shared::IsXPMetervisible())
-			{
-				return false;
-			}
-
-			return true;
-		}
-
-		// Waits for level up to be ready and then shows menu
-		void WaitForLevelUpReady()
-		{
-			std::this_thread::sleep_for(std::chrono::milliseconds(500));
-
-			if (!CanLevelUpMenuBeShown())
-			{
-				std::this_thread::sleep_for(std::chrono::seconds(1));
-				std::async(std::launch::async, WaitForLevelUpReady);
-				return;
-			}
-			else
-			{
-				UIMessageQueue* uiMessageQueue = UIMessageQueue::GetSingleton();
-				if (UI* ui = UI::GetSingleton())
-				{
-					if (ui->menuMap.contains("CASLevelUpMenu"))
-					{
-						uiMessageQueue->AddMessage("CASLevelUpMenu", UI_MESSAGE_TYPE::kShow);
-					}
-				}
-			}
-		}
-
 		void ModPerkCount(std::int8_t a_count)
 		{
 			PlayerCharacter* playerCharacter = PlayerCharacter::GetSingleton();
@@ -540,7 +491,6 @@ namespace Cascadia
 			}
 		}
 
-		// Called from 'LevelIncrease::Event'
 		void HandleLevelUp()
 		{
 			float pointsToAdd = GetSkillPointsToAdd();
@@ -550,10 +500,7 @@ namespace Cascadia
 			Skills::CascadiaPerksLevelUp.clear();
 			Skills::GetLevelUpFormsFromGame();
 
-			Serialization::SetReadyToLevelUp(true);
-
-			std::thread LevelUpWait(WaitForLevelUpReady);
-			LevelUpWait.detach();
+			LevelUp::Controller::GetSingleton().QueueLevelUp();
 		}
 
 		void ModSkillByName(std::string a_skillName, std::uint32_t a_value, std::uint32_t a_baseValue)
@@ -704,8 +651,7 @@ namespace Cascadia
 		{
 			if (Serialization::IsReadyToLevelUp())
 			{
-				std::thread LevelUpWait(WaitForLevelUpReady);
-				LevelUpWait.detach();
+				LevelUp::Controller::GetSingleton().RestorePending(1);
 			}
 		}
 
@@ -763,8 +709,8 @@ namespace Cascadia
 			switch (menuModeType)
 			{
 			case kLevelUp:
-				Serialization::SetReadyToLevelUp(false);
 				Serialization::SetSkillPoints(0);
+				LevelUp::Controller::GetSingleton().CompleteOneLevelUp();
 				REX::DEBUG("'CompleteLevelUp' - 'kLevelUp'");
 				break;
 

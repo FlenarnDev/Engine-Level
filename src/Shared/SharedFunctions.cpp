@@ -87,6 +87,12 @@ namespace Cascadia
 		{
 			BSFixedString menuString("HUDMenu");
 			IMenu* menu = UI::GetSingleton()->GetMenu(menuString).get();
+			if (!menu || !menu->uiMovie || !menu->uiMovie->asMovieRoot)
+			{
+				// HUDMenu not up yet (e.g. very early game state) - nothing to be visible.
+				return false;
+			}
+
 			Scaleform::GFx::Value openValue;
 			menu->uiMovie->asMovieRoot->GetVariable(&openValue, "root.HUDNotificationsGroup_mc.XPMeter_mc.visible");
 

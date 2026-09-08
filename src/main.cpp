@@ -11,6 +11,7 @@
 #include "Patches/Patches.h"
 #include "Scripts/ObScript.h"
 #include "Serialization/Serialization.h"
+#include "Systems/LevelUp.h"
 #include "Systems/Skills.h"
 #include "Systems/LockLevels.h"
 #include "Shared/Hooks.h"
@@ -125,7 +126,8 @@ F4SE_PLUGIN_LOAD(const F4SE::LoadInterface* a_f4se)
 	}
 
 
-	if (!F4SE::GetPapyrusInterface()->Register(Cascadia::Shared::RegisterPapyrusFuncs)) {
+	if (!F4SE::GetPapyrusInterface()->Register(Cascadia::Shared::RegisterPapyrusFuncs)) 
+	{
 		REX::CRITICAL("Failed to register Papyrus funtions...");
 		return false;
 	}
@@ -136,6 +138,8 @@ F4SE_PLUGIN_LOAD(const F4SE::LoadInterface* a_f4se)
 		REX::CRITICAL("Failed to register messaging handler, marking as incompatible."sv);
 		return false;
 	}
+
+	Cascadia::LevelUp::Controller::Install();
 
 	const F4SE::ScaleformInterface* scaleform = F4SE::GetScaleformInterface();
 	if (!scaleform)

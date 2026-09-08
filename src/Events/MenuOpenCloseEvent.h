@@ -22,6 +22,10 @@ namespace Cascadia
 					DialogueMenu::SetSubtitlePosition(DialogueMenu::savedSubtitlePosition.first, DialogueMenu::savedSubtitlePosition.second);
 				}
 			}
+			else if (a_event.menuName == BSFixedString("CASLevelUpMenu"))
+			{
+				LevelUp::Controller::GetSingleton().OnMenuOpenClose(a_event.opening);
+			}
 
 			REX::DEBUG("Menu: {}, opening: {}", a_event.menuName, a_event.opening);
 
