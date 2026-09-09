@@ -159,10 +159,11 @@ namespace Cascadia
 				return;
 			}
 
-			float newValue = GetPermanentSpecialValue(a_special) + a_delta;
-			Serialization::SetPermanentSpecial(a_special->formID, newValue);
+			PlayerCharacter* playerCharacter = PlayerCharacter::GetSingleton();
+			playerCharacter->ModActorValue(ACTOR_VALUE_MODIFIER::kPermanent, *a_special, a_delta);
 
-			PlayerCharacter::GetSingleton()->ModActorValue(ACTOR_VALUE_MODIFIER::kPermanent, *a_special, a_delta);
+			float clamped = playerCharacter->GetPermanentActorValue(*a_special);
+			Serialization::SetPermanentSpecial(a_special->formID, clamped);
 		}
 
 		float GetPermanentSkillValue(Actor* a_actor, ActorValueInfo* a_skill)
@@ -210,6 +211,14 @@ namespace Cascadia
 
 			auto addDependent = [](ActorValueInfo* a_owner, ActorValueInfo* a_dependent)
 			{
+				for (std::uint32_t i = 0; i < a_owner->numDependentActorValues; i++)
+				{
+					if (a_owner->dependentActorValues[i] == a_dependent)
+					{
+						return;
+					}
+				}
+
 				if (a_owner->numDependentActorValues < std::size(a_owner->dependentActorValues))
 				{
 					a_owner->dependentActorValues[a_owner->numDependentActorValues++] = a_dependent;

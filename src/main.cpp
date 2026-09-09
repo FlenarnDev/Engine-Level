@@ -58,6 +58,7 @@ namespace
 			break;
 
 		case F4SE::MessagingInterface::kGameLoaded:
+			Cascadia::PipboyTabs::InstallSkillsTabRefresh();
 			REX::INFO("{:s} - 'kGameLoaded'.", "Cascadia Gameplay Systems");
 			break;
 

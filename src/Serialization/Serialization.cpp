@@ -86,7 +86,7 @@ namespace Cascadia
 						a_intfc->ReadRecordData(&oldFormID, sizeof(uint32_t));
 						newFormID = a_intfc->ResolveFormID(oldFormID).value_or(0);
 
-						if (!newFormID != 0)
+						if (newFormID != 0)
 						{
 							taggedSkills.insert(newFormID);
 						}

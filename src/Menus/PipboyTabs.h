@@ -223,34 +223,99 @@ namespace Cascadia
 
 		}
 
-		void UpdateMenu_Internal(Scaleform::Ptr<Scaleform::GFx::ASMovieRootBase> a_movieRoot)
+		void RefreshSkillsTabData(Scaleform::Ptr<Scaleform::GFx::ASMovieRootBase> a_movieRoot)
 		{
-			//Shared::PipboyMap::InitializeActiveObjectives();
-
-			if (Skills::CascadiaSkillsLevelUp.size() > 0)
+			if (Skills::CascadiaSkillsLevelUp.size() == 0)
 			{
-				Scaleform::GFx::Value argumentsArray[7];
-				a_movieRoot->CreateString(&argumentsArray[0], "skills");
-				a_movieRoot->CreateString(&argumentsArray[1], "$CAS_SKILLS");
-				argumentsArray[2] = 0;
-				argumentsArray[3] = 0;
-				a_movieRoot->CreateObject(&argumentsArray[4]);
-				Scaleform::GFx::Value skillArray;
-				a_movieRoot->CreateArray(&skillArray);
-				std::vector<std::string> stringArray;
+				return;
+			}
 
-				for (std::int32_t skillEntry = static_cast<std::int32_t>(Skills::CascadiaSkillsLevelUp.size()) - 1; skillEntry >= 0; skillEntry--)
+			Scaleform::GFx::Value argumentsArray[7];
+			a_movieRoot->CreateString(&argumentsArray[0], "skills");
+			a_movieRoot->CreateString(&argumentsArray[1], "$CAS_SKILLS");
+			argumentsArray[2] = 0;
+			argumentsArray[3] = 0;
+			a_movieRoot->CreateObject(&argumentsArray[4]);
+			Scaleform::GFx::Value skillArray;
+			a_movieRoot->CreateArray(&skillArray);
+			std::vector<std::string> stringArray;
+
+			for (std::int32_t skillEntry = static_cast<std::int32_t>(Skills::CascadiaSkillsLevelUp.size()) - 1; skillEntry >= 0; skillEntry--)
+			{
+				ActorValueInfo* baseSkill = Skills::CascadiaSkillsLevelUp.at(skillEntry);
+				PopulateSkillEntry(&skillArray, a_movieRoot, baseSkill, stringArray);
+			}
+
+			argumentsArray[4].SetMember("skillsList", skillArray);
+			argumentsArray[5] = 0;
+			argumentsArray[6] = 0;
+
+			a_movieRoot->Invoke("root.Menu_mc.PipboyTabs_loader.content.registerTab", nullptr, argumentsArray, 7);
+		}
+
+		void RefreshSkillsTabIfOpen()
+		{
+			UI* ui = UI::GetSingleton();
+			if (!ui || !ui->GetMenuOpen("PipboyMenu"))
+			{
+				return;
+			}
+
+			IMenu* menu = ui->GetMenu("PipboyMenu").get();
+			if (!menu || !menu->uiMovie)
+			{
+				return;
+			}
+
+			RefreshSkillsTabData(menu->uiMovie->asMovieRoot);
+		}
+
+		class SkillsAVChangeSink : public BSTEventSink<ActorValueEvents::ActorValueChangedEvent>
+		{
+		public:
+			static SkillsAVChangeSink& GetSingleton()
+			{
+				static SkillsAVChangeSink singleton;
+				return singleton;
+			}
+
+			BSEventNotifyControl ProcessEvent(const ActorValueEvents::ActorValueChangedEvent& a_event, BSTEventSource<ActorValueEvents::ActorValueChangedEvent>*) override
+			{
+				PlayerCharacter* playerCharacter = PlayerCharacter::GetSingleton();
+				if (!playerCharacter || a_event.owner != playerCharacter)
 				{
-					ActorValueInfo* baseSkill = Skills::CascadiaSkillsLevelUp.at(skillEntry);
-					PopulateSkillEntry(&skillArray, a_movieRoot, baseSkill, stringArray);
+					return BSEventNotifyControl::kContinue;
 				}
 
-				argumentsArray[4].SetMember("skillsList", skillArray);
-				argumentsArray[5] = 0;
-				argumentsArray[6] = 0;
+				const ActorValueInfo* changed = &a_event.actorValue;
+				bool relevant = changed == Skills::VanillaActorValues.Luck ||
+				                Skills::specialToSkillsMap.find(changed) != Skills::specialToSkillsMap.end() ||
+				                Skills::skillToSpecialMap.find(changed) != Skills::skillToSpecialMap.end();
 
-				a_movieRoot->Invoke("root.Menu_mc.PipboyTabs_loader.content.registerTab", nullptr, argumentsArray, 7);
+				if (relevant)
+				{
+					RefreshSkillsTabIfOpen();
+				}
+
+				return BSEventNotifyControl::kContinue;
 			}
+		};
+
+		inline void InstallSkillsTabRefresh()
+		{
+			PlayerCharacter* playerCharacter = PlayerCharacter::GetSingleton();
+			if (!playerCharacter)
+			{
+				REX::CRITICAL("PlayerCharacter unavailable; skills tab will not live-update on value change.");
+				return;
+			}
+
+			playerCharacter->BSTEventSource<ActorValueEvents::ActorValueChangedEvent>::RegisterSink(&SkillsAVChangeSink::GetSingleton());
+		}
+
+		void UpdateMenu_Internal(Scaleform::Ptr<Scaleform::GFx::ASMovieRootBase> a_movieRoot)
+		{
+			RefreshSkillsTabData(a_movieRoot);
 
 			for (avifStruct avif : avifPages)
 			{
@@ -355,19 +420,21 @@ namespace Cascadia
 				// @TODO: RESOLVE
 				RE::ObjectRefHandle res;
 				auto& mapData = RE::PipboyDataManager::GetSingleton()->mapData;
-				auto ress = mapData.travelLocationRefrHandles.find(index);//.GetTravelLocationRefr(&res, index);
-				if (ress != mapData.travelLocationRefrHandles.end()) {
-					//REX::DEBUG("RES ID FOUND IN HASHMAP IS: {}", ress->first);
+				auto ress = mapData.travelLocationRefrHandles.find(index);
+				if (ress != mapData.travelLocationRefrHandles.end())
+				{
 					res = ress->second;
 				}
 
 
 
-				if (res && res.get() && res.get().get()) {
-					if (res->IsMarker()) {
-
+				if (res && res.get() && res.get().get())
+				{
+					if (res->IsMarker())
+					{
 						auto a = res->extraList->GetByType<RE::ExtraLinkedRefChildren>();
-						if (!a || a->linkedChildren.empty() || a->linkedChildren.size() <= 1) {
+						if (!a || a->linkedChildren.empty() || a->linkedChildren.size() <= 1)
+						{
 							*a_params.retVal = arrValues;
 							return;
 						}
@@ -379,25 +446,25 @@ namespace Cascadia
 						for (std::uint32_t i = 0; i < a->linkedChildren.size(); i++)
 						{
 							const auto& linkedREF = a->linkedChildren.at(i);
-							if (!linkedREF.REFR->IsMarker()) {
+							if (!linkedREF.REFR->IsMarker())
+							{
 								REX::CRITICAL("LinkRef index {} is not a MapMarkerData for {}", i, locName);
 							}
 
 							const bool ext = !linkedREF.REFR->GetParentCell() || linkedREF.REFR->GetParentCell()->IsExterior();
 
 							const Scaleform::GFx::Value pushVal = ext && !extAlready ? "Exterior" : locName;
-							if (ext && !extAlready)
+							if (ext && !extAlready) 
+							{
 								extAlready = ext;
-
+							}
+								
 							arrValues.PushBack(pushVal);
 						}
 
 						Shared::CurrentMultiLoc_Target = res;
 						Shared::bIsMultiTravelling = true;
 						*a_params.retVal = arrValues;
-
-
-						//REX::DEBUG("MARKER FOUND BRO - {}", res->extraList->GetByType<RE::EXTRA_DATA_TYPE::kLinkedRef>());
 					}
 				}
 			}
@@ -412,39 +479,40 @@ namespace Cascadia
 				Shared::chosenI = ith_choice;
 
 				// @TODO: RESOLVE
-				if (!Shared::bIsMultiTravelling)
+				if (!Shared::bIsMultiTravelling) 
+				{
 					return;
+				}
 
-				RE::ObjectRefHandle res;
-				auto& mapData = RE::PipboyDataManager::GetSingleton()->mapData;
-				auto ress = mapData.travelLocationRefrHandles.find(Shared::markerID);//.GetTravelLocationRefr(&res, index);
-				if (ress != mapData.travelLocationRefrHandles.end()) {
-					//REX::DEBUG("RES ID FOUND IN HASHMAP IS: {}", ress->first);
+				ObjectRefHandle res;
+				auto& mapData = PipboyDataManager::GetSingleton()->mapData;
+				auto ress = mapData.travelLocationRefrHandles.find(Shared::markerID);
+				if (ress != mapData.travelLocationRefrHandles.end())
+				{
 					res = ress->second;
 				}
 
-				if (res && res.get() && res.get().get()) {
-					if (res->IsMarker()) {
-
-						auto a = res->extraList->GetByType<RE::ExtraLinkedRefChildren>();
-						if (!a || a->linkedChildren.empty() || a->linkedChildren.size() <= 1) {
+				if (res && res.get() && res.get().get())
+				{
+					if (res->IsMarker()) 
+					{
+						auto a = res->extraList->GetByType<ExtraLinkedRefChildren>();
+						if (!a || a->linkedChildren.empty() || a->linkedChildren.size() <= 1)
+						{
 							return;
 						}
 
-						//auto vm = RE::GameVM::GetSingleton()->GetVM();
 						auto refr = a->linkedChildren.at(ith_choice).REFR;
 
-						if (!refr || !refr.get() || !refr.get().get()) {
+						if (!refr || !refr.get() || !refr.get().get())
+						{
 							Shared::bIsMultiTravelling = false;
 							return;
 						}
 
 						auto finalLocccc = refr.get().get();
 
-						Shared::FinalMultiDestination = finalLocccc;//RE::PlayerCharacter::GetSingleton()->GetCurrentLocation()->worldLocMarker.get().get();
-					}
-					else {
-						//REX::DEBUG("WTF MARKER BRO - {}", res->GetDisplayFullName());
+						Shared::FinalMultiDestination = finalLocccc;
 					}
 				}
 			}
@@ -494,7 +562,6 @@ namespace Cascadia
 
 					Scaleform::GFx::Value urlRequest2;
 					Scaleform::GFx::Value url2 = "UIMapSearchArea.swf";
-					//a_view->asMovieRoot->GetVariable(&root, "root");
 					a_view->asMovieRoot->CreateObject(&urlRequest2, "flash.net.URLRequest", &url2, 1);
 
 					loader.SetMember("name", "PipboyTabs_loader");
@@ -505,29 +572,20 @@ namespace Cascadia
 					root.SetMember("pbt", pipboyTabs);
 
 					Shared::RegisterFunction<Ready>(&pipboyTabs, a_view->asMovieRoot, "ready");
-					
+
 					Shared::RegisterFunction<MarkerMultipleLocations>(&pipboyTabs, a_view->asMovieRoot, "MarkerMultipleLocations");
 					Shared::RegisterFunction<FastTravelToMultiLocation_ith_Loc>(&pipboyTabs, a_view->asMovieRoot, "FastTravelToMultiLocation_ith_Loc");
 					Shared::RegisterFunction<CancelTravel>(&pipboyTabs, a_view->asMovieRoot, "CancelTravel");
 					Shared::RegisterFunction<Debug_ActionScript>(&pipboyTabs, a_view->asMovieRoot, "DebugPrint");
-
 					Shared::RegisterFunction<Scaleform_GetAreas>(&pipboyTabs, a_view->asMovieRoot, "GetAreas");
 					Shared::RegisterFunction<Scaleform_IsProximityMarker>(&pipboyTabs, a_view->asMovieRoot, "IsProximityMarker");
-
 
 					loader.Invoke("load", nullptr, &urlRequest, 1);
 
 					// root.SetMember("UIMapSearchArea_loader", &loader);
 					loader.Invoke("load", nullptr, &urlRequest2, 1);
 
-
-
 					a_view->asMovieRoot->Invoke("root.Menu_mc.addChild", nullptr, &loader, 1);
-
-
-
-					
-					
 					//a_view->asMovieRoot->Invoke("root.addChild", nullptr, &loader, 1);
 					
 				}

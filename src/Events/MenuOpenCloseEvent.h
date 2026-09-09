@@ -3,6 +3,7 @@
 #include "Menus/ExamineMenu.h"
 #include "Menus/DialogueMenu.h"
 #include "Menus/LevelUpMenu.h"
+#include "Menus/PipboyTabs.h"
 
 namespace Cascadia
 {
@@ -25,6 +26,13 @@ namespace Cascadia
 			else if (a_event.menuName == BSFixedString("CASLevelUpMenu"))
 			{
 				LevelUp::Controller::GetSingleton().OnMenuOpenClose(a_event.opening);
+			}
+			else if (a_event.menuName == BSFixedString("PipboyMenu"))
+			{
+				if (a_event.opening)
+				{
+					PipboyTabs::RefreshSkillsTabIfOpen();
+				}
 			}
 
 			REX::DEBUG("Menu: {}, opening: {}", a_event.menuName, a_event.opening);
