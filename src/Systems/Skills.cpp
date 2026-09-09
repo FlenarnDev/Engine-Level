@@ -133,7 +133,7 @@ namespace Cascadia
 			RegisterLinkedAV(CascadiaActorValues.EnergyWeapons, VanillaActorValues.Perception);
 			RegisterLinkedAV(CascadiaActorValues.Explosives, VanillaActorValues.Perception);
 			RegisterLinkedAV(CascadiaActorValues.Guns, VanillaActorValues.Agility);
-			RegisterLinkedAV(CascadiaActorValues.Lockpick, VanillaActorValues.Charisma);
+			RegisterLinkedAV(CascadiaActorValues.Lockpick, VanillaActorValues.Perception);
 			RegisterLinkedAV(CascadiaActorValues.Medicine, VanillaActorValues.Intelligence);
 			RegisterLinkedAV(CascadiaActorValues.MeleeWeapons, VanillaActorValues.Strength);
 			RegisterLinkedAV(CascadiaActorValues.Repair, VanillaActorValues.Intelligence);
