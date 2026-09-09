@@ -1,6 +1,10 @@
 #include "Shared/SharedFunctions.h"
 #include "../Shared/SharedDeclarations.h"
+#include "Serialization/Serialization.h"
 #include "Systems/Skills.h"
+
+#include <cmath>
+#include <iterator>
 
 namespace Cascadia
 {
@@ -61,7 +65,7 @@ namespace Cascadia
 			Unarmed				(END * 2) + 2 + (LCK / 2)
 		*/
 
-		//	Most functions in this namespace are based on shad0wshayd3's work on Project Massachusetts & HcG x Grills rework for the Capital Wasteland project.
+		//	Most functions in this namespace are based on shad0wshayd3's work on Project Massachusetts & HcG x Grills rework for the Capital Wasteland project, alongside some corrections and adjustments.
 		//	Link: https://github.com/shad0wshayd3/F4SE-dev/tree/master/f4se/f4se_plugins/ProjectMassachusetts
 		//	Rewrite Link: https://github.com/shad0wshayd3/F4SE-dev/tree/pm-rewrite
 
@@ -111,13 +115,113 @@ namespace Cascadia
 			}
 		}
 
+		float DeriveSkillValue(const ActorValueOwner* a_actor, const ActorValueInfo& a_info)
+		{
+			if (!a_actor)
+			{
+				return 0.0f;
+			}
+
+			auto specialIt = skillToSpecialMap.find(&a_info);
+			if (specialIt == skillToSpecialMap.end())
+			{
+				return 0.0f;
+			}
+
+			const float special = a_actor->GetActorValue(*specialIt->second);
+			const float luck = a_actor->GetActorValue(*VanillaActorValues.Luck);
+
+			return 2.0f + std::floor(special * 2.0f) + std::ceil(luck * 0.5f);
+		}
+
+		float GetPermanentSpecialValue(ActorValueInfo* a_special)
+		{
+			if (!a_special)
+			{
+				return 0.0f;
+			}
+
+			if (Serialization::HasPermanentSpecial(a_special->formID))
+			{
+				return Serialization::GetPermanentSpecial(a_special->formID);
+			}
+
+			PlayerCharacter* playerCharacter = PlayerCharacter::GetSingleton();
+			float snapshot = playerCharacter->GetPermanentActorValue(*a_special);
+			Serialization::SetPermanentSpecial(a_special->formID, snapshot);
+			return snapshot;
+		}
+
+		void ModPermanentSpecial(ActorValueInfo* a_special, float a_delta)
+		{
+			if (!a_special)
+			{
+				return;
+			}
+
+			float newValue = GetPermanentSpecialValue(a_special) + a_delta;
+			Serialization::SetPermanentSpecial(a_special->formID, newValue);
+
+			PlayerCharacter::GetSingleton()->ModActorValue(ACTOR_VALUE_MODIFIER::kPermanent, *a_special, a_delta);
+		}
+
+		float GetPermanentSkillValue(Actor* a_actor, ActorValueInfo* a_skill)
+		{
+			if (!a_actor || !a_skill)
+			{
+				return 0.0f;
+			}
+
+			auto specialIt = skillToSpecialMap.find(a_skill);
+			if (specialIt == skillToSpecialMap.end())
+			{
+				return 0.0f;
+			}
+
+			float special;
+			float luck;
+			if (a_actor == PlayerCharacter::GetSingleton())
+			{
+				special = GetPermanentSpecialValue(specialIt->second);
+				luck = GetPermanentSpecialValue(VanillaActorValues.Luck);
+			}
+			else
+			{
+				special = a_actor->GetPermanentActorValue(*specialIt->second);
+				luck = a_actor->GetPermanentActorValue(*VanillaActorValues.Luck);
+			}
+
+			const float derived = 2.0f + std::floor(special * 2.0f) + std::ceil(luck * 0.5f);
+			const float invested = a_actor->GetModifier(ACTOR_VALUE_MODIFIER::kPermanent, *a_skill);
+
+			return derived + invested;
+		}
+
+		float GetPermanentPlayerSkillValue(ActorValueInfo* a_skill)
+		{
+			return GetPermanentSkillValue(PlayerCharacter::GetSingleton(), a_skill);
+		}
+
 		void RegisterLinkedAV(ActorValueInfo* skill, ActorValueInfo* special)
 		{
-			// SPECIAL -> Skills lookup
 			specialToSkillsMap[special].push_back(skill);
-
-			// Skill -> SPECIAL lookup
 			skillToSpecialMap[skill] = special;
+			skill->derivationFunction = DeriveSkillValue;
+
+			auto addDependent = [](ActorValueInfo* a_owner, ActorValueInfo* a_dependent)
+			{
+				if (a_owner->numDependentActorValues < std::size(a_owner->dependentActorValues))
+				{
+					a_owner->dependentActorValues[a_owner->numDependentActorValues++] = a_dependent;
+				}
+				else
+				{
+					REX::ERROR("Skills: '{}' has no room left in dependentActorValues for '{}'.", a_owner->GetFormEditorID(), a_dependent->GetFormEditorID());
+				}
+			};
+
+			addDependent(special, skill);
+			addDependent(VanillaActorValues.Luck, skill);
 		}
 
 		void RegisterForSkillLink()

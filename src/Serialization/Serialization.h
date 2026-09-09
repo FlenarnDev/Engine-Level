@@ -44,6 +44,18 @@ namespace Cascadia
 		void RemoveSkillTagged(TESFormID skillFormid);
 		bool IsSkillTagged(TESFormID skillFormID);
 		std::uint32_t GetSkillsTagged();
+
+		// Cascadia-tracked permanent SPECIAL baseline. This exists because the engine's
+		// own permanent/temporary/damage modifier classification for a SPECIAL AV can't
+		// be trusted to match what a magic effect's author intended (verified: an effect
+		// meant to be a temporary buff can land its magnitude in the engine's permanent
+		// modifier slot) - so GetPermanentActorValue on a SPECIAL isn't safe to use as a
+		// "this SPECIAL genuinely wasn't temporarily buffed" reference. This baseline is
+		// only ever moved by Cascadia's own code (see Skills::ModPermanentSpecial),
+		// independent of whatever slot external effects use.
+		bool HasPermanentSpecial(TESFormID specialFormID);
+		float GetPermanentSpecial(TESFormID specialFormID);
+		void SetPermanentSpecial(TESFormID specialFormID, float value);
 	}
 }
 

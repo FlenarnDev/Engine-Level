@@ -7,6 +7,10 @@
 #include "Systems/LevelUp.h"
 #include "Systems/Skills.h"
 
+#include <algorithm>
+#include <cmath>
+#include <string_view>
+
 namespace Cascadia
 {
 	namespace LevelUpMenu
@@ -39,38 +43,38 @@ namespace Cascadia
 
 		namespace TempModValues
 		{
-			std::uint32_t barter;
-			std::uint32_t energyWeapons;
-			std::uint32_t explosives;
-			std::uint32_t guns;
-			std::uint32_t lockpick;
-			std::uint32_t medicine;
-			std::uint32_t meleeWeapons;
-			std::uint32_t repair;
-			std::uint32_t science;
-			std::uint32_t sneak;
-			std::uint32_t speech;
-			std::uint32_t survival;
-			std::uint32_t unarmed;
+			std::int32_t barter;
+			std::int32_t energyWeapons;
+			std::int32_t explosives;
+			std::int32_t guns;
+			std::int32_t lockpick;
+			std::int32_t medicine;
+			std::int32_t meleeWeapons;
+			std::int32_t repair;
+			std::int32_t science;
+			std::int32_t sneak;
+			std::int32_t speech;
+			std::int32_t survival;
+			std::int32_t unarmed;
 		}
 
 		void InitialiseValues()
 		{
 			PlayerCharacter* playerCharacter = PlayerCharacter::GetSingleton();
 
-			InitialValues::barter = playerCharacter->GetPermanentActorValue(*Skills::CascadiaActorValues.Barter);
-			InitialValues::energyWeapons = playerCharacter->GetPermanentActorValue(*Skills::CascadiaActorValues.EnergyWeapons);
-			InitialValues::explosives = playerCharacter->GetPermanentActorValue(*Skills::CascadiaActorValues.Explosives);
-			InitialValues::guns = playerCharacter->GetPermanentActorValue(*Skills::CascadiaActorValues.Guns);
-			InitialValues::lockpick = playerCharacter->GetPermanentActorValue(*Skills::CascadiaActorValues.Lockpick);
-			InitialValues::medicine = playerCharacter->GetPermanentActorValue(*Skills::CascadiaActorValues.Medicine);
-			InitialValues::meleeWeapons = playerCharacter->GetPermanentActorValue(*Skills::CascadiaActorValues.MeleeWeapons);
-			InitialValues::repair = playerCharacter->GetPermanentActorValue(*Skills::CascadiaActorValues.Repair);
-			InitialValues::science = playerCharacter->GetPermanentActorValue(*Skills::CascadiaActorValues.Science);
-			InitialValues::sneak = playerCharacter->GetPermanentActorValue(*Skills::CascadiaActorValues.Sneak);
-			InitialValues::speech = playerCharacter->GetPermanentActorValue(*Skills::CascadiaActorValues.Speech);
-			InitialValues::survival = playerCharacter->GetPermanentActorValue(*Skills::CascadiaActorValues.Survival);
-			InitialValues::unarmed = playerCharacter->GetPermanentActorValue(*Skills::CascadiaActorValues.Unarmed);
+			InitialValues::barter = static_cast<std::uint32_t>(Skills::GetPermanentSkillValue(playerCharacter, Skills::CascadiaActorValues.Barter));
+			InitialValues::energyWeapons = static_cast<std::uint32_t>(Skills::GetPermanentSkillValue(playerCharacter, Skills::CascadiaActorValues.EnergyWeapons));
+			InitialValues::explosives = static_cast<std::uint32_t>(Skills::GetPermanentSkillValue(playerCharacter, Skills::CascadiaActorValues.Explosives));
+			InitialValues::guns = static_cast<std::uint32_t>(Skills::GetPermanentSkillValue(playerCharacter, Skills::CascadiaActorValues.Guns));
+			InitialValues::lockpick = static_cast<std::uint32_t>(Skills::GetPermanentSkillValue(playerCharacter, Skills::CascadiaActorValues.Lockpick));
+			InitialValues::medicine = static_cast<std::uint32_t>(Skills::GetPermanentSkillValue(playerCharacter, Skills::CascadiaActorValues.Medicine));
+			InitialValues::meleeWeapons = static_cast<std::uint32_t>(Skills::GetPermanentSkillValue(playerCharacter, Skills::CascadiaActorValues.MeleeWeapons));
+			InitialValues::repair = static_cast<std::uint32_t>(Skills::GetPermanentSkillValue(playerCharacter, Skills::CascadiaActorValues.Repair));
+			InitialValues::science = static_cast<std::uint32_t>(Skills::GetPermanentSkillValue(playerCharacter, Skills::CascadiaActorValues.Science));
+			InitialValues::sneak = static_cast<std::uint32_t>(Skills::GetPermanentSkillValue(playerCharacter, Skills::CascadiaActorValues.Sneak));
+			InitialValues::speech = static_cast<std::uint32_t>(Skills::GetPermanentSkillValue(playerCharacter, Skills::CascadiaActorValues.Speech));
+			InitialValues::survival = static_cast<std::uint32_t>(Skills::GetPermanentSkillValue(playerCharacter, Skills::CascadiaActorValues.Survival));
+			InitialValues::unarmed = static_cast<std::uint32_t>(Skills::GetPermanentSkillValue(playerCharacter, Skills::CascadiaActorValues.Unarmed));
 		}
 
 		enum SkillArray
@@ -177,7 +181,6 @@ namespace Cascadia
 		void PopulateSkillEntry(Scaleform::GFx::Value* a_destination, Scaleform::Ptr<Scaleform::GFx::ASMovieRootBase> a_movieRoot, ActorValueInfo* a_skill)
 		{
 			PlayerCharacter* playerCharacter = PlayerCharacter::GetSingleton();
-			float buffedValue = playerCharacter->GetActorValue(*a_skill);
 
 			Scaleform::GFx::Value skillEntry;
 			a_movieRoot->CreateObject(&skillEntry);
@@ -190,12 +193,12 @@ namespace Cascadia
 			skillEntry.SetMember("description", description.c_str());
 			skillEntry.SetMember("formid", a_skill->formID);
 
-			float baseValue = GetInitialActorValue(a_skill);
-			float value = playerCharacter->GetPermanentActorValue(*a_skill);
+			const float baseValue = GetInitialActorValue(a_skill);
+			const float buffedValue = playerCharacter->GetActorValue(*a_skill);
 			skillEntry.SetMember("value", (std::uint32_t)baseValue);
 			skillEntry.SetMember("baseValue", (std::uint32_t)baseValue);
-			skillEntry.SetMember("buffedValue", (std::uint32_t)value);
-			
+			skillEntry.SetMember("buffedValue", (std::uint32_t)buffedValue);
+
 			skillEntry.SetMember("alreadyTagged", Serialization::IsSkillTagged(a_skill->formID));
 			skillEntry.SetMember("tagged", Serialization::IsSkillTagged(a_skill->formID));
 			a_destination->PushBack(skillEntry);
@@ -396,8 +399,9 @@ namespace Cascadia
 				{"CAS_MeleeWeapons", SkillArray::MeleeWeapons},
 				{"CAS_Repair", SkillArray::Repair},
 				{"CAS_Science", SkillArray::Science},
+				{"CAS_Sneak", SkillArray::Sneak},
 				{"CAS_Speech", SkillArray::Speech},
-				{"CAS_Surival", SkillArray::Survival},
+				{"CAS_Survival", SkillArray::Survival},
 				{"CAS_Unarmed", SkillArray::Unarmed}
 			};
 
@@ -413,27 +417,23 @@ namespace Cascadia
 
 		float GetSkillPointsToAdd()
 		{
-			// Fallout 3 formula is 10 + base intelligence
-			// Extra 3 points if the player has "Educated" perk
-			// Using a global in 'FalloutCascaida.esm' we can adjust the base value.
-
+			// Using a global in 'FalloutCascadia.esm' we can adjust the base value.
 			TESGlobal* baseSkillPointsGlobal = TESDataHandler::GetSingleton()->LookupForm<TESGlobal>(0x1F9DFD, MOD_ESM);
-			float skillPointsValue = 0;
-
-			if (baseSkillPointsGlobal)
-			{
-				skillPointsValue = baseSkillPointsGlobal->value;
-			}
-			else
-			{
-				skillPointsValue = 10;
-			}
+			float baseSkillPoints = baseSkillPointsGlobal ? baseSkillPointsGlobal->value : 10.0f;
 
 			PlayerCharacter* playerCharacter = PlayerCharacter::GetSingleton();
 
-			float playerIntelligence = playerCharacter->GetBaseActorValue(*Skills::VanillaActorValues.Intelligence);
+			float playerIntelligence = playerCharacter->GetPermanentActorValue(*Skills::VanillaActorValues.Intelligence);
+			float usedIntelligence = std::min(playerIntelligence, 10.0f);
 
-			skillPointsValue = (skillPointsValue + playerIntelligence);
+			float skillPointsValue = std::floor(baseSkillPoints + (usedIntelligence * 0.5f));
+
+			std::int32_t currentLevel = static_cast<std::int32_t>(playerCharacter->GetLevel());
+			std::int32_t usedIntelligenceInt = static_cast<std::int32_t>(usedIntelligence);
+			if ((currentLevel % 2) == 0 && (usedIntelligenceInt % 2) != 0)
+			{
+				skillPointsValue += 1.0f;
+			}
 
 			BGSPerk* educatedPerk = TESDataHandler::GetSingleton()->LookupForm<BGSPerk>(0x0F399E, MOD_ESM);
 
@@ -441,7 +441,7 @@ namespace Cascadia
 			{
 				if (playerCharacter->GetPerkRank(educatedPerk) != 0)
 				{
-					skillPointsValue = (skillPointsValue + 3);
+					skillPointsValue = (skillPointsValue + 2);
 				}
 			}
 
@@ -495,7 +495,8 @@ namespace Cascadia
 		{
 			float pointsToAdd = GetSkillPointsToAdd();
 
-			Serialization::ModSkillPoints(pointsToAdd);
+			// GetSkillPointsToAdd always resolves to a whole number (floor + the integer parity carry + integer Educated bonus), so this is an exact conversion.
+			Serialization::ModSkillPoints(static_cast<std::uint32_t>(pointsToAdd));
 
 			Skills::CascadiaPerksLevelUp.clear();
 			Skills::GetLevelUpFormsFromGame();
@@ -509,141 +510,141 @@ namespace Cascadia
 			skillNameString.erase(std::remove_if(skillNameString.begin(), skillNameString.end(), isspace), skillNameString.end());
 
 			ActorValueInfo* skill = Skills::GetSkillByName(skillNameString);
-			const char* skillEditorID = skill->GetFormEditorID();
+			std::string_view skillEditorID = skill->GetFormEditorID();
 
-			std::uint32_t modValue = (a_value - a_baseValue);
+			std::int32_t modValue = static_cast<std::int32_t>(a_value) - static_cast<std::int32_t>(a_baseValue);
 
-			if (skillEditorID == "CAS_Barter")
+			if (skillEditorID == "CAS_Barter"sv)
 			{
 				TempModValues::barter = modValue;
 			}
-			else if (skillEditorID == "CAS_EnergyWeapons")
+			else if (skillEditorID == "CAS_EnergyWeapons"sv)
 			{
 				TempModValues::energyWeapons = modValue;
 			}
-			else if (skillEditorID == "CAS_Explosives")
+			else if (skillEditorID == "CAS_Explosives"sv)
 			{
 				TempModValues::explosives = modValue;
 			}
-			else if (skillEditorID == "CAS_Guns")
+			else if (skillEditorID == "CAS_Guns"sv)
 			{
 				TempModValues::guns = modValue;
 			}
-			else if (skillEditorID == "CAS_Lockpick")
+			else if (skillEditorID == "CAS_Lockpick"sv)
 			{
 				TempModValues::lockpick = modValue;
 			}
-			else if (skillEditorID == "CAS_Medicine")
+			else if (skillEditorID == "CAS_Medicine"sv)
 			{
 				TempModValues::medicine = modValue;
 			}
-			else if (skillEditorID == "CAS_MeleeWeapons")
+			else if (skillEditorID == "CAS_MeleeWeapons"sv)
 			{
 				TempModValues::meleeWeapons = modValue;
 			}
-			else if (skillEditorID == "CAS_Repair")
+			else if (skillEditorID == "CAS_Repair"sv)
 			{
 				TempModValues::repair = modValue;
 			}
-			else if (skillEditorID == "CAS_Science")
+			else if (skillEditorID == "CAS_Science"sv)
 			{
 				TempModValues::science = modValue;
 			}
-			else if (skillEditorID == "CAS_Sneak")
+			else if (skillEditorID == "CAS_Sneak"sv)
 			{
 				TempModValues::sneak = modValue;
 			}
-			else if (skillEditorID == "CAS_Speech")
+			else if (skillEditorID == "CAS_Speech"sv)
 			{
 				TempModValues::speech = modValue;
 			}
-			else if (skillEditorID == "CAS_Survival")
+			else if (skillEditorID == "CAS_Survival"sv)
 			{
 				TempModValues::survival = modValue;
 			}
-			else if (skillEditorID == "CAS_Unarmed")
+			else if (skillEditorID == "CAS_Unarmed"sv)
 			{
 				TempModValues::unarmed = modValue;
 			}
-			
+
 			PlayerCharacter* playerCharacter = PlayerCharacter::GetSingleton();
-			playerCharacter->ModActorValue(ACTOR_VALUE_MODIFIER::kPermanent, *skill, modValue);
+			playerCharacter->ModActorValue(ACTOR_VALUE_MODIFIER::kPermanent, *skill, static_cast<float>(modValue));
 		}
 
 		void RevertSkill(ActorValueInfo* skill)
 		{
-			const char* editorID = skill->GetFormEditorID();
+			std::string_view editorID = skill->GetFormEditorID();
 
-			std::uint32_t modValue;
+			std::int32_t modValue = 0;
 
-			if (editorID == "CAS_Barter")
+			if (editorID == "CAS_Barter"sv)
 			{
 				modValue = TempModValues::barter;
 				TempModValues::barter = 0;
 			}
-			else if (editorID == "CAS_EnergyWeapons")
+			else if (editorID == "CAS_EnergyWeapons"sv)
 			{
 				modValue = TempModValues::energyWeapons;
 				TempModValues::energyWeapons = 0;
 			}
-			else if (editorID == "CAS_Explosives")
+			else if (editorID == "CAS_Explosives"sv)
 			{
 				modValue = TempModValues::explosives;
 				TempModValues::explosives = 0;
 			}
-			else if (editorID == "CAS_Guns")
+			else if (editorID == "CAS_Guns"sv)
 			{
 				modValue = TempModValues::guns;
 				TempModValues::guns = 0;
 			}
-			else if (editorID == "CAS_Lockpick")
+			else if (editorID == "CAS_Lockpick"sv)
 			{
 				modValue = TempModValues::lockpick;
 				TempModValues::lockpick = 0;
 			}
-			else if (editorID == "CAS_Medicine")
+			else if (editorID == "CAS_Medicine"sv)
 			{
 				modValue = TempModValues::medicine;
 				TempModValues::medicine = 0;
 			}
-			else if (editorID == "CAS_MeleeWeapons")
+			else if (editorID == "CAS_MeleeWeapons"sv)
 			{
 				modValue = TempModValues::meleeWeapons;
 				TempModValues::meleeWeapons = 0;
 			}
-			else if (editorID == "CAS_Repair")
+			else if (editorID == "CAS_Repair"sv)
 			{
 				modValue = TempModValues::repair;
 				TempModValues::repair = 0;
 			}
-			else if (editorID == "CAS_Science")
+			else if (editorID == "CAS_Science"sv)
 			{
 				modValue = TempModValues::science;
 				TempModValues::science = 0;
 			}
-			else if (editorID == "CAS_Sneak")
+			else if (editorID == "CAS_Sneak"sv)
 			{
 				modValue = TempModValues::sneak;
 				TempModValues::sneak = 0;
 			}
-			else if (editorID == "CAS_Speech")
+			else if (editorID == "CAS_Speech"sv)
 			{
 				modValue = TempModValues::speech;
 				TempModValues::speech = 0;
 			}
-			else if (editorID == "CAS_Survival")
+			else if (editorID == "CAS_Survival"sv)
 			{
 				modValue = TempModValues::survival;
 				TempModValues::survival = 0;
 			}
-			else if (editorID == "CAS_Unarmed")
+			else if (editorID == "CAS_Unarmed"sv)
 			{
 				modValue = TempModValues::unarmed;
 				TempModValues::unarmed = 0;
 			}
 
 			PlayerCharacter* playerCharacter = PlayerCharacter::GetSingleton();
-			playerCharacter->ModActorValue(ACTOR_VALUE_MODIFIER::kPermanent, *skill, modValue);
+			playerCharacter->ModActorValue(ACTOR_VALUE_MODIFIER::kPermanent, *skill, static_cast<float>(-modValue));
 		}
 
 		// Check if player saved in the middle of a level up.
@@ -914,6 +915,7 @@ namespace Cascadia
 		class LearnSpecial : public Scaleform::GFx::FunctionHandler
 		{
 		public:
+			// TODO - Intense Training
 			virtual void Call(const Params& a_params)
 			{
 				REX::DEBUG("'LearnSpecial' called from AS3.");

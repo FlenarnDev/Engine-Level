@@ -1721,101 +1721,6 @@ namespace Cascadia
 			return returnValue;
 		}
 
-		typedef void(ActorSPECIALModifiedCallbackSig)(Actor*, const ActorValueInfo*, float, float);
-		REL::Relocation<ActorSPECIALModifiedCallbackSig> ActorSPECIALModifiedCallback_Original;
-
-		void HookActorSPECIALModifiedCallback(Actor* a_this, const ActorValueInfo* a_info, float a_originalValue, float a_delta)
-		{
-			PlayerCharacter* playerCharacter = PlayerCharacter::GetSingleton();
-			ActorSPECIALModifiedCallback_Original(a_this, a_info, a_originalValue, a_delta);
-
-			REX::DEBUG("Special Modified Callback - AV: {}", a_info->GetFormEditorID());
-
-			if (a_this == playerCharacter) {
-				bool boost = true;
-
-				if (a_delta < 0.0f) {
-					boost = false;
-				}
-
-				bool temporary = true;
-
-				float baseValue = playerCharacter->GetBaseActorValue(*a_info);
-				REX::DEBUG("'{}' base value: {}", a_info->GetFormEditorID(), baseValue);
-				float modValue = playerCharacter->GetActorValue(*a_info);
-				REX::DEBUG("'{}' mod value: {}", a_info->GetFormEditorID(), modValue);
-				if (baseValue == modValue) {
-					temporary = false;
-				}
-				REX::DEBUG("Temporary modification: {}", temporary);
-
-				ActorValue* actorValueSingleton = ActorValue::GetSingleton();
-				bool isLuck = a_info == actorValueSingleton->luck;
-
-				if (isLuck) {
-					// TODO
-				}
-				else {
-					auto skillsIt = Skills::specialToSkillsMap.find(a_info);
-					if (skillsIt != Skills::specialToSkillsMap.end()) {
-						for (ActorValueInfo* skill : skillsIt->second) {
-							REX::DEBUG("Skill found for {}: {}", a_info->GetFormEditorID(), skill->GetFormEditorID());
-
-							// Correct
-							float originalValueFloat = 2.0f + (2.0f * a_originalValue) + (playerCharacter->GetBaseActorValue(*actorValueSingleton->luck) * 0.5f);
-							int originalValueInt = static_cast<int>(std::ceil(originalValueFloat));
-							REX::DEBUG("Skill, initial S.P.E.C.I.A.L value: {}", originalValueInt);
-
-							// Correct
-							float newValueFloat = 2.0f + (2.0f * playerCharacter->GetActorValue(*a_info)) + (playerCharacter->GetActorValue(*actorValueSingleton->luck) * 0.5f);
-							int newValueInt = static_cast<int>(std::ceil(newValueFloat));
-							REX::DEBUG("Skill, new S.P.E.C.I.A.L value: {}", newValueInt);
-
-							const int delta = newValueInt - originalValueInt;
-							REX::DEBUG("Delta of skill values (initial/new): {}", delta);
-
-							// Correct
-							float currentSkillLevelWithoutInitialValue = (playerCharacter->GetBaseActorValue(*skill) - originalValueFloat) - 0.5f; // Needs 0.5f reduction for math reasons.
-							REX::DEBUG("Current skill level without S.P.E.C.I.A.L modification: {}", currentSkillLevelWithoutInitialValue);							
-
-
-							float currentBaseSkillValue = playerCharacter->GetBaseActorValue(*skill);
-							REX::DEBUG("Current base skill value: {}", currentBaseSkillValue);
-							float currentModSkillValue = playerCharacter->GetActorValue(*skill);
-							REX::DEBUG("Current mod skill value: {}", currentModSkillValue);
-							
-							
-							bool skillModifiedByReduction = false;
-							if (currentBaseSkillValue > currentModSkillValue) {
-								skillModifiedByReduction = true;
-							}
-
-							if (skillModifiedByReduction) {
-								REX::DEBUG("Skill is reduced by mod by: {} points.", (currentBaseSkillValue - currentModSkillValue));
-
-								// We make the assumption that a S.P.E.C.I.A.L can only ever be reduced temporarily, 
-								// this is the only limiting factor we have at play here.
-								if ((currentBaseSkillValue - currentModSkillValue) >= delta && !temporary) {
-									REX::DEBUG("Current reduction is bigger than, or equals to the newly calculated delta of: {} points.", delta);
-									playerCharacter->ModActorValue(ACTOR_VALUE_MODIFIER::kTemporary, *skill, delta);
-								}
-								return;
-
-							}
-
-							if (temporary) {
-								playerCharacter->SetActorValue(*skill, originalValueInt + currentSkillLevelWithoutInitialValue);
-								playerCharacter->ModActorValue(ACTOR_VALUE_MODIFIER::kTemporary, *skill, delta);
-							}
-							else {
-								playerCharacter->SetActorValue(*skill, newValueInt + currentSkillLevelWithoutInitialValue);
-							}
-						}
-					}
-				}
-			}
-		}
-
 		typedef void(nsHUDTypesNotificationData_ctorSig)(nsHUDTypes::NotificationInfo*, const HUDNotificationEvent*);
 		REL::Relocation<nsHUDTypesNotificationData_ctorSig> nsHUDTypesNotificationData_ctor_Original;
 
@@ -2251,7 +2156,6 @@ namespace Cascadia
 				slimOk &= RegisterDetourFunction(ID::LoadingMenu::PopulateLoadScreens, &HookLoadingMenuPopulateLoadScreens, LoadingMenuPopulateLoadScreens_Original, "LoadingMenuPopulateLoadScreens"sv);
 				slimOk &= RegisterDetourFunction(ID::GamePlayFormulas::CanPickLockGateCheck, &HookGamePlayFormulasCanPickLockGateCheck, GamePlayFormulasCanPickLockGateCheck_Original, "GamePlayFormulasCanPickLockGateCheck"sv);
 				slimOk &= RegisterDetourFunction(ID::GamePlayFormulas::CanHackGateCheck, &HookGamePlayFormulasCanHackGateCheck, GamePlayFormulasCanHackGateCheck_Original, "GamePlayFormulasCanHackGateCheck"sv);
-				slimOk &= RegisterDetourFunction(ID::Actor::SPECIALModifiedCallback, &HookActorSPECIALModifiedCallback, ActorSPECIALModifiedCallback_Original, "ActorSPECIALModifiedCallback"sv);
 				slimOk &= RegisterDetourFunction(RE::ID::ExamineMenu::BuildWeaponScrappingArray, &HookBuildWeaponScrappingArray, BuildWeaponScrappingArrayOriginal, "BuildWeaponScrappingArray"sv);
 				slimOk &= RegisterDetourFunction(RE::ID::PlayerCharacter::HandlePositionPlayerRequest, &HookPlayerCharacterHandlePositionPlayerRequest, PlayerCharacterHandlePositionPlayerRequest_Original, "PlayerCharacterHandlePositionPlayerRequest"sv);
 				slimOk &= RegisterDetourFunction(REL::ID(2225603), &HookPipboyBuildQuestTargetMarker, PipboyBuildQuestTargetMarker_Original, "PipboyBuildQuestTargetMarker"sv);

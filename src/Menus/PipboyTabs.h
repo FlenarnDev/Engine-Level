@@ -110,8 +110,9 @@ namespace Cascadia
 			a_movieRoot->CreateObject(&skillEntry);
 			PlayerCharacter* playerCharacter = PlayerCharacter::GetSingleton();
 
-			float value = playerCharacter->GetBaseActorValue(*a_skill);
+			float value = Skills::GetPermanentSkillValue(playerCharacter, a_skill);
 			float buffedValue = playerCharacter->GetActorValue(*a_skill);
+
 			BSStringT<char> description;
 			a_skill->GetDescription(description);
 
@@ -132,7 +133,7 @@ namespace Cascadia
 			skillEntry.SetMember("maxVal", 0.0);
 			skillEntry.SetMember("basevalue", value);
 			skillEntry.SetMember("modifier", buffedValue - value);
-			skillEntry.SetMember("buffervalue", buffedValue);
+			skillEntry.SetMember("buffedvalue", buffedValue);
 
 			std::uint32_t filter = 1;
 			skillEntry.SetMember("filterFlag", filter);

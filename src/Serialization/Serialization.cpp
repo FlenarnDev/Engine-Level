@@ -14,7 +14,11 @@ namespace Cascadia
 		std::int32_t playerSkillPoints = 0;
 		std::set<std::uint32_t> taggedSkills;
 		bool playerReadyToLevelUp = false;
-		
+
+		// Cascadia-tracked permanent SPECIAL baseline - see Serialization.h for why this
+		// exists separately from the engine's own GetPermanentActorValue.
+		std::unordered_map<std::uint32_t, float> permanentSpecialBaseline;
+
 		void CASSerialization::Serialize(const F4SE::SerializationInterface* a_intfc)
 		{
 			REX::DEBUG("Serialize save data.");
@@ -34,7 +38,17 @@ namespace Cascadia
 			REX::DEBUG("Saving tagged skills.");
 
 			a_intfc->WriteRecord('BPRL', SerializationVersion, &playerReadyToLevelUp, sizeof(bool));
-		
+
+			std::uint32_t permanentSpecialCount = static_cast<std::uint32_t>(permanentSpecialBaseline.size());
+
+			a_intfc->OpenRecord('PSPC', SerializationVersion);
+			a_intfc->WriteRecordData(&permanentSpecialCount, sizeof(uint32_t));
+			for (auto& [formID, value] : permanentSpecialBaseline)
+			{
+				a_intfc->WriteRecordData(&formID, sizeof(uint32_t));
+				a_intfc->WriteRecordData(&value, sizeof(float));
+			}
+			REX::DEBUG("Saving permanent SPECIAL baseline.");
 		}
 
 		void CASSerialization::Deserialize(const F4SE::SerializationInterface* a_intfc)
@@ -59,6 +73,7 @@ namespace Cascadia
 					break;
 
 				case 'UTSK':
+				{
 					REX::DEBUG("Found tagged skills data.");
 					std::uint32_t taggedSkillsCount = 0;
 					a_intfc->ReadRecordData(&taggedSkillsCount, sizeof(uint32_t));
@@ -76,6 +91,31 @@ namespace Cascadia
 							taggedSkills.insert(newFormID);
 						}
 					}
+					break;
+				}
+
+				case 'PSPC':
+				{
+					REX::DEBUG("Found permanent SPECIAL baseline data.");
+					std::uint32_t permanentSpecialCount = 0;
+					a_intfc->ReadRecordData(&permanentSpecialCount, sizeof(uint32_t));
+
+					for (std::uint32_t i = 0; i < permanentSpecialCount; i++)
+					{
+						std::uint32_t oldFormID = 0;
+						float value = 0.0f;
+
+						a_intfc->ReadRecordData(&oldFormID, sizeof(uint32_t));
+						a_intfc->ReadRecordData(&value, sizeof(float));
+
+						std::uint32_t newFormID = a_intfc->ResolveFormID(oldFormID).value_or(0);
+						if (newFormID != 0)
+						{
+							permanentSpecialBaseline[newFormID] = value;
+						}
+					}
+					break;
+				}
 				}
 			}
 		}
@@ -86,6 +126,7 @@ namespace Cascadia
 			playerSkillPoints = 0;
 			playerReadyToLevelUp = false;
 			taggedSkills.clear();
+			permanentSpecialBaseline.clear();
 		}
 
 		void RevertCallback([[maybe_unused]] const F4SE::SerializationInterface* a_intfc)
@@ -146,6 +187,22 @@ namespace Cascadia
 		std::uint32_t GetSkillsTagged()
 		{
 			return taggedSkills.size();
+		}
+
+		bool HasPermanentSpecial(TESFormID specialFormID)
+		{
+			return permanentSpecialBaseline.find(specialFormID) != permanentSpecialBaseline.end();
+		}
+
+		float GetPermanentSpecial(TESFormID specialFormID)
+		{
+			auto it = permanentSpecialBaseline.find(specialFormID);
+			return it != permanentSpecialBaseline.end() ? it->second : 0.0f;
+		}
+
+		void SetPermanentSpecial(TESFormID specialFormID, float value)
+		{
+			permanentSpecialBaseline[specialFormID] = value;
 		}
 	}
 }

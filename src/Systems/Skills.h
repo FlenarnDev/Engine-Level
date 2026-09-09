@@ -60,6 +60,14 @@ namespace Cascadia
 		ActorValueInfo* GetSkillByName(std::string mySkill);
 		float GetBaseSkillValueByName(Actor* myActor, std::string mySkill);
 
+		float DeriveSkillValue(const ActorValueOwner* a_actor, const ActorValueInfo& a_info);
+
+		float GetPermanentSpecialValue(ActorValueInfo* a_special);
+		void ModPermanentSpecial(ActorValueInfo* a_special, float a_delta);
+
+		float GetPermanentSkillValue(Actor* a_actor, ActorValueInfo* a_skill);
+		float GetPermanentPlayerSkillValue(ActorValueInfo* a_skill);
+
 		void RegisterLinkedAV(ActorValueInfo* skill, ActorValueInfo* special);
 		void RegisterForSkillLink();
 
