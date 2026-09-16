@@ -54,6 +54,20 @@ namespace Cascadia
 		};
 		extern CascadiaAV_Struct CascadiaActorValues;
 
+		struct CascadiaPerks_Struct
+		{
+			// Weapon Type Perks
+			BGSPerk* WeaponTypeEnergyWeaponsPerk;
+			BGSPerk* WeaponTypeExplosivesPerk;
+			BGSPerk* WeaponTypeMeleeWeaponsPerk;
+			BGSPerk* WeaponTypeGunsPerk;
+			BGSPerk* WeaponTypeUnarmedPerk;
+
+			// Special perks that require some special handling
+			BGSPerk* IntenseTrainingPerk;
+		};
+		extern CascadiaPerks_Struct CascadiaPerks;
+
 		extern std::unordered_map<const ActorValueInfo*, std::vector<ActorValueInfo*>> specialToSkillsMap;
 		extern std::unordered_map<const ActorValueInfo*, ActorValueInfo*> skillToSpecialMap;
 

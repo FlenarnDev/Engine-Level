@@ -17,15 +17,6 @@ namespace Cascadia
 
 		CascadiaAV_Struct CascadiaActorValues;
 
-		struct CascadiaPerks_Struct
-		{
-			// Weapon Type Perks
-			BGSPerk* WeaponTypeEnergyWeaponsPerk;
-			BGSPerk* WeaponTypeExplosivesPerk;
-			BGSPerk* WeaponTypeMeleeWeaponsPerk;
-			BGSPerk* WeaponTypeGunsPerk;
-			BGSPerk* WeaponTypeUnarmedPerk;
-		};
 		CascadiaPerks_Struct CascadiaPerks;
 		
 		struct CascadiaGlobals_Struct
@@ -160,7 +151,7 @@ namespace Cascadia
 			}
 
 			PlayerCharacter* playerCharacter = PlayerCharacter::GetSingleton();
-			playerCharacter->ModActorValue(ACTOR_VALUE_MODIFIER::kPermanent, *a_special, a_delta);
+			playerCharacter->ModBaseActorValue(*a_special, a_delta);
 
 			float clamped = playerCharacter->GetPermanentActorValue(*a_special);
 			Serialization::SetPermanentSpecial(a_special->formID, clamped);
@@ -382,6 +373,7 @@ namespace Cascadia
 			CascadiaPerks.WeaponTypeMeleeWeaponsPerk = tesDataHandler->LookupForm<BGSPerk>(0x1F9E00, MOD_ESM);
 			CascadiaPerks.WeaponTypeGunsPerk = tesDataHandler->LookupForm<BGSPerk>(0x1F9E01, MOD_ESM);
 			CascadiaPerks.WeaponTypeUnarmedPerk = tesDataHandler->LookupForm<BGSPerk>(0x1F9E02, MOD_ESM);
+			CascadiaPerks.IntenseTrainingPerk = tesDataHandler->LookupForm<BGSPerk>(0x0F3974, MOD_ESM);
 
 			// Cascadia Skills List
 			CascadiaSkillsList.emplace_back(CascadiaActorValues.Barter);

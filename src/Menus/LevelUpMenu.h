@@ -9,6 +9,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <optional>
 #include <string_view>
 
 namespace Cascadia
@@ -19,8 +20,9 @@ namespace Cascadia
 
 		std::uint32_t menuModeType = 0;
 		std::uint32_t tagPointsValue = 0;
-		
+
 		bool allowRetag = false;
+		bool suppressNextClose = false;
 
 		BSTArray<ActorValueInfo*> scaleformSkills;
 
@@ -753,7 +755,14 @@ namespace Cascadia
 			virtual void Call(const Params& a_params)
 			{
 				REX::DEBUG("'CloseMenu' called from AS3.");
-				
+
+				if (suppressNextClose)
+				{
+					suppressNextClose = false;
+					REX::DEBUG("AddPerks redirected into a new mode without closing.");
+					return;
+				}
+
 				UIMessageQueue* uiMessageQueue = UIMessageQueue::GetSingleton();
 				if (UI* ui = UI::GetSingleton())
 				{
@@ -867,14 +876,29 @@ namespace Cascadia
 				Scaleform::GFx::Value arrayElement, perkFormID;
 
 				PlayerCharacter* playerCharacter = PlayerCharacter::GetSingleton();
+				bool selectedIntenseTraining = false;
 
 				for (std::uint32_t i = 0; i < perkCount; i++) {
 					a_params.args[0].GetElement(i, &arrayElement);
-					arrayElement.GetMember("iFormID", &perkFormID);				
+					arrayElement.GetMember("iFormID", &perkFormID);
 					TESForm* a_perkForm = TESForm::GetFormByNumericID(perkFormID.GetUInt());
 					BGSPerk* a_perk = static_cast<BGSPerk*>(a_perkForm);
 					playerCharacter->AddPerk(a_perk);
 					ModPerkCount(-1);
+
+					if (Skills::CascadiaPerks.IntenseTrainingPerk && a_perk == Skills::CascadiaPerks.IntenseTrainingPerk)
+					{
+						selectedIntenseTraining = true;
+					}
+				}
+
+				if (selectedIntenseTraining)
+				{
+					CompleteLevelUp();
+
+					menuModeType = kIntenseTraining;
+					suppressNextClose = true;
+					HandleLevelUpMenuOpen(a_params.movie->asMovieRoot);
 				}
 			}
 		};
@@ -915,19 +939,48 @@ namespace Cascadia
 		class LearnSpecial : public Scaleform::GFx::FunctionHandler
 		{
 		public:
-			// TODO - Intense Training
 			virtual void Call(const Params& a_params)
 			{
 				REX::DEBUG("'LearnSpecial' called from AS3.");
+
+				if (a_params.argCount < 1 || !a_params.args[0].IsArray())
+				{
+					return;
+				}
+
 				std::uint32_t specialCount = a_params.args[0].GetArraySize();
 				Scaleform::GFx::Value arrayElement, specialFormID, specialValue;
 
-				ActorValueInfo* special;
-
-				for (int i = 0; i < specialCount; i++) {
+				for (std::uint32_t i = 0; i < specialCount; i++)
+				{
 					a_params.args[0].GetElement(i, &arrayElement);
 					arrayElement.GetMember("formID", &specialFormID);
 					arrayElement.GetMember("iValue", &specialValue);
+
+					ActorValueInfo* special = static_cast<ActorValueInfo*>(TESForm::GetFormByNumericID(specialFormID.GetUInt()));
+					if (!special)
+					{
+						REX::ERROR("'LearnSpecial' - unrecognised SPECIAL formID {}", specialFormID.GetUInt());
+						continue;
+					}
+
+					float newValue = 0.0F;
+					if (specialValue.IsNumber())
+					{
+						newValue = specialValue.GetNumber();
+					}
+					else if (specialValue.IsUInt())
+					{
+						newValue = specialValue.GetUInt();
+					}
+
+					float currentValue = Skills::GetPermanentSpecialValue(special);
+					float delta = newValue - currentValue;
+
+					if (delta != 0.0F)
+					{
+						Skills::ModPermanentSpecial(special, delta);
+					}
 				}
 			}
 		};
@@ -962,8 +1015,100 @@ namespace Cascadia
 			}
 		};
 
+		struct DirectionalRepeatTiming
+		{
+			// Fallbacks only
+			float longDelay = 0.5F;
+			float shortDelay = 0.1F;
+			std::uint32_t repeatsUntilShort = 1;
+
+			static const DirectionalRepeatTiming& Get()
+			{
+				static const DirectionalRepeatTiming timing = [] {
+					DirectionalRepeatTiming t;
+					if (auto* setting = GetINISetting("fThumbstickRepeatLong:Controls"))
+					{
+						t.longDelay = setting->GetFloat();
+					}
+					if (auto* setting = GetINISetting("fThumbstickRepeatShort:Controls"))
+					{
+						t.shortDelay = setting->GetFloat();
+					}
+					if (auto* setting = GetINISetting("uRepeatsUntilShort:Controls"))
+					{
+						t.repeatsUntilShort = setting->GetUInt();
+					}
+					return t;
+				}();
+				return timing;
+			}
+		};
+
+		inline bool IsDPadDirection(BS_BUTTON_CODE a_code)
+		{
+			switch (a_code)
+			{
+				case BS_BUTTON_CODE::kDPAD_Up:
+				case BS_BUTTON_CODE::kDPAD_Down:
+				case BS_BUTTON_CODE::kDPAD_Left:
+				case BS_BUTTON_CODE::kDPAD_Right:
+					return true;
+				default:
+					return false;
+			}
+		}
+
+		inline BS_BUTTON_CODE DirectionValToDPadCode(DIRECTION_VAL a_dir)
+		{
+			switch (a_dir)
+			{
+				case DIRECTION_VAL::kUp:
+					return BS_BUTTON_CODE::kDPAD_Up;
+				case DIRECTION_VAL::kDown:
+					return BS_BUTTON_CODE::kDPAD_Down;
+				case DIRECTION_VAL::kLeft:
+					return BS_BUTTON_CODE::kDPAD_Left;
+				case DIRECTION_VAL::kRight:
+				default:
+					return BS_BUTTON_CODE::kDPAD_Right;
+			}
+		}
+
+		inline void ComputeShadedBackgroundColor(float& a_r, float& a_g, float& a_b)
+		{
+			float r = 245.0F, g = 245.0F, b = 255.0F;
+			float dimFactor = 4.5F;
+
+			if (auto* setting = GetINISetting("iHUDColorR:Interface"))
+			{
+				r = static_cast<float>(setting->GetInt());
+			}
+			if (auto* setting = GetINISetting("iHUDColorG:Interface"))
+			{
+				g = static_cast<float>(setting->GetInt());
+			}
+			if (auto* setting = GetINISetting("iHUDColorB:Interface"))
+			{
+				b = static_cast<float>(setting->GetInt());
+			}
+			if (auto* setting = GetINISetting("fShadedBackgroundDimFactor:Interface"))
+			{
+				dimFactor = setting->GetFloat();
+			}
+
+			if (dimFactor <= 0.0F)
+			{
+				dimFactor = 4.5F;
+			}
+
+			a_r = r / dimFactor;
+			a_g = g / dimFactor;
+			a_b = b / dimFactor;
+		}
+
 		class CASLevelUpMenu :
-			public GameMenuBase
+			public GameMenuBase,
+			public BSTEventSink<ApplyColorUpdateEvent>
 		{
 		public:
 			static IMenu* CreateCASLevelUpMenu(const UIMessage&)
@@ -990,9 +1135,112 @@ namespace Cascadia
 				}
 			}
 
-			void OnButtonEvent(const ButtonEvent* a_event) override 
+			bool ShouldHandleEvent(const InputEvent* a_event) override
 			{
-				ProcessUserEventExternal(a_event->QUserEvent().c_str(), a_event->QHeldDown(), a_event->device.underlying(), a_event->GetBSButtonCode());
+				if (a_event->eventType == INPUT_EVENT_TYPE::kThumbstick)
+				{
+					return a_event->handled != InputEvent::HANDLED_RESULT::kStop;
+				}
+				return IMenu::ShouldHandleEvent(a_event);
+			}
+
+			BSEventNotifyControl ProcessEvent(const ApplyColorUpdateEvent&, BSTEventSource<ApplyColorUpdateEvent>*) override
+			{
+				ApplyBackgroundColor();
+				return BSEventNotifyControl::kContinue;
+			}
+
+			void ApplyBackgroundColor()
+			{
+				float r, g, b;
+				ComputeShadedBackgroundColor(r, g, b);
+
+				Scaleform::GFx::ASMovieRootBase* movieRoot = uiMovie.get()->asMovieRoot.get();
+				Scaleform::GFx::Value arguments[3];
+				arguments[0] = r;
+				arguments[1] = g;
+				arguments[2] = b;
+				movieRoot->Invoke("root.SetBackgroundColor", nullptr, arguments, 3);
+			}
+
+			std::optional<BS_BUTTON_CODE> heldDirectionCode;
+			std::uint32_t                 heldDeviceType{ 0 };
+			float                         repeatTimer{ 0.0F };
+			std::uint32_t                 repeatCount{ 0 };
+
+			void BeginDirectionalHold(BS_BUTTON_CODE a_code, std::uint32_t a_device)
+			{
+				heldDirectionCode = a_code;
+				heldDeviceType = a_device;
+				repeatTimer = 0.0F;
+				repeatCount = 0;
+			}
+
+			void OnButtonEvent(const ButtonEvent* a_event) override
+			{
+				const BS_BUTTON_CODE code = a_event->GetBSButtonCode();
+
+				if (IsDPadDirection(code))
+				{
+					if (a_event->QJustPressed())
+					{
+						BeginDirectionalHold(code, a_event->device.underlying());
+					}
+					else if (a_event->QReleased() && heldDirectionCode == code)
+					{
+						heldDirectionCode.reset();
+					}
+				}
+
+				ProcessUserEventExternal(a_event->QUserEvent().c_str(), a_event->QJustPressed(), a_event->device.underlying(), code);
+			}
+
+			void OnThumbstickEvent(const ThumbstickEvent* a_event) override
+			{
+				if (a_event->QIDCode() != static_cast<std::uint32_t>(ThumbstickEvent::THUMBSTICK_ID::kLeft))
+				{
+					return;
+				}
+
+				if (a_event->currDir == a_event->prevDir)
+				{
+					return;
+				}
+
+				if (a_event->currDir == DIRECTION_VAL::kNone)
+				{
+					if (heldDirectionCode && DirectionValToDPadCode(a_event->prevDir) == *heldDirectionCode)
+					{
+						heldDirectionCode.reset();
+					}
+					return;
+				}
+
+				const BS_BUTTON_CODE code = DirectionValToDPadCode(a_event->currDir);
+				BeginDirectionalHold(code, a_event->device.underlying());
+				ProcessUserEventExternal(a_event->QUserEvent().c_str(), true, a_event->device.underlying(), code);
+			}
+
+			void AdvanceMovie(float a_timeDelta, std::uint64_t a_time) override
+			{
+				IMenu::AdvanceMovie(a_timeDelta, a_time);
+
+				if (!heldDirectionCode)
+				{
+					return;
+				}
+
+				const DirectionalRepeatTiming& timing = DirectionalRepeatTiming::Get();
+				repeatTimer += a_timeDelta;
+
+				float interval = (repeatCount < timing.repeatsUntilShort) ? timing.longDelay : timing.shortDelay;
+				while (repeatTimer >= interval)
+				{
+					repeatTimer -= interval;
+					++repeatCount;
+					ProcessUserEventExternal("", true, heldDeviceType, *heldDirectionCode);
+					interval = (repeatCount < timing.repeatsUntilShort) ? timing.longDelay : timing.shortDelay;
+				}
 			}
 
 			CASLevelUpMenu()
@@ -1001,11 +1249,16 @@ namespace Cascadia
 					UI_MENU_FLAGS::kPausesGame,
 					UI_MENU_FLAGS::kUsesCursor,
 					UI_MENU_FLAGS::kTopmostRenderedMenu,
-					UI_MENU_FLAGS::kUpdateUsesCursor,
-					UI_MENU_FLAGS::kUsesBlurredBackground
+					UI_MENU_FLAGS::kUpdateUsesCursor
 				);
 				menuHUDMode = "SpecialMode";
 				depthPriority = UI_DEPTH_PRIORITY::kTerminal;
+
+				if (UIMessageQueue* uiMessageQueue = UIMessageQueue::GetSingleton())
+				{
+					uiMessageQueue->AddMessage("VignetteMenu", UI_MESSAGE_TYPE::kShow);
+				}
+
 				const auto ScaleformManager = BSScaleformManager::GetSingleton();
 
 				[[maybe_unused]] const auto LoadMovieSuccess =
@@ -1016,7 +1269,7 @@ namespace Cascadia
 				Scaleform::GFx::Value bgsCodeObj;
 				movieRoot->GetVariable(&bgsCodeObj, "root.Menu_mc.BGSCodeObj");
 
-				filterHolder = std::make_unique<BSGFxShaderFXTarget>(*uiMovie, "root.Menu_mc");
+				filterHolder = std::make_unique<BSGFxShaderFXTarget>(*uiMovie, "root");
 				if (filterHolder)
 				{
 					filterHolder->CreateAndSetFiltersToHUD(HUDColorTypes::kGameplayHUDColor);
@@ -1039,7 +1292,26 @@ namespace Cascadia
 				Shared::RegisterFunction<PlayUISound>(&bgsCodeObj, uiMovie.get()->asMovieRoot, "PlayUISound");
 
 				movieRoot->Invoke("root.Menu_mc.onCodeObjCreate", nullptr, nullptr, 0);
+
+				ApplyBackgroundColor();
+				if (auto* source = ApplyColorUpdateEvent::GetEventSource())
+				{
+					source->RegisterSink(this);
+				}
 			};
+
+			~CASLevelUpMenu() override
+			{
+				if (auto* source = ApplyColorUpdateEvent::GetEventSource())
+				{
+					source->UnregisterSink(this);
+				}
+
+				if (UIMessageQueue* uiMessageQueue = UIMessageQueue::GetSingleton())
+				{
+					uiMessageQueue->AddMessage("VignetteMenu", UI_MESSAGE_TYPE::kHide);
+				}
+			}
 
 			static IMenu* Create(const UIMessage&)
 			{

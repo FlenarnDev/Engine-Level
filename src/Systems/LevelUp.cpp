@@ -2,6 +2,15 @@
 
 #include "Shared/SharedFunctions.h"
 
+namespace Cascadia
+{
+	namespace LevelUpMenu
+	{
+		extern std::uint32_t menuModeType;
+		inline constexpr std::uint32_t kLevelUpMode = 0;
+	}
+}
+
 using namespace RE;
 
 namespace Cascadia
@@ -202,13 +211,15 @@ namespace Cascadia
 			return true;
 		}
 
-		bool Controller::RequestOpen() const
+		bool Controller::RequestOpen()
 		{
 			UIMessageQueue* uiMessageQueue = UIMessageQueue::GetSingleton();
 			if (!uiMessageQueue)
 			{
 				return false;
 			}
+
+			LevelUpMenu::menuModeType = LevelUpMenu::kLevelUpMode;
 
 			uiMessageQueue->AddMessage("CASLevelUpMenu", UI_MESSAGE_TYPE::kShow);
 			return true;

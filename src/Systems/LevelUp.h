@@ -22,6 +22,8 @@ namespace Cascadia
 
 			void QueueLevelUp(std::uint32_t a_count = 1);
 			void RestorePending(std::uint32_t a_count);
+			void QueueIntenseTraining();
+			void CancelIntenseTraining();
 			void Update();
 			void OnMenuOpenClose(bool a_opened);
 			void CompleteOneLevelUp();
@@ -38,12 +40,13 @@ namespace Cascadia
 			Controller() = default;
 
 			[[nodiscard]] bool CanOpen() const;
-			[[nodiscard]] bool RequestOpen() const;
+			[[nodiscard]] bool RequestOpen();
 
 			void ScheduleNextCheck(std::chrono::steady_clock::time_point a_now);
 
 			State state_{ State::idle };
 			std::uint32_t pendingCount_{ 0 };
+			bool intenseTrainingPending_{ false };
 			std::chrono::steady_clock::time_point nextCheck_{};
 			std::chrono::steady_clock::time_point openingDeadline_{};
 
