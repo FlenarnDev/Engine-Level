@@ -2,6 +2,7 @@
 #include "Events/CameraFarDistanceOverride.h"
 #include "Events/LevelIncreaseEvent.h"
 #include "Events/MenuOpenCloseEvent.h"
+#include "Events/PerkValueChangedEvent.h"
 #include "Events/TESCellFullyLoadedEvent.h"
 #include "Events/TESHarvestEvent.h"
 #include "Events/TESHitEvent.h"
@@ -59,6 +60,7 @@ namespace
 
 		case F4SE::MessagingInterface::kGameLoaded:
 			Cascadia::PipboyTabs::InstallSkillsTabRefresh();
+			Cascadia::InstallIntenseTrainingPerkWatcher();
 			REX::INFO("{:s} - 'kGameLoaded'.", "Cascadia Gameplay Systems");
 			break;
 
