@@ -56,6 +56,10 @@ namespace Cascadia
 		TESForm* CustomProximityMapMarkerForm;
 		BGSLocationRefType* CustomProximityMapMarkerRefType;
 
+		BGSKeyword* PerkMagKeyword;
+
+		std::uint8_t currentInventoryTabNumber;
+
 		namespace PipboyMap {
 			std::map<const TESQuest*, std::map<std::uint32_t, Area>> MapProximityAreas;
 
@@ -176,6 +180,8 @@ namespace Cascadia
 
 			CustomProximityMapMarkerForm = dataHandler->LookupForm(0X32C723, MOD_ESM);
 			CustomProximityMapMarkerRefType = dataHandler->LookupForm<BGSLocationRefType>(0X32C724, MOD_ESM);
+
+			PerkMagKeyword = dataHandler->LookupForm<BGSLocationRefType>(0X1D4A70, RETAIL_ESM01);
 
 			InitializeGameAdditionalVars(dataHandler);
 			Recipes::InitializeRecipes(dataHandler);

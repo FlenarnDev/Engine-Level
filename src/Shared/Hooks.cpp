@@ -1,4 +1,5 @@
 #include "Shared/Hooks.h"
+#include <RE/P/PipboyInventoryMenu.h>
 
 using namespace RE;
 
@@ -1434,7 +1435,7 @@ namespace Cascadia
 
 			if (a_textID == BSFixedStringCS("CND"))
 			{
-				bool showAsPercent = true;
+				bool showAsPercent = false;
 				std::uint32_t precision = 1;
 
 				a_newEntry.SetMember("showAsPercent", showAsPercent);
@@ -1451,7 +1452,7 @@ namespace Cascadia
 
 			if (*a_textID == BSFixedStringCS("CND"))
 			{
-				PipboyPrimitiveValue<bool>* showAsPercent = new PipboyPrimitiveValue<bool>(true, result);
+				PipboyPrimitiveValue<bool>* showAsPercent = new PipboyPrimitiveValue<bool>(false, result);
 				PipboyPrimitiveValue<std::uint32_t>* precision = new PipboyPrimitiveValue<std::uint32_t>(1, result);
 
 				const BSFixedString showAsPercentString = "showAsPercent";
@@ -2118,6 +2119,8 @@ namespace Cascadia
 			}
 		}
 
+
+
 		// ========== REGISTERS ==========
 
 		static void InstallRemoveItemHook()
@@ -2159,7 +2162,11 @@ namespace Cascadia
 				slimOk &= RegisterDetourFunction(RE::ID::ExamineMenu::BuildWeaponScrappingArray, &HookBuildWeaponScrappingArray, BuildWeaponScrappingArrayOriginal, "BuildWeaponScrappingArray"sv);
 				slimOk &= RegisterDetourFunction(RE::ID::PlayerCharacter::HandlePositionPlayerRequest, &HookPlayerCharacterHandlePositionPlayerRequest, PlayerCharacterHandlePositionPlayerRequest_Original, "PlayerCharacterHandlePositionPlayerRequest"sv);
 				slimOk &= RegisterDetourFunction(REL::ID(2225603), &HookPipboyBuildQuestTargetMarker, PipboyBuildQuestTargetMarker_Original, "PipboyBuildQuestTargetMarker"sv);
-				slimOk &= RegisterDetourFunction(ID::PipboyMapData::UpdateQuestMarkers, &HookPipboyMapDataUpdateQuestMarkers, PipboyMapDataUpdateQuestMarkers_Original, "PipboyMapDataUpdateQuestMarkers"sv);
+				//slimOk &= RegisterDetourFunction(ID::PipboyInventoryMenu::SortItems, HookPipboyInventoryMenuSortItems, PipboyInventoryMenuSortItems_Original, "PipboyInventoryMenuSortItems");
+				//slimOk &= RegisterDetourFunction(ID::PipboyInventoryData::SortItems, HookPipboyInventoryDataSortItems, PipboyInventoryDataSortItems_Original, "PipboyInventoryDataSortItems");
+
+				// @TODO TO FIX
+				slimOk &= RegisterDetourFunction(RE::ID::PipboyMapData::UpdateQuestMarkers, &HookPipboyMapDataUpdateQuestMarkers, PipboyMapDataUpdateQuestMarkers_Original, "PipboyMapDataUpdateQuestMarkers"sv);
 
 				hrSlimDetours = slimOk ? SlimDetoursTransactionCommit() : (SlimDetoursTransactionAbort(), E_FAIL);
 			}
