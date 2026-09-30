@@ -39,6 +39,11 @@ namespace Cascadia
 		extern TESForm* CustomProximityMapMarkerForm;
 		extern BGSLocationRefType* CustomProximityMapMarkerRefType;
 
+		// Used for notes/password grabbing
+		extern BGSKeyword* PerkMagKeyword;
+
+		extern std::uint8_t currentInventoryTabNumber;
+
 		namespace PipboyMap {
 			class Area
 			{

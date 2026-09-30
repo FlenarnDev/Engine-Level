@@ -2,6 +2,7 @@
 
 #include "Shared/SharedDeclarations.h"
 #include "Systems/Skills.h"
+#include <Shared/InventoryHelpers.h>
 
 // Massive thanks to Neanka - the OG interface god.
 // https://github.com/Neanka/f4se/tree/master/f4se/PipboyTabs
@@ -72,6 +73,107 @@ namespace Cascadia
 				a_params.movie->asMovieRoot->CreateObject(&rett);
 				rett.SetMember("retArr", arrVal);
 				*a_params.retVal = rett;
+			}
+		};
+
+		bool IsInventoryItemKeyOrPassword(const BGSInventoryItem* ItemToCheck) {
+			return ItemToCheck && ItemToCheck->object->GetFormType() == ENUM_FORM_ID::kKEYM;
+		}
+
+		bool IsInventoryItemNote(const BGSInventoryItem* ItemToCheck) {
+			if (!ItemToCheck) return false;
+
+			if (ItemToCheck->object->GetFormType() == ENUM_FORM_ID::kNOTE) {
+				// Notes and Holotapes
+				auto noteItem = static_cast<BGSNote*>(ItemToCheck->object);
+				return true;
+			}
+			if (ItemToCheck->object->GetFormType() == ENUM_FORM_ID::kBOOK) {
+				auto bookItem = static_cast<RE::TESObjectBOOK*>(ItemToCheck->object);
+				// If perk magazine, it is NOT gonna be on the note list.
+				return !bookItem->HasKeyword(Shared::PerkMagKeyword);
+			}
+
+			return false;
+		}
+
+		class Scaleform_GetNotesAndPasswords : public Scaleform::GFx::FunctionHandler
+		{
+		public:
+			virtual void Call(const Params& a_params)
+			{
+				Scaleform::GFx::Value returnVal, notesList, keyList;
+				a_params.movie->asMovieRoot->CreateObject(&returnVal);
+				a_params.movie->asMovieRoot->CreateArray(&notesList);
+				//a_params.movie->asMovieRoot->CreateArray(&keyList);
+
+				PlayerCharacter* a_actor = PlayerCharacter::GetSingleton();
+				a_actor->inventoryList->rwLock.lock_read();
+				for (const BGSInventoryItem& inventoryItem : a_actor->inventoryList->data) {
+					/*
+					if (IsInventoryItemKeyOrPassword(&inventoryItem)) {
+						// Key tab
+						Scaleform::GFx::Value keyObject;
+						a_params.movie->asMovieRoot->CreateObject(&keyObject);
+						const auto keyItem = static_cast<TESKey*>(inventoryItem.object);
+						
+						keyObject.SetMember("itemName", keyItem->GetFullName());
+
+						keyList.PushBack(keyObject);
+					}*/
+					if (IsInventoryItemNote(&inventoryItem)) {
+						// Notes tab
+						Scaleform::GFx::Value noteObject;
+						a_params.movie->asMovieRoot->CreateObject(&noteObject);
+
+						if (inventoryItem.object->GetFormType() == ENUM_FORM_ID::kNOTE) {
+							// Notes and Holotapes
+							auto noteItem = static_cast<BGSNote*>(inventoryItem.object);
+							noteObject.SetMember("itemName", noteItem->GetFullName());
+							noteObject.SetMember("itemDescription", noteItem->GetFullName());
+							noteObject.SetMember("itemIsBook", false);
+						}
+						else if (inventoryItem.object->GetFormType() == ENUM_FORM_ID::kBOOK) {
+							auto bookItem = static_cast<RE::TESObjectBOOK*>(inventoryItem.object);
+							noteObject.SetMember("itemName", bookItem->GetFullName());
+							BSString desc;
+							bookItem->GetDescription(desc);
+							noteObject.SetMember("itemDescription", desc.c_str());
+							noteObject.SetMember("itemIsBook", true);
+						}
+						else {
+							continue;
+						}
+						
+
+						notesList.PushBack(noteObject);
+					}
+				}
+				a_actor->inventoryList->rwLock.unlock_read();
+
+
+				returnVal.SetMember("noteList", notesList);
+				//returnVal.SetMember("keyList", keyList);
+
+				*a_params.retVal = returnVal;
+			}
+		};
+
+		// For filtering
+		class Scaleform_IsItemNoteOrKeyOrPassword : public Scaleform::GFx::FunctionHandler
+		{
+		public:
+			virtual void Call(const Params& a_params)
+			{
+				const auto pipboyInventoryItemIndex = a_params.args[0].GetUInt();
+				const auto inventoryItemGrabbed = Cascadia::InventoryUtils::GetInventoryItemByIndex(pipboyInventoryItemIndex);
+				if (inventoryItemGrabbed == nullptr || (!IsInventoryItemKeyOrPassword(inventoryItemGrabbed) && !IsInventoryItemKeyOrPassword(inventoryItemGrabbed))) {
+					*a_params.retVal = false;
+					return;
+				}
+
+				*a_params.retVal = true;
+
 			}
 		};
 
@@ -544,6 +646,14 @@ namespace Cascadia
 			}
 		};
 
+		class Scaleform_SetCurrentTabNumber : public Scaleform::GFx::FunctionHandler
+		{
+		public:
+			virtual void Call(const Params& a_params) {
+				Shared::currentInventoryTabNumber = a_params.args[0].GetUInt();
+			}
+		};
+
 		bool RegisterScaleform(Scaleform::GFx::Movie* a_view, Scaleform::GFx::Value* a_value)
 		{
 			Scaleform::GFx::Value currentSWFPath;
@@ -579,6 +689,11 @@ namespace Cascadia
 					Shared::RegisterFunction<Debug_ActionScript>(&pipboyTabs, a_view->asMovieRoot, "DebugPrint");
 					Shared::RegisterFunction<Scaleform_GetAreas>(&pipboyTabs, a_view->asMovieRoot, "GetAreas");
 					Shared::RegisterFunction<Scaleform_IsProximityMarker>(&pipboyTabs, a_view->asMovieRoot, "IsProximityMarker");
+
+					Shared::RegisterFunction<Scaleform_GetNotesAndPasswords>(&pipboyTabs, a_view->asMovieRoot, "GetNotesAndPasswords");
+					Shared::RegisterFunction<Scaleform_IsItemNoteOrKeyOrPassword>(&pipboyTabs, a_view->asMovieRoot, "IsItemNoteOrKeyOrPassword");
+
+					Shared::RegisterFunction<Scaleform_SetCurrentTabNumber>(&pipboyTabs, a_view->asMovieRoot, "SetCurrentTabNumber");
 
 					loader.Invoke("load", nullptr, &urlRequest, 1);
 

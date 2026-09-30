@@ -20,17 +20,17 @@ namespace Cascadia
 			return pipboyObject->value.c_str();
 		}*/
 
-		/**std::uint32_t GetHandleIDByIndex(std::uint32_t index)
+		std::uint32_t GetHandleIDByIndex(std::uint32_t index)
 		{
 			PipboyPrimitiveValue<std::uint32_t>* pipboyObject = static_cast<PipboyPrimitiveValue<std::uint32_t>*>(PipboyInventoryObjects.at(index)->memberMap.find(BSFixedString("HandleID"))->second);
 
 			// RE::PlayerCharacter* player = RE::PlayerCharacter::GetSingleton();
 			// auto a = player->inventoryList->data.at(index).GetDisplayFullName()
 
-			return pipboyObject->value;
-		}*/
+			return pipboyObject->m_value;
+		}
 
-		/**std::uint32_t GetStackIDByIndex(std::uint32_t index)
+		std::uint32_t GetStackIDByIndex(std::uint32_t index)
 		{
 
 			PipboyArray* StackIDs = static_cast<PipboyArray*>(PipboyInventoryObjects.at(index)->memberMap.find(BSFixedString("StackID"))->second);
@@ -39,11 +39,11 @@ namespace Cascadia
 			for (int i = 0; i < StackIDs->elements.size(); i++)
 			{
 				PipboyPrimitiveValue<std::uint32_t>* pipboyObject = static_cast<PipboyPrimitiveValue<std::uint32_t>*>(StackIDs->elements.at(i));
-				Result = pipboyObject->value;
+				Result = pipboyObject->m_value;
 			}
 
 			return Result;
-		}*/
+		}
 
 
 		TESForm* GetInventoryFormByHandleID(std::uint32_t a_handleID)
@@ -71,17 +71,17 @@ namespace Cascadia
 		}
 
 
-		/**const BGSInventoryItem* GetInventoryItemByIndex(std::uint32_t index)
+		const BGSInventoryItem* GetInventoryItemByIndex(std::uint32_t index)
 		{
 			// auto player = RE::PlayerCharacter::GetSingleton();
 			if (PipboyInventoryObjects.size() <= index)
 				return nullptr;
 
 			PipboyPrimitiveValue<std::uint32_t>* pipboyObject = static_cast<PipboyPrimitiveValue<std::uint32_t>*>(PipboyInventoryObjects.at(index)->memberMap.find(BSFixedString("HandleID"))->second);
-			std::uint32_t HandleID = pipboyObject->value;
+			std::uint32_t HandleID = pipboyObject->m_value;
 			return GetInventoryItemByHandleID(HandleID);
 			// return &player->inventoryList->data.at(index);
-		}*/
+		}
 
 		const BGSInventoryItem* GetInventoryItemWorkbenchByIndex()
 		{
